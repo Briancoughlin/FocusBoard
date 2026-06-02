@@ -9,6 +9,7 @@ import gmailRouter from './routes/gmail.js';
 import calendarRouter from './routes/calendar.js';
 import slackRouter from './routes/slack.js';
 import pasteRouter from './routes/paste.js';
+import persistenceRouter from './routes/persistence.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CONFIG_PATH = path.join(__dirname, 'config.json');
@@ -139,6 +140,7 @@ app.use('/api/gmail', gmailRouter);
 app.use('/api/calendar', calendarRouter);
 app.use('/api/slack', slackRouter);
 app.use('/api/paste', pasteRouter);
+app.use('/api/persistence', persistenceRouter);
 
 // --- Sync all sources ---
 app.get('/api/sync', async (req, res) => {

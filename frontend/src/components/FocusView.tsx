@@ -1,10 +1,11 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { DragDropContext, type DropResult } from '@hello-pangea/dnd';
 import type { Task, Status } from '../types';
 import { WeekView } from './WeekView';
 import { KanbanColumn, COLUMNS } from './KanbanColumn';
 import { getUrgencyScore } from './TaskCard';
 import { InboxSidebar } from './InboxSidebar';
+import { getPersistedValue, setPersistedValue } from '../services/persistence';
 
 interface Props {
   tasks: Task[];
@@ -21,10 +22,13 @@ const MIN_SPLIT = 15;
 const MAX_SPLIT = 70;
 
 export function FocusView({ tasks, kanbanTasks, isLoading, onTaskMove, onDismiss, onAddToBoard }: Props) {
-  const [splitPercent, setSplitPercent] = useState<number>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? Number(saved) : DEFAULT_SPLIT;
-  });
+  const [splitPercent, setSplitPercent] = useState<number>(DEFAULT_SPLIT);
+
+  useEffect(() => {
+    getPersistedValue<number>('split-percent', DEFAULT_SPLIT).then(val => {
+      setSplitPercent(val);
+    });
+  }, []);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const handleRef = useRef<HTMLDivElement>(null);
@@ -47,7 +51,7 @@ export function FocusView({ tasks, kanbanTasks, isLoading, onTaskMove, onDismiss
       handle.removeEventListener('pointermove', onPointerMove);
       handle.removeEventListener('pointerup', onPointerUp);
       setSplitPercent(prev => {
-        localStorage.setItem(STORAGE_KEY, String(prev));
+        setPersistedValue('split-percent', prev);
         return prev;
       });
     };

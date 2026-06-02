@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { Task, Status } from './types';
 import { syncAll } from './services/api';
+import { getPersistedValue, setPersistedValue } from './services/persistence';
 import { Header } from './components/Header';
 import { KanbanBoard } from './components/KanbanBoard';
 import { SettingsPage } from './components/SettingsPage';
@@ -8,22 +9,6 @@ import { PastePanel } from './components/PastePanel';
 import { DailyDigest } from './components/DailyDigest';
 import { FocusView } from './components/FocusView';
 import { JiraDonePrompt } from './components/JiraDonePrompt';
-
-const STORAGE_KEY = 'focusboard-overrides';
-
-// Load column overrides (manual drags) from localStorage
-function loadOverrides(): Record<string, Status> {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
-}
-
-function saveOverrides(overrides: Record<string, Status>) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(overrides));
-}
 
 // Apply user overrides on top of fetched tasks
 function applyOverrides(tasks: Task[], overrides: Record<string, Status>): Task[] {
@@ -35,46 +20,46 @@ function applyOverrides(tasks: Task[], overrides: Record<string, Status>): Task[
 export default function App() {
   const [view, setView] = useState<'board' | 'focus' | 'settings'>('focus');
   const [rawTasks, setRawTasks] = useState<Task[]>([]);
-  const [overrides, setOverrides] = useState<Record<string, Status>>(loadOverrides);
+  const [overrides, setOverrides] = useState<Record<string, Status>>({});
+  const overridesRef = useRef<Record<string, Status>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [lastSynced, setLastSynced] = useState<Date | null>(null);
   const [errors, setErrors] = useState<Array<{ source: string; error: string }>>([]);
   const [pasteOpen, setPasteOpen] = useState(false);
   const [jiraDoneTask, setJiraDoneTask] = useState<Task | null>(null);
-  const [showDigest, setShowDigest] = useState(() => {
-    const last = localStorage.getItem('focusboard-digest-date');
-    return last !== new Date().toDateString();
-  });
-  const [completedToday, setCompletedToday] = useState<number>(() => {
-    try {
-      const raw = localStorage.getItem('focusboard-completed-today');
-      if (!raw) return 0;
-      const { date, count } = JSON.parse(raw);
-      return date === new Date().toDateString() ? count : 0;
-    } catch { return 0; }
-  });
+  const [showDigest, setShowDigest] = useState(false);
+  const [completedToday, setCompletedToday] = useState<number>(0);
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  const [pastedTasks, setPastedTasks] = useState<Task[]>([]);
+  const [doneDates, setDoneDates] = useState<Record<string, string>>({});
+  const [persistenceLoaded, setPersistenceLoaded] = useState(false);
 
-  const [dismissed, setDismissed] = useState<Set<string>>(() => {
-    try {
-      const raw = localStorage.getItem('focusboard-dismissed');
-      return new Set(raw ? JSON.parse(raw) : []);
-    } catch { return new Set(); }
-  });
+  // Load all persisted values on mount
+  useEffect(() => {
+    const today = new Date().toDateString();
 
-  const handleDismiss = useCallback((taskId: string) => {
-    setDismissed(prev => {
-      const updated = new Set(prev).add(taskId);
-      localStorage.setItem('focusboard-dismissed', JSON.stringify([...updated]));
-      return updated;
+    Promise.all([
+      getPersistedValue<Record<string, Status>>('overrides', {}),
+      getPersistedValue<Task[]>('pasted-tasks', []),
+      getPersistedValue<string[]>('dismissed', []),
+      getPersistedValue<{ date: string; count: number } | null>('completed-today', null),
+      getPersistedValue<Record<string, string>>('done-dates', {}),
+      getPersistedValue<string | null>('digest-date', null),
+    ]).then(([loadedOverrides, loadedPastedTasks, loadedDismissed, loadedCompletedToday, loadedDoneDates, loadedDigestDate]) => {
+      overridesRef.current = loadedOverrides;
+      setOverrides(loadedOverrides);
+      setPastedTasks(loadedPastedTasks);
+      setDismissed(new Set(loadedDismissed));
+      setDoneDates(loadedDoneDates);
+
+      if (loadedCompletedToday && loadedCompletedToday.date === today) {
+        setCompletedToday(loadedCompletedToday.count);
+      }
+
+      setShowDigest(loadedDigestDate !== today);
+      setPersistenceLoaded(true);
     });
   }, []);
-
-  const [pastedTasks, setPastedTasks] = useState<Task[]>(() => {
-    try {
-      const raw = localStorage.getItem('focusboard-pasted-tasks');
-      return raw ? JSON.parse(raw) : [];
-    } catch { return []; }
-  });
 
   const fetchTasks = useCallback(async () => {
     setIsLoading(true);
@@ -98,34 +83,54 @@ export default function App() {
   }, [fetchTasks]);
 
   const handleTaskMove = useCallback((taskId: string, newStatus: Status) => {
-    const updated = { ...overrides, [taskId]: newStatus };
+    const updated = { ...overridesRef.current, [taskId]: newStatus };
+    overridesRef.current = updated;
     setOverrides(updated);
-    saveOverrides(updated);
-    if (newStatus === 'done' && tasks.find(t => t.id === taskId)?.source === 'jira') {
-      setJiraDoneTask(tasks.find(t => t.id === taskId) || null);
-    }
+    setPersistedValue('overrides', updated);
+
     if (newStatus === 'done') {
-      // Record when this task was completed
-      const completions = JSON.parse(localStorage.getItem('focusboard-done-dates') || '{}');
-      completions[taskId] = new Date().toDateString();
-      localStorage.setItem('focusboard-done-dates', JSON.stringify(completions));
+      setDoneDates(prev => {
+        const next = { ...prev, [taskId]: new Date().toDateString() };
+        setPersistedValue('done-dates', next);
+        return next;
+      });
       setCompletedToday(prev => {
         const next = prev + 1;
-        localStorage.setItem('focusboard-completed-today', JSON.stringify({ date: new Date().toDateString(), count: next }));
+        setPersistedValue('completed-today', { date: new Date().toDateString(), count: next });
         return next;
       });
     }
-  }, [overrides]);
 
-  const handlePastedTasks = useCallback((newTasks: Task[]) => {
-    setPastedTasks(prev => {
-      const updated = [...prev, ...newTasks];
-      localStorage.setItem('focusboard-pasted-tasks', JSON.stringify(updated));
+    // Check for Jira done prompt — need access to tasks derived state
+    // We resolve the task from current rawTasks + pastedTasks
+    setRawTasks(currentRaw => {
+      if (newStatus === 'done') {
+        const allTasks = applyOverrides([...currentRaw], overridesRef.current);
+        const moved = allTasks.find(t => t.id === taskId);
+        if (moved?.source === 'jira') {
+          setJiraDoneTask(moved);
+        }
+      }
+      return currentRaw;
+    });
+  }, []);
+
+  const handleDismiss = useCallback((taskId: string) => {
+    setDismissed(prev => {
+      const updated = new Set(prev).add(taskId);
+      setPersistedValue('dismissed', [...updated]);
       return updated;
     });
   }, []);
 
-  const doneDates: Record<string, string> = JSON.parse(localStorage.getItem('focusboard-done-dates') || '{}');
+  const handlePastedTasks = useCallback((newTasks: Task[]) => {
+    setPastedTasks(prev => {
+      const updated = [...prev, ...newTasks];
+      setPersistedValue('pasted-tasks', updated);
+      return updated;
+    });
+  }, []);
+
   const today = new Date().toDateString();
 
   const tasks = applyOverrides([...rawTasks, ...pastedTasks], overrides)
@@ -133,6 +138,16 @@ export default function App() {
     .filter(t => t.status !== 'done' || doneDates[t.id] === today);
 
   const kanbanTasks = tasks.filter(t => t.source !== 'calendar');
+
+  if (!persistenceLoaded) {
+    return (
+      <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-gray-400 text-sm">Loading...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
@@ -169,7 +184,7 @@ export default function App() {
               setPastedTasks(prev => {
                 const pinned = { ...task, id: `pinned-${task.id}`, source: 'paste' as const, status: 'todo' as const };
                 const updated = [...prev, pinned];
-                localStorage.setItem('focusboard-pasted-tasks', JSON.stringify(updated));
+                setPersistedValue('pasted-tasks', updated);
                 return updated;
               });
             }}
@@ -181,7 +196,7 @@ export default function App() {
         <DailyDigest
           tasks={tasks}
           onDismiss={() => {
-            localStorage.setItem('focusboard-digest-date', new Date().toDateString());
+            setPersistedValue('digest-date', new Date().toDateString());
             setShowDigest(false);
           }}
         />

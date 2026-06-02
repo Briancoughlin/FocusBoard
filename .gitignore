@@ -3,3 +3,4 @@ config.json
 .env
 frontend/dist/
 backend/daemon/
+backend/data/

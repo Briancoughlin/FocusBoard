@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Mail, Hash, ExternalLink, Plus, Inbox } from 'lucide-react';
 import type { Task } from '../types';
+import { getPersistedValue, setPersistedValue } from '../services/persistence';
 
 interface InboxItem {
   id: string;
@@ -26,17 +27,18 @@ function timeAgo(dateStr: string): string {
 }
 
 export function InboxSidebar({ tasks, onAddToBoard }: Props) {
-  const [readIds, setReadIds] = useState<Set<string>>(() => {
-    try {
-      const raw = localStorage.getItem('focusboard-inbox-read');
-      return new Set(raw ? JSON.parse(raw) : []);
-    } catch { return new Set(); }
-  });
+  const [readIds, setReadIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    getPersistedValue<string[]>('inbox-read', []).then(ids => {
+      setReadIds(new Set(ids));
+    });
+  }, []);
 
   const markRead = (id: string) => {
     setReadIds(prev => {
       const next = new Set(prev).add(id);
-      localStorage.setItem('focusboard-inbox-read', JSON.stringify([...next]));
+      setPersistedValue('inbox-read', [...next]);
       return next;
     });
   };
@@ -75,7 +77,7 @@ export function InboxSidebar({ tasks, onAddToBoard }: Props) {
             onClick={() => {
               const next = new Set([...readIds, ...inboxItems.map(i => i.id)]);
               setReadIds(next);
-              localStorage.setItem('focusboard-inbox-read', JSON.stringify([...next]));
+              setPersistedValue('inbox-read', [...next]);
             }}
             className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
           >
