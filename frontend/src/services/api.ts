@@ -44,5 +44,5 @@ export async function saveConfig(config: Partial<Config>): Promise<void> {
 }
 
 export function getGoogleAuthUrl(): string {
-  return `${window.location.protocol}//${window.location.hostname}:3001/auth/google`;
+  return '/auth/google';
 }

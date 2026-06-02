@@ -78,6 +78,7 @@ export function SettingsPage() {
         jiraUrl: cfg.jiraUrl || '',
         jiraEmail: cfg.jiraEmail || '',
         jiraToken: '',
+        jiraJql: cfg.jiraJql || '',
         googleClientId: cfg.googleClientId || '',
         googleClientSecret: '',
         slackToken: '',
@@ -226,6 +227,14 @@ export function SettingsPage() {
           placeholder={config.jiraToken ? '••••••••••••' : 'Paste token...'}
           onChange={v => setField('jiraToken', v)}
           hint="Account Settings → Security → API tokens"
+        />
+        <Field
+          label="JQL Filter (optional)"
+          id="jiraJql"
+          value={form.jiraJql || ''}
+          placeholder="assignee=currentUser() AND resolution=Unresolved ORDER BY updated DESC"
+          onChange={v => setField('jiraJql', v)}
+          hint="Paste your Jira filter JQL here to show exactly the tickets you want"
         />
         <div className="flex items-center gap-3 mt-1">
           <TestButton source="jira" url="/api/jira" />

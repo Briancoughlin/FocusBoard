@@ -19,6 +19,7 @@ export interface Config {
   jiraUrl?: string;
   jiraEmail?: string;
   jiraToken?: string;
+  jiraJql?: string;
   googleClientId?: string;
   googleClientSecret?: string;
   googleAccessToken?: string;

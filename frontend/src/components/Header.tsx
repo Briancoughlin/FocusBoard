@@ -1,13 +1,15 @@
 import React from 'react';
-import { RefreshCw, Settings, Zap, ClipboardPaste } from 'lucide-react';
+import { RefreshCw, Settings, Zap, ClipboardPaste, Trophy, Newspaper } from 'lucide-react';
 
 interface Props {
-  view: 'board' | 'settings';
-  onViewChange: (v: 'board' | 'settings') => void;
+  view: 'board' | 'focus' | 'settings';
+  onViewChange: (v: 'board' | 'focus' | 'settings') => void;
   onRefresh: () => void;
   isRefreshing: boolean;
   lastSynced: Date | null;
   onPaste: () => void;
+  onShowDigest: () => void;
+  completedToday: number;
 }
 
 function formatLastSynced(d: Date | null): string {
@@ -21,7 +23,7 @@ function formatLastSynced(d: Date | null): string {
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-export function Header({ view, onViewChange, onRefresh, isRefreshing, lastSynced, onPaste }: Props) {
+export function Header({ view, onViewChange, onRefresh, isRefreshing, lastSynced, onPaste, onShowDigest, completedToday }: Props) {
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between shadow-sm sticky top-0 z-10">
       {/* Left: Brand */}
@@ -39,33 +41,40 @@ export function Header({ view, onViewChange, onRefresh, isRefreshing, lastSynced
 
       {/* Center: Nav tabs */}
       <nav className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-        <button
-          onClick={() => onViewChange('board')}
-          className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
-            view === 'board'
-              ? 'bg-white shadow-sm text-gray-900'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          Board
-        </button>
-        <button
-          onClick={() => onViewChange('settings')}
-          className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
-            view === 'settings'
-              ? 'bg-white shadow-sm text-gray-900'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          Settings
-        </button>
+        {(['board', 'focus', 'settings'] as const).map(v => (
+          <button
+            key={v}
+            onClick={() => onViewChange(v)}
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all capitalize ${
+              view === v
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            {v}
+          </button>
+        ))}
       </nav>
 
       {/* Right: sync info + actions */}
       <div className="flex items-center gap-3">
+        {completedToday > 0 && (
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 rounded-lg" title="Tasks completed today">
+            <Trophy size={14} className="text-emerald-500" />
+            <span className="text-sm font-semibold text-emerald-600">{completedToday}</span>
+            <span className="text-xs text-emerald-500 hidden sm:inline">done today</span>
+          </div>
+        )}
         <span className="text-xs text-gray-400 hidden sm:inline">
           {formatLastSynced(lastSynced)}
         </span>
+        <button
+          onClick={onShowDigest}
+          title="Show daily digest"
+          className="p-2 rounded-lg text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-all"
+        >
+          <Newspaper size={16} />
+        </button>
         <button
           onClick={onPaste}
           title="Paste notes or Zoom summary"

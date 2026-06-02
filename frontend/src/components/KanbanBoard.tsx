@@ -22,7 +22,6 @@ const TABS: { id: FilterTab; label: string; color: string; activeColor: string }
   { id: 'week',     label: 'This Week',  color: 'text-rose-400 border-transparent',  activeColor: 'text-rose-600 border-rose-600' },
   { id: 'jira',     label: 'Jira',       color: 'text-blue-400 border-transparent',  activeColor: 'text-blue-600 border-blue-600' },
   { id: 'gmail',    label: 'Gmail',      color: 'text-red-400 border-transparent',   activeColor: 'text-red-600 border-red-600' },
-  { id: 'calendar', label: 'Calendar',   color: 'text-green-400 border-transparent', activeColor: 'text-green-600 border-green-600' },
   { id: 'slack',    label: 'Slack',      color: 'text-purple-400 border-transparent',activeColor: 'text-purple-600 border-purple-600' },
   { id: 'paste',    label: 'Zoom/Notes', color: 'text-violet-400 border-transparent',activeColor: 'text-violet-600 border-violet-600' },
 ];

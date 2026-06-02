@@ -16,8 +16,12 @@ const CONFIG_PATH = path.join(__dirname, 'config.json');
 const app = express();
 const PORT = 3001;
 
-app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
+app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:3001'], credentials: true }));
 app.use(express.json());
+
+// Serve built frontend static files
+const frontendDist = path.join(__dirname, '..', 'frontend', 'dist');
+app.use(express.static(frontendDist));
 
 // --- Config helpers ---
 function loadConfig() {
@@ -54,6 +58,7 @@ app.get('/api/config', (req, res) => {
     slackToken: cfg.slackToken ? '***' : '',
     anthropicKey: cfg.anthropicKey ? '***' : '',
     // status flags
+    jiraJql: cfg.jiraJql || '',
     jiraConfigured: !!(cfg.jiraUrl && cfg.jiraEmail && cfg.jiraToken),
     googleConfigured: !!(cfg.googleClientId && cfg.googleClientSecret && cfg.googleAccessToken),
     slackConfigured: !!cfg.slackToken,
@@ -68,7 +73,7 @@ app.post('/api/config', (req, res) => {
   // Only update fields that are provided and not the placeholder '***'
   const merged = { ...existing };
   const fields = [
-    'jiraUrl', 'jiraEmail', 'jiraToken',
+    'jiraUrl', 'jiraEmail', 'jiraToken', 'jiraJql',
     'googleClientId', 'googleClientSecret',
     'slackToken', 'anthropicKey',
   ];
@@ -160,6 +165,11 @@ app.get('/api/sync', async (req, res) => {
   );
 
   res.json(results);
+});
+
+// Catch-all for SPA routing — must be after all API routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(frontendDist, 'index.html'));
 });
 
 app.listen(PORT, () => {
