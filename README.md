@@ -226,14 +226,20 @@ focusboard/
 
 ## Data & Security
 
+All data is stored locally on your machine — nothing is sent to any external server beyond the APIs you configure.
+
 | Data | Where stored |
 |------|-------------|
-| API credentials | `backend/config.json` (gitignored, local only) |
-| Column positions | Browser localStorage |
-| Pasted tasks | Browser localStorage |
-| Dismissed cards | Browser localStorage |
-| Done dates | Browser localStorage (resets daily) |
+| API credentials | `backend/config.json` (gitignored) |
+| Column positions (drag overrides) | `backend/data/overrides.json` |
+| Pasted/Quick Add tasks | `backend/data/pasted-tasks.json` |
+| Dismissed cards | `backend/data/dismissed.json` |
+| Done dates | `backend/data/done-dates.json` |
+| Completed today count | `backend/data/completed-today.json` |
+| Inbox read state | `backend/data/inbox-read.json` |
+| Focus view split position | `backend/data/split-percent.json` |
 
-- `config.json` is gitignored — your tokens are never committed to git
-- Tokens are masked in the Settings UI
-- Everything runs locally — no cloud, no external servers beyond the APIs you configure
+Data in `backend/data/` survives browser cache clears and browser switches since it lives on disk, not in the browser. Both `config.json` and `data/` are gitignored so nothing sensitive is ever committed.
+
+- Tokens are masked in the Settings UI (shown as `••••••••`)
+- Everything runs locally — no cloud, no telemetry
