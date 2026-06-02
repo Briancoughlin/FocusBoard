@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # FocusBoard
 
 An ADHD-friendly task aggregator with a Kanban board UI. Pulls tasks from Jira, Gmail, Google Calendar, and Slack into a single drag-and-drop board. Uses Claude AI to extract action items from emails and messages.
@@ -129,3 +130,6 @@ focusboard/
 - If a source isn't configured, the board still works — you'll see a banner with a link to Settings
 - The backend self-creates `config.json` on first run
 - Never commit `config.json` — it contains your API tokens
+=======
+# FocusBoard
+>>>>>>> f68e191e1bc77459187897ca838836dda939e226
