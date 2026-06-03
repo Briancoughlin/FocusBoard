@@ -147,9 +147,16 @@ export function TaskCard({ task, index, onDismiss, onPin, pinned }: Props) {
               </div>
             </div>
 
-            {/* Ticket key */}
+            {/* Ticket key + fix version */}
             {task.ticketKey && (
-              <p className="text-xs font-mono text-blue-400 mb-0.5" title="Jira ticket key — click title to open">{task.ticketKey}</p>
+              <div className="flex items-center gap-2 mb-0.5">
+                <p className="text-xs font-mono text-blue-400" title="Jira ticket key — click title to open">{task.ticketKey}</p>
+                {task.fixVersion && (
+                  <span className="text-xs px-1 py-0 rounded" style={{ backgroundColor: 'var(--accent-light)', color: 'var(--accent)' }} title={`Fix version: ${task.fixVersion}`}>
+                    {task.fixVersion}
+                  </span>
+                )}
+              </div>
             )}
 
             {/* Title — click to open */}

@@ -54,7 +54,7 @@ router.get('/', async (req, res) => {
   try {
     const defaultJql = 'assignee=currentUser() AND resolution=Unresolved ORDER BY updated DESC';
     const jql = encodeURIComponent(cfg.jiraJql || defaultJql);
-    const fields = 'summary,status,priority,duedate,assignee,description,customfield_10006';
+    const fields = 'summary,status,priority,duedate,assignee,description,customfield_10006,fixVersions';
     // Try REST API v2 for self-hosted Jira Data Center (v3 is Atlassian Cloud only)
     // Paginate through all results
     let allIssues = [];
@@ -112,6 +112,7 @@ router.get('/', async (req, res) => {
       ticketKey: issue.key,
       epicKey: issue.fields.customfield_10006 || undefined,
       epicName: issue.fields.customfield_10006 ? (epicNames[issue.fields.customfield_10006] || issue.fields.customfield_10006) : undefined,
+      fixVersion: issue.fields.fixVersions?.[0]?.name || undefined,
       updatedAt: new Date().toISOString(),
     }));
 

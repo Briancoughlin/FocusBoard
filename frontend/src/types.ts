@@ -15,6 +15,7 @@ export interface Task {
   ticketKey?: string;
   epicKey?: string;
   epicName?: string;
+  fixVersion?: string;
   updatedAt: string;
 }
 
