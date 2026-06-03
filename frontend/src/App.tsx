@@ -271,12 +271,16 @@ export default function App() {
     overridesRef.current = updatedOverrides;
     setOverrides(updatedOverrides);
     setPersistedValue('overrides', updatedOverrides);
-    // Add the jira task to injectedTasks
-    setInjectedTasks(prev => {
-      const updated = [...prev, jiraTask];
-      setPersistedValue('injected-tasks', updated);
-      return updated;
-    });
+
+    // Only inject into local state if In Progress — otherwise let next Jira sync pick it up
+    if (jiraTask.status === 'inprogress') {
+      setInjectedTasks(prev => {
+        const updated = [...prev, jiraTask];
+        setPersistedValue('injected-tasks', updated);
+        return updated;
+      });
+    }
+    // If not in progress, dismiss the original card and Jira sync will bring it back correctly
     setJiraCreateTask(null);
   }, []);
 
