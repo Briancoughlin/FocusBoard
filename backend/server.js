@@ -39,8 +39,10 @@ app.use('/api', (req, res, next) => {
 
 // Serve built frontend static files — set auth cookie so visiting the app grants access
 const frontendDist = path.join(__dirname, '..', 'frontend', 'dist');
+const cookieOpts = { httpOnly: true, sameSite: 'lax' };
+
 app.get('/', (req, res) => {
-  res.cookie('fb_session', AUTH_TOKEN, { httpOnly: true, sameSite: 'strict' });
+  res.cookie('fb_session', AUTH_TOKEN, cookieOpts);
   res.sendFile(path.join(frontendDist, 'index.html'));
 });
 app.use(express.static(frontendDist));
@@ -222,7 +224,7 @@ app.get('/api/sync', async (req, res) => {
 
 // Catch-all for SPA routing — must be after all API routes
 app.get('*', (req, res) => {
-  res.cookie('fb_session', AUTH_TOKEN, { httpOnly: true, sameSite: 'strict' });
+  res.cookie('fb_session', AUTH_TOKEN, cookieOpts);
   res.sendFile(path.join(frontendDist, 'index.html'));
 });
 
