@@ -138,6 +138,7 @@ export function InboxSidebar({ tasks, onAddToBoard }: Props) {
   const githubItems = tasks
     .filter(t => t.source === 'github')
     .map(toItem)
+    .filter(i => !i.read)
     .sort((a, b) => {
       const p = (i: InboxItem) => i.title.includes('❌') ? 0 : i.title.includes('👀') ? 1 : 2;
       if (p(a) !== p(b)) return p(a) - p(b);
@@ -147,6 +148,7 @@ export function InboxSidebar({ tasks, onAddToBoard }: Props) {
   const inboxItems = tasks
     .filter(t => t.source === 'gmail' || t.source === 'slack')
     .map(toItem)
+    .filter(i => !i.read)
     .sort((a, b) => {
       if (a.source === 'slack' && b.source !== 'slack') return -1;
       if (b.source === 'slack' && a.source !== 'slack') return 1;
