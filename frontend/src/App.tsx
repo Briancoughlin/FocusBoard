@@ -56,7 +56,7 @@ export default function App() {
     }
 
     loadTheme();
-    const interval = setInterval(loadTheme, 30000);
+    const interval = setInterval(loadTheme, 5000);
     return () => clearInterval(interval);
   }, []);
 
