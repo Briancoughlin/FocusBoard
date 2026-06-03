@@ -122,15 +122,14 @@ export default function App() {
 
       // Prompt to add channel ID for unmapped Slack channels
       // Prompt to add channel ID for Slack channels that use web URL (not slack:// deep link)
-      const slackTasks = newTasks.filter(t =>
+      const unmappedSlack = newTasks.find(t =>
         t.source === 'slack' &&
         t.url &&
-        t.url.includes('unity.slack.com/messages/') &&
+        t.url.includes('/messages/') &&
         !t.url.includes('slack://channel')
       );
-      if (slackTasks.length > 0 && !slackChannelPrompt) {
-        // Extract channel name from URL e.g. https://unity.slack.com/messages/ask-discussions
-        const urlMatch = slackTasks[0].url?.match(/\/messages\/([\w-]+)/);
+      if (unmappedSlack && !slackChannelPrompt) {
+        const urlMatch = unmappedSlack.url?.match(/\/messages\/([\w-]+)/);
         if (urlMatch && !urlMatch[1].startsWith('@')) {
           setSlackChannelPrompt(urlMatch[1]);
         }
