@@ -218,14 +218,6 @@ export default function App() {
     setPersistedValue('due-date-overrides', updated);
   }, []);
 
-  const handlePastedTasks = useCallback((newTasks: Task[]) => {
-    setPastedTasks(prev => {
-      const updated = [...prev, ...newTasks];
-      setPersistedValue('pasted-tasks', updated);
-      return updated;
-    });
-  }, []);
-
   const handleSlackChannelSave = useCallback(async (channelName: string, channelId: string) => {
     try {
       const res = await fetch('/api/config', { credentials: 'include' });
