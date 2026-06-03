@@ -3,13 +3,18 @@ import { google } from 'googleapis';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { decryptConfig } from '../crypto-utils.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CONFIG_PATH = path.join(__dirname, '..', 'config.json');
 
 function loadConfig() {
   if (!fs.existsSync(CONFIG_PATH)) return {};
-  try { return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8')); } catch { return {}; }
+  try {
+    const raw = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
+    if (raw.encrypted === true) return decryptConfig(raw);
+    return raw;
+  } catch { return {}; }
 }
 
 function getOAuth2Client(cfg) {

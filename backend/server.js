@@ -53,7 +53,8 @@ function loadConfig() {
     if (raw.encrypted === true) {
       try {
         return decryptConfig(raw);
-      } catch {
+      } catch (decryptErr) {
+        console.error('Config decrypt error:', decryptErr.message);
         return {};
       }
     }
