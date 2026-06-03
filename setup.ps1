@@ -75,11 +75,12 @@ $trigger = New-ScheduledTaskTrigger -AtLogOn
 $settings = New-ScheduledTaskSettingsSet `
     -ExecutionTimeLimit 0 `
     -RestartCount 3 `
-    -RestartInterval (New-TimeSpan -Minutes 1)
+    -RestartInterval (New-TimeSpan -Minutes 1) `
+    -Hidden
 
 $principal = New-ScheduledTaskPrincipal `
     -UserId $env:USERNAME `
-    -LogonType Interactive `
+    -LogonType ServiceAccount `
     -RunLevel Highest
 
 Register-ScheduledTask `
