@@ -111,6 +111,7 @@ function SectionHeader({ icon, title, count, onMarkAll, collapsed, onToggle }: {
 export function InboxSidebar({ tasks, onAddToBoard }: Props) {
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const [githubCollapsed, setGithubCollapsed] = useState(false);
+  const [slackCollapsed, setSlackCollapsed] = useState(false);
   const [inboxCollapsed, setInboxCollapsed] = useState(false);
 
   useEffect(() => {
@@ -153,19 +154,22 @@ export function InboxSidebar({ tasks, onAddToBoard }: Props) {
       return new Date(b.receivedAt).getTime() - new Date(a.receivedAt).getTime();
     });
 
-  const inboxItems = tasks
-    .filter(t => t.source === 'gmail' || t.source === 'slack')
+  const slackItems = tasks
+    .filter(t => t.source === 'slack')
     .map(toItem)
     .filter(i => !i.read)
-    .sort((a, b) => {
-      if (a.source === 'slack' && b.source !== 'slack') return -1;
-      if (b.source === 'slack' && a.source !== 'slack') return 1;
-      return new Date(b.receivedAt).getTime() - new Date(a.receivedAt).getTime();
-    });
+    .sort((a, b) => new Date(b.receivedAt).getTime() - new Date(a.receivedAt).getTime());
 
-  const githubUnread = githubItems.filter(i => !i.read).length;
-  const inboxUnread = inboxItems.filter(i => !i.read).length;
-  const totalUnread = githubUnread + inboxUnread;
+  const inboxItems = tasks
+    .filter(t => t.source === 'gmail')
+    .map(toItem)
+    .filter(i => !i.read)
+    .sort((a, b) => new Date(b.receivedAt).getTime() - new Date(a.receivedAt).getTime());
+
+  const githubUnread = githubItems.length;
+  const slackUnread = slackItems.length;
+  const inboxUnread = inboxItems.length;
+  const totalUnread = githubUnread + slackUnread + inboxUnread;
 
   return (
     <div className="flex flex-col h-full w-64 flex-shrink-0" style={{ backgroundColor: 'var(--bg-sidebar)', borderLeft: '1px solid var(--border)' }}>
@@ -200,10 +204,29 @@ export function InboxSidebar({ tasks, onAddToBoard }: Props) {
           ))
         ))}
 
+        {/* Slack section */}
+        <SectionHeader
+          icon={<Hash size={12} className="text-purple-500" />}
+          title="Slack"
+          count={slackUnread}
+          onMarkAll={() => markAllRead(slackItems.map(i => i.id))}
+          collapsed={slackCollapsed}
+          onToggle={() => setSlackCollapsed(c => !c)}
+        />
+        {!slackCollapsed && (slackItems.length === 0 ? (
+          <div className="px-3 py-4 text-center" style={{ backgroundColor: 'var(--bg-card)' }}>
+            <p className="text-xs" style={{ color: 'var(--border)' }}>No Slack notifications</p>
+          </div>
+        ) : (
+          slackItems.map(item => (
+            <ItemRow key={item.id} item={item} onRead={markRead} onAddToBoard={onAddToBoard} />
+          ))
+        ))}
+
         {/* Inbox section */}
         <SectionHeader
           icon={<Inbox size={12} className="text-gray-500" />}
-          title="Inbox"
+          title="Gmail"
           count={inboxUnread}
           onMarkAll={() => markAllRead(inboxItems.map(i => i.id))}
           collapsed={inboxCollapsed}
