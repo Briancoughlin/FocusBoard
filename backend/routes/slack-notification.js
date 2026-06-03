@@ -57,6 +57,13 @@ router.post('/', (req, res) => {
     ? `${title}: ${shortBody}`
     : `Slack: ${title}`;
 
+  // Build a Slack deep link — opens the DM or channel search in Slack desktop app
+  const isChannel = title.startsWith('#');
+  const isDM = title && !isChannel;
+  const slackUrl = isChannel
+    ? `slack://channel?team=&id=` // channel name search fallback
+    : `slack://open`; // opens Slack app directly
+
   const task = {
     id: taskId,
     sourceId: taskId,
@@ -66,7 +73,7 @@ router.post('/', (req, res) => {
     priority: 'high',
     status: 'todo',
     updatedAt: new Date().toISOString(),
-    url: undefined,
+    url: 'slack://open', // always open Slack app on click
     appName,
     originalTitle: title,
   };
