@@ -115,10 +115,11 @@ export function TaskCard({ task, index, onDismiss, onPin, pinned }: Props) {
               {onPin && (
                 <button
                   onClick={e => { e.stopPropagation(); onPin(task.id); }}
-                  className={`transition-colors p-0.5 rounded ${pinned ? 'text-amber-400' : 'text-gray-300 hover:text-amber-400'}`}
+                  className="transition-colors p-0.5 rounded"
+                  style={{ color: pinned ? '#f59e0b' : 'var(--border)' }}
                   title={pinned ? 'Unpin from Focus' : 'Pin to Focus view'}
                 >
-                  <Pin size={12} />
+                  <Pin size={13} fill={pinned ? '#f59e0b' : 'none'} />
                 </button>
               )}
               <button
