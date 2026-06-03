@@ -11,6 +11,7 @@ import { DailyDigest } from './components/DailyDigest';
 import { FocusView } from './components/FocusView';
 import { JiraDonePrompt } from './components/JiraDonePrompt';
 import { JiraCreatePrompt } from './components/JiraCreatePrompt';
+import { SlackChannelPrompt } from './components/SlackChannelPrompt';
 
 // Apply user overrides on top of fetched tasks
 function applyOverrides(tasks: Task[], overrides: Record<string, Status>): Task[] {
@@ -39,6 +40,7 @@ export default function App() {
   const [pasteOpen, setPasteOpen] = useState(false);
   const [jiraDoneTask, setJiraDoneTask] = useState<Task | null>(null);
   const [jiraCreateTask, setJiraCreateTask] = useState<Task | null>(null);
+  const [slackChannelPrompt, setSlackChannelPrompt] = useState<string | null>(null);
   const [injectedTasks, setInjectedTasks] = useState<Task[]>([]);
   const [pinnedIds, setPinnedIds] = useState<Set<string>>(new Set());
   const [showDigest, setShowDigest] = useState(false);
@@ -112,9 +114,18 @@ export default function App() {
     setIsLoading(true);
     try {
       const result = await syncAll();
-      setRawTasks(result.tasks || []);
+      const newTasks = result.tasks || [];
+      setRawTasks(newTasks);
       setErrors(result.errors || []);
       setLastSynced(new Date());
+
+      // Prompt to add channel ID for unmapped Slack channels
+      const slackTasks = newTasks.filter(t => t.source === 'slack' && t.url === 'slack://open');
+      if (slackTasks.length > 0 && !slackChannelPrompt) {
+        const title = slackTasks[0].originalTitle || slackTasks[0].title;
+        const channelMatch = title?.match(/#([\w-]+)/);
+        if (channelMatch) setSlackChannelPrompt(channelMatch[1]);
+      }
     } catch (err: any) {
       setErrors([{ source: 'sync', error: err.message }]);
     } finally {
@@ -177,6 +188,21 @@ export default function App() {
     dueDateOverridesRef.current = updated;
     setDueDateOverrides(updated);
     setPersistedValue('due-date-overrides', updated);
+  }, []);
+
+  const handleSlackChannelSave = useCallback(async (channelName: string, channelId: string) => {
+    try {
+      const res = await fetch('/api/config', { credentials: 'include' });
+      const cfg = await res.json();
+      const existing = cfg.slackChannelMap || {};
+      await fetch('/api/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ slackChannelMap: { ...existing, [channelName]: channelId } }),
+      });
+    } catch {}
+    setSlackChannelPrompt(null);
   }, []);
 
   const handlePin = useCallback((taskId: string) => {
@@ -302,6 +328,13 @@ export default function App() {
             setPersistedValue('digest-date', new Date().toDateString());
             setShowDigest(false);
           }}
+        />
+      )}
+      {slackChannelPrompt && (
+        <SlackChannelPrompt
+          channelName={slackChannelPrompt}
+          onSave={handleSlackChannelSave}
+          onDismiss={() => setSlackChannelPrompt(null)}
         />
       )}
       {jiraDoneTask && (
