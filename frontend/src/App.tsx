@@ -163,7 +163,7 @@ export default function App() {
     .filter(t => !dismissed.has(t.id))
     .filter(t => t.status !== 'done' || doneDates[t.id] === today);
 
-  const kanbanTasks = tasks.filter(t => t.source !== 'calendar');
+  const kanbanTasks = tasks.filter(t => t.source !== 'calendar' && t.source !== 'slack');
 
   if (!persistenceLoaded) {
     return (
