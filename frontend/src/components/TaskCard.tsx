@@ -90,12 +90,15 @@ export function TaskCard({ task, index, onDismiss, onPin, pinned }: Props) {
           style={{ ...provided.draggableProps.style, backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}
         >
           {/* Urgency colour strip */}
-          <div className={`h-1 w-full ${bar}`} />
+          <div
+            className={`h-1 w-full ${bar}`}
+            title={urgency === 'overdue' ? 'Overdue' : urgency === 'today' ? 'Due today' : urgency === 'soon' ? 'Due soon' : undefined}
+          />
 
           <div className="p-3">
             {/* Top row: source badge + urgency badge + dismiss */}
             <div className="flex items-center justify-between mb-2">
-              <SourceBadge source={task.source} />
+              <span title={`Source: ${task.source}`}><SourceBadge source={task.source} /></span>
               <div className="flex items-center gap-1">
               {badge && (
                 <span
@@ -109,11 +112,14 @@ export function TaskCard({ task, index, onDismiss, onPin, pinned }: Props) {
                 </span>
               )}
               {task.priority && task.source === 'jira' && (
-                <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${
-                  task.priority === 'high'   ? 'bg-red-100 text-red-600' :
-                  task.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                                               'bg-gray-100 text-gray-500'
-                }`}>
+                <span
+                  className={`text-xs font-bold px-1.5 py-0.5 rounded ${
+                    task.priority === 'high'   ? 'bg-red-100 text-red-600' :
+                    task.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                                                 'bg-gray-100 text-gray-500'
+                  }`}
+                  title={`Priority: ${task.priority === 'high' ? 'High' : task.priority === 'medium' ? 'Medium' : 'Low'}`}
+                >
                   {task.priority === 'high' ? 'High' : task.priority === 'medium' ? 'Med' : 'Low'}
                 </span>
               )}
@@ -143,7 +149,7 @@ export function TaskCard({ task, index, onDismiss, onPin, pinned }: Props) {
 
             {/* Ticket key */}
             {task.ticketKey && (
-              <p className="text-xs font-mono text-blue-400 mb-0.5">{task.ticketKey}</p>
+              <p className="text-xs font-mono text-blue-400 mb-0.5" title="Jira ticket key — click title to open">{task.ticketKey}</p>
             )}
 
             {/* Title — click to open */}

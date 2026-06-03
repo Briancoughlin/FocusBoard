@@ -159,6 +159,7 @@ export function FocusView({ tasks, kanbanTasks, isLoading, onTaskMove, onDismiss
           <div
             className="flex items-center justify-between px-3 py-1.5 mb-2 rounded-lg text-sm font-medium flex-shrink-0"
             style={{ backgroundColor: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.4)', color: '#b45309' }}
+            title="Showing tasks filtered by this day"
           >
             <span>Showing tasks for {formatDayLabel(selectedDay)}</span>
             <button
@@ -174,13 +175,13 @@ export function FocusView({ tasks, kanbanTasks, isLoading, onTaskMove, onDismiss
         {/* Epic filter */}
         {epics.length > 0 && (
           <div className="flex items-center gap-2 px-1 pb-2 flex-shrink-0">
-            <span className="text-xs text-gray-400 font-medium">Epic:</span>
+            <span className="text-xs text-gray-400 font-medium" title="Filter the kanban to show only tasks from a specific epic">Epic:</span>
             <select
               value={selectedEpic}
               onChange={e => setSelectedEpic(e.target.value)}
               className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 max-w-xs"
               aria-label="Filter by epic"
-              title="Filter by epic"
+              title="Filter the kanban to show only tasks from a specific epic"
             >
               <option value="all">All epics</option>
               {epics.map(e => (
@@ -192,7 +193,7 @@ export function FocusView({ tasks, kanbanTasks, isLoading, onTaskMove, onDismiss
                 onClick={() => setSelectedEpic('all')}
                 className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
                 aria-label="Clear epic filter"
-                title="Clear epic filter"
+                title="Show all epics"
               >
                 ✕ Clear
               </button>

@@ -115,6 +115,7 @@ export function WeekView({ tasks, allTasks, selectedDay, onDaySelect }: Props) {
                   {...provided.droppableProps}
                   onClick={() => onDaySelect(isSelected ? null : day)}
                   aria-label={`${fullDayLabel} — ${dueTodayCount} task${dueTodayCount !== 1 ? 's' : ''}`}
+                  title="Click to filter tasks for this day. Drag a task here to schedule it for this date."
                   className={`flex flex-col flex-1 min-w-0 rounded-xl overflow-hidden cursor-pointer transition-all ${isPast ? 'opacity-60' : ''}`}
                   style={{
                     border: `2px solid ${snapshot.isDraggingOver ? '#f59e0b' : borderColor}`,
@@ -201,6 +202,7 @@ export function WeekView({ tasks, allTasks, selectedDay, onDaySelect }: Props) {
                             onClick={e => { e.stopPropagation(); item.url && window.open(item.url, '_blank'); }}
                             role="button"
                             aria-label={item.title.replace('[All Day] ', '')}
+                            title={item.title}
                             tabIndex={0}
                             onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); item.url && window.open(item.url, '_blank'); } }}
                             className="p-1.5 rounded-lg text-xs cursor-pointer transition-all"

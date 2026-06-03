@@ -36,6 +36,7 @@ function ItemRow({ item, onRead, onAddToBoard }: {
       onClick={() => { onRead(item.id); if (item.url) window.open(item.url, '_blank'); }}
       role="article"
       aria-label={item.title}
+      title={item.title}
       className={`px-3 py-2.5 border-b cursor-pointer transition-colors relative ${item.read ? 'opacity-40' : ''} ${
         item.source === 'slack' && !item.read ? 'bg-purple-50 border-purple-100 hover:bg-purple-100' :
         item.source === 'github' && !item.read && item.title.includes('❌') ? 'bg-red-50 border-red-100 hover:bg-red-100' :
@@ -96,6 +97,12 @@ function ItemRow({ item, onRead, onAddToBoard }: {
   );
 }
 
+const SECTION_TOOLTIPS: Record<string, string> = {
+  GitHub: 'GitHub CI results, PRs and review requests',
+  Slack:  'Slack mentions and DMs captured from Windows notifications',
+  Gmail:  'Gmail action items extracted by AI',
+};
+
 function SectionHeader({ icon, title, count, onMarkAll, collapsed, onToggle }: {
   icon: React.ReactNode;
   title: string;
@@ -112,6 +119,7 @@ function SectionHeader({ icon, title, count, onMarkAll, collapsed, onToggle }: {
       role="button"
       aria-expanded={!collapsed}
       aria-label={`${title} notifications, ${count} unread. Click to ${collapsed ? 'expand' : 'collapse'}`}
+      title={SECTION_TOOLTIPS[title]}
       tabIndex={0}
       onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle(); } }}
     >

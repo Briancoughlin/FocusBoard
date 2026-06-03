@@ -19,12 +19,12 @@ const UNCONFIGURED_ERRORS = ['not configured'];
 
 type FilterTab = 'all' | 'week' | Source; // Source already includes 'paste'
 
-const TABS: { id: FilterTab; label: string; color: string; activeColor: string }[] = [
-  { id: 'all',      label: 'All',        color: 'text-gray-500 border-transparent',  activeColor: 'text-gray-900 border-gray-900' },
-  { id: 'jira',     label: 'Jira',       color: 'text-blue-400 border-transparent',  activeColor: 'text-blue-600 border-blue-600' },
-  { id: 'gmail',    label: 'Gmail',      color: 'text-red-400 border-transparent',   activeColor: 'text-red-600 border-red-600' },
-  { id: 'paste',    label: 'Zoom/Notes', color: 'text-violet-400 border-transparent', activeColor: 'text-violet-600 border-violet-600' },
-  { id: 'github',   label: 'GitHub',     color: 'text-gray-400 border-transparent',   activeColor: 'text-gray-700 border-gray-700' },
+const TABS: { id: FilterTab; label: string; color: string; activeColor: string; tooltip: string }[] = [
+  { id: 'all',      label: 'All',        color: 'text-gray-500 border-transparent',  activeColor: 'text-gray-900 border-gray-900', tooltip: 'Show all tasks' },
+  { id: 'jira',     label: 'Jira',       color: 'text-blue-400 border-transparent',  activeColor: 'text-blue-600 border-blue-600', tooltip: 'Show Jira tickets only' },
+  { id: 'gmail',    label: 'Gmail',      color: 'text-red-400 border-transparent',   activeColor: 'text-red-600 border-red-600', tooltip: 'Show Gmail action items only' },
+  { id: 'paste',    label: 'Zoom/Notes', color: 'text-violet-400 border-transparent', activeColor: 'text-violet-600 border-violet-600', tooltip: 'Show Quick Add and Zoom notes only' },
+  { id: 'github',   label: 'GitHub',     color: 'text-gray-400 border-transparent',   activeColor: 'text-gray-700 border-gray-700', tooltip: 'Show GitHub PRs and notifications only' },
 ];
 
 
@@ -86,6 +86,7 @@ export function KanbanBoard({ tasks, isLoading, onTaskMove, onOpenSettings, onDi
               role="tab"
               aria-selected={isActive}
               aria-label={tab.id === 'all' ? `Show all tasks (${count})` : `Show ${count} tasks from ${tab.label}`}
+              title={tab.tooltip}
               className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${isActive ? 'border-[var(--accent)] text-[var(--text-primary)]' : tab.color + ' hover:text-gray-700'}`}
               style={isActive ? { borderBottomColor: 'var(--accent)', color: 'var(--text-primary)' } : {}}
             >
