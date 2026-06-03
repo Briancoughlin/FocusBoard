@@ -105,6 +105,7 @@ app.get('/api/config', (req, res) => {
     googleAccessToken: cfg.googleAccessToken ? '***' : '',
     googleRefreshToken: cfg.googleRefreshToken ? '***' : '',
     slackToken: cfg.slackToken ? '***' : '',
+    slackWorkspaceUrl: cfg.slackWorkspaceUrl || '',
     anthropicKey: cfg.anthropicKey ? '***' : '',
     anthropicBaseUrl: cfg.anthropicBaseUrl || '',
     // status flags
