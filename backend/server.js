@@ -242,6 +242,10 @@ app.get('/api/sync', async (req, res) => {
     })
   );
 
+  // Include Windows notification tasks (Slack toasts captured locally)
+  const notifTasks = getPendingAndClear();
+  if (notifTasks.length > 0) results.tasks.push(...notifTasks);
+
   // Include any pending notification tasks captured by the watcher
   const notifTasks = getPendingAndClear();
   if (notifTasks.length > 0) {
