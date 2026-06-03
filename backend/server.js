@@ -246,12 +246,6 @@ app.get('/api/sync', async (req, res) => {
   const notifTasks = getPendingAndClear();
   if (notifTasks.length > 0) results.tasks.push(...notifTasks);
 
-  // Include any pending notification tasks captured by the watcher
-  const notifTasks = getPendingAndClear();
-  if (notifTasks.length > 0) {
-    results.tasks.push(...notifTasks);
-  }
-
   res.json(results);
 });
 
