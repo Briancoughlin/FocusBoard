@@ -43,9 +43,15 @@ router.post('/', async (req, res) => {
       updatedAt: new Date().toISOString(),
     }));
 
+    // Always create at least one task from the raw text
     return res.json({ tasks: tasks.length ? tasks : [{
-      id: `paste-${Date.now()}`, sourceId: `paste-${Date.now()}`,
-      title: text.slice(0, 120), source: 'paste', status: 'todo', priority: 'medium', updatedAt: new Date().toISOString()
+      id: `paste-${Date.now()}`,
+      sourceId: `paste-${Date.now()}`,
+      title: text.trim().slice(0, 120),
+      source: 'paste',
+      status: 'todo',
+      priority: 'medium',
+      updatedAt: new Date().toISOString()
     }]});
   }
 
@@ -59,12 +65,15 @@ router.post('/', async (req, res) => {
       max_tokens: 1024,
       messages: [{
         role: 'user',
-        content: `Extract all action items and tasks from the following text. Return ONLY a JSON array of objects with these fields:
-- title: short action item title (max 100 chars, start with a verb)
+        content: `Extract action items and tasks from the following text. If the text IS itself a task or reminder (even a single line), create one task from it directly.
+
+Return ONLY a JSON array of objects with these fields:
+- title: short action item title (max 100 chars, start with a verb if possible)
 - description: brief context (max 200 chars, optional)
 - priority: "high", "medium", or "low"
 - dueDate: ISO date string if mentioned, otherwise omit
 
+Always return at least one task. If the text is a single sentence or note, treat it as one task.
 Return only the JSON array, no other text.
 
 Text to process:
