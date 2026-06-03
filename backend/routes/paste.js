@@ -89,6 +89,24 @@ ${text}`,
       updatedAt: new Date().toISOString(),
     }));
 
+    // If AI returned nothing, fall back to bullet-point splitting
+    if (tasks.length === 0) {
+      const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+      const fallback = lines
+        .map(line => line.replace(/^(\[.\]|[-*•]|\d+\.)\s*/, '').trim())
+        .filter(line => line.length > 3)
+        .map((item, i) => ({
+          id: `paste-${Date.now()}-${i}`,
+          sourceId: `paste-${Date.now()}-${i}`,
+          title: item.slice(0, 120),
+          source: 'paste',
+          status: 'todo',
+          priority: 'medium',
+          updatedAt: new Date().toISOString(),
+        }));
+      return res.json({ tasks: fallback.length ? fallback : [{ id: `paste-${Date.now()}`, sourceId: `paste-${Date.now()}`, title: text.slice(0, 120), source: 'paste', status: 'todo', priority: 'medium', updatedAt: new Date().toISOString() }] });
+    }
+
     res.json({ tasks });
   } catch (err) {
     console.error('Paste extract error:', err.message);
