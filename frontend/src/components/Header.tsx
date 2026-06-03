@@ -40,11 +40,12 @@ export function Header({ view, onViewChange, onRefresh, isRefreshing, lastSynced
       </div>
 
       {/* Center: Nav tabs */}
-      <nav className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+      <nav className="flex items-center gap-1 bg-gray-100 rounded-lg p-1" aria-label="Main navigation">
         {(['board', 'focus', 'settings'] as const).map(v => (
           <button
             key={v}
             onClick={() => onViewChange(v)}
+            aria-current={view === v ? 'page' : undefined}
             className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all capitalize ${
               view === v
                 ? 'text-white shadow-sm'
@@ -60,8 +61,14 @@ export function Header({ view, onViewChange, onRefresh, isRefreshing, lastSynced
       {/* Right: sync info + actions */}
       <div className="flex items-center gap-3">
         {completedToday > 0 && (
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 rounded-lg" title="Tasks completed today">
-            <Trophy size={14} className="text-emerald-500" />
+          <div
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 rounded-lg"
+            title={`${completedToday} tasks completed today`}
+            aria-label={`${completedToday} tasks completed today`}
+            role="status"
+            aria-live="polite"
+          >
+            <Trophy size={14} className="text-emerald-500" aria-hidden="true" />
             <span className="text-sm font-semibold text-emerald-600">{completedToday}</span>
             <span className="text-xs text-emerald-500 hidden sm:inline">done today</span>
           </div>
@@ -72,38 +79,43 @@ export function Header({ view, onViewChange, onRefresh, isRefreshing, lastSynced
         <button
           onClick={onShowDigest}
           title="Show daily digest"
+          aria-label="Show daily digest"
           className="p-2 rounded-lg text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-all"
         >
-          <Newspaper size={16} />
+          <Newspaper size={16} aria-hidden="true" />
         </button>
         <button
           onClick={onPaste}
-          title="Paste notes or Zoom summary"
+          title="Quick Add — paste Zoom or meeting notes to create tasks"
+          aria-label="Quick Add — paste Zoom or meeting notes to create tasks"
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-violet-50 text-violet-600 hover:bg-violet-100 transition-all"
         >
-          <ClipboardPaste size={15} />
-          <span className="hidden sm:inline">Quick Add</span>
+          <ClipboardPaste size={15} aria-hidden="true" />
+          <span className="hidden sm:inline" aria-hidden="true">Quick Add</span>
         </button>
         <button
           onClick={onRefresh}
           disabled={isRefreshing}
-          title="Refresh all sources"
+          title="Sync all sources"
+          aria-label="Sync all sources"
+          aria-busy={isRefreshing}
           className={`p-2 rounded-lg text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-all ${
             isRefreshing ? 'opacity-50 cursor-not-allowed' : ''
           }`}
         >
-          <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
+          <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} aria-hidden="true" />
         </button>
         <button
           onClick={() => onViewChange('settings')}
-          title="Settings"
+          title="Open settings"
+          aria-label="Open settings"
           className={`p-2 rounded-lg transition-all ${
             view === 'settings'
               ? 'text-blue-600 bg-blue-50'
               : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
           }`}
         >
-          <Settings size={16} />
+          <Settings size={16} aria-hidden="true" />
         </button>
       </div>
     </header>

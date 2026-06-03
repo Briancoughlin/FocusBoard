@@ -74,9 +74,13 @@ export function KanbanColumn({ column, tasks, isLoading, onDismiss, onPin, pinne
   return (
     <div className="flex flex-col flex-1 min-w-0">
       {/* Column header */}
-      <div className={`flex items-center justify-between px-3 py-2 mb-2 rounded-t-lg border-t-4 ${column.borderColor} shadow-sm`} style={{ backgroundColor: 'var(--bg-card)', borderBottomColor: 'var(--border)' }}>
+      <div
+        className={`flex items-center justify-between px-3 py-2 mb-2 rounded-t-lg border-t-4 ${column.borderColor} shadow-sm`}
+        style={{ backgroundColor: 'var(--bg-card)', borderBottomColor: 'var(--border)' }}
+        aria-label={`${column.label} column — ${isLoading ? 'loading' : tasks.length} tasks`}
+      >
         <h2 className={`font-semibold text-sm ${column.headerColor}`}>{column.label}</h2>
-        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${column.countColor}`}>
+        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${column.countColor}`} aria-hidden="true">
           {isLoading ? '…' : tasks.length}
         </span>
       </div>
@@ -87,6 +91,7 @@ export function KanbanColumn({ column, tasks, isLoading, onDismiss, onPin, pinne
           <div
             ref={provided.innerRef}
             {...provided.droppableProps}
+            aria-label={`Drop tasks here to mark as ${column.label}`}
             className={`
               flex-1 rounded-b-lg p-2 min-h-[120px] transition-colors duration-150 scrollbar-thin overflow-y-auto
               ${snapshot.isDraggingOver ? `${column.bgColor} ring-2 ring-inset ring-blue-300` : ''}

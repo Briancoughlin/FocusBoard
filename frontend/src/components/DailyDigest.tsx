@@ -38,18 +38,18 @@ export function DailyDigest({ tasks, onDismiss }: Props) {
   const dayName = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
   return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="digest-title">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-500 to-purple-600 px-6 py-5 text-white">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-blue-100 text-sm font-medium">{dayName}</p>
-              <h2 className="text-2xl font-bold mt-0.5">{greet()} Brian</h2>
+              <h2 id="digest-title" className="text-2xl font-bold mt-0.5">{greet()} Brian</h2>
               <p className="text-blue-100 text-sm mt-1">Here's what needs your attention today</p>
             </div>
-            <button onClick={onDismiss} className="text-white/70 hover:text-white transition-colors mt-1">
-              <X size={20} />
+            <button onClick={onDismiss} className="text-white/70 hover:text-white transition-colors mt-1" aria-label="Close daily digest">
+              <X size={20} aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -130,6 +130,7 @@ export function DailyDigest({ tasks, onDismiss }: Props) {
           <button
             onClick={onDismiss}
             className="w-full py-2.5 bg-gray-900 hover:bg-gray-700 text-white font-medium rounded-xl transition-colors text-sm"
+            aria-label="Dismiss daily digest"
           >
             Let's go
           </button>

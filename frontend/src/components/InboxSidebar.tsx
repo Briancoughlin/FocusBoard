@@ -34,6 +34,8 @@ function ItemRow({ item, onRead, onAddToBoard }: {
   return (
     <div
       onClick={() => { onRead(item.id); if (item.url) window.open(item.url, '_blank'); }}
+      role="article"
+      aria-label={item.title}
       className={`px-3 py-2.5 border-b cursor-pointer transition-colors relative ${item.read ? 'opacity-40' : ''} ${
         item.source === 'slack' && !item.read ? 'bg-purple-50 border-purple-100 hover:bg-purple-100' :
         item.source === 'github' && !item.read && item.title.includes('❌') ? 'bg-red-50 border-red-100 hover:bg-red-100' :
@@ -55,9 +57,10 @@ function ItemRow({ item, onRead, onAddToBoard }: {
             onClick={e => { e.stopPropagation(); onRead(item.id); }}
             className="transition-colors hover:text-red-400"
             style={{ color: 'var(--text-secondary)' }}
-            title="Dismiss"
+            title="Dismiss notification"
+            aria-label="Dismiss notification"
           >
-            <X size={11} />
+            <X size={11} aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -69,8 +72,10 @@ function ItemRow({ item, onRead, onAddToBoard }: {
         <button
           onClick={e => { e.stopPropagation(); onAddToBoard(item); onRead(item.id); }}
           className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700 font-medium transition-colors"
+          aria-label="Add to kanban board as a task"
+          title="Add to kanban board as a task"
         >
-          <Plus size={10} /> Add to board
+          <Plus size={10} aria-hidden="true" /> Add to board
         </button>
         {item.url && (
           <a
@@ -80,8 +85,10 @@ function ItemRow({ item, onRead, onAddToBoard }: {
             onClick={e => { e.stopPropagation(); onRead(item.id); }}
             className="flex items-center gap-1 text-xs transition-colors"
             style={{ color: 'var(--text-secondary)' }}
+            aria-label="Open in source application"
+            title="Open in source application"
           >
-            <ExternalLink size={10} /> Open
+            <ExternalLink size={10} aria-hidden="true" /> Open
           </a>
         )}
       </div>
@@ -98,20 +105,31 @@ function SectionHeader({ icon, title, count, onMarkAll, collapsed, onToggle }: {
   onToggle: () => void;
 }) {
   return (
-    <div className="px-3 py-2 flex items-center justify-between sticky top-0 z-10 cursor-pointer select-none"
+    <div
+      className="px-3 py-2 flex items-center justify-between sticky top-0 z-10 cursor-pointer select-none"
       style={{ backgroundColor: 'var(--bg-sidebar)', borderBottom: '1px solid var(--border)' }}
       onClick={onToggle}
+      role="button"
+      aria-expanded={!collapsed}
+      aria-label={`${title} notifications, ${count} unread. Click to ${collapsed ? 'expand' : 'collapse'}`}
+      tabIndex={0}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle(); } }}
     >
       <div className="flex items-center gap-1.5">
-        <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{collapsed ? '▶' : '▼'}</span>
-        {icon}
+        <span className="text-xs" style={{ color: 'var(--text-secondary)' }} aria-hidden="true">{collapsed ? '▶' : '▼'}</span>
+        <span aria-hidden="true">{icon}</span>
         <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>{title}</span>
         {count > 0 && (
-          <span className="text-xs font-bold px-1.5 py-0.5 bg-blue-500 text-white rounded-full">{count}</span>
+          <span className="text-xs font-bold px-1.5 py-0.5 bg-blue-500 text-white rounded-full" aria-hidden="true">{count}</span>
         )}
       </div>
       {count > 0 && onMarkAll && !collapsed && (
-        <button onClick={e => { e.stopPropagation(); onMarkAll(); }} className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
+        <button
+          onClick={e => { e.stopPropagation(); onMarkAll(); }}
+          className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+          aria-label={`Mark all ${title} notifications as read`}
+          title={`Mark all ${title} notifications as read`}
+        >
           All read
         </button>
       )}

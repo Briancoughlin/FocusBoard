@@ -68,6 +68,8 @@ export function WeekView({ tasks, allTasks, selectedDay, onDaySelect }: Props) {
               onClick={() => onDaySelect(null)}
               className="text-xs px-2 py-0.5 rounded-full font-medium transition-colors"
               style={{ backgroundColor: 'var(--accent)', color: '#fff' }}
+              aria-label="Reset to current week view"
+              title="Reset to current week view"
             >
               Today
             </button>
@@ -99,6 +101,7 @@ export function WeekView({ tasks, allTasks, selectedDay, onDaySelect }: Props) {
           });
 
           const droppableId = `day-${toDateString(day)}`;
+          const fullDayLabel = day.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' });
 
           let borderColor = 'var(--border)';
           if (isSelected) borderColor = '#f59e0b'; // amber accent for selected
@@ -111,6 +114,7 @@ export function WeekView({ tasks, allTasks, selectedDay, onDaySelect }: Props) {
                   ref={provided.innerRef}
                   {...provided.droppableProps}
                   onClick={() => onDaySelect(isSelected ? null : day)}
+                  aria-label={`${fullDayLabel} — ${dueTodayCount} task${dueTodayCount !== 1 ? 's' : ''}`}
                   className={`flex flex-col flex-1 min-w-0 rounded-xl overflow-hidden cursor-pointer transition-all ${isPast ? 'opacity-60' : ''}`}
                   style={{
                     border: `2px solid ${snapshot.isDraggingOver ? '#f59e0b' : borderColor}`,
@@ -149,6 +153,8 @@ export function WeekView({ tasks, allTasks, selectedDay, onDaySelect }: Props) {
                           color: '#fff',
                           fontSize: '9px',
                         }}
+                        aria-label={`${dueTodayCount} task${dueTodayCount !== 1 ? 's' : ''} due`}
+                        title={`${dueTodayCount} task${dueTodayCount !== 1 ? 's' : ''} due`}
                       >
                         {dueTodayCount}
                       </span>
@@ -193,6 +199,10 @@ export function WeekView({ tasks, allTasks, selectedDay, onDaySelect }: Props) {
                           <div
                             key={item.id}
                             onClick={e => { e.stopPropagation(); item.url && window.open(item.url, '_blank'); }}
+                            role="button"
+                            aria-label={item.title.replace('[All Day] ', '')}
+                            tabIndex={0}
+                            onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); item.url && window.open(item.url, '_blank'); } }}
                             className="p-1.5 rounded-lg text-xs cursor-pointer transition-all"
                             style={{
                               backgroundColor: 'var(--bg-card)',

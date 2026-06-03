@@ -79,16 +79,16 @@ export function JiraCreatePrompt({ task, onCreated, onDismiss }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="jira-create-title">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-500 to-blue-700 px-6 py-4 flex items-center justify-between">
           <div>
-            <h2 className="text-white font-semibold text-lg">Track in Jira?</h2>
+            <h2 id="jira-create-title" className="text-white font-semibold text-lg">Track in Jira?</h2>
             <p className="text-blue-100 text-xs mt-0.5">Create a ticket to track this work</p>
           </div>
-          <button onClick={onDismiss} className="text-white/70 hover:text-white transition-colors">
-            <X size={20} />
+          <button onClick={onDismiss} className="text-white/70 hover:text-white transition-colors" aria-label="Close Jira create dialog">
+            <X size={20} aria-hidden="true" />
           </button>
         </div>
 

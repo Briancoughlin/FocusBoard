@@ -74,7 +74,7 @@ export function KanbanBoard({ tasks, isLoading, onTaskMove, onOpenSettings, onDi
       ))}
 
       {/* Source tabs */}
-      <div className="flex gap-1 mb-4 border-b" style={{ borderColor: 'var(--border)' }}>
+      <div className="flex gap-1 mb-4 border-b" style={{ borderColor: 'var(--border)' }} role="tablist" aria-label="Filter tasks by source">
         {TABS.map(tab => {
           const count = tab.id === 'all' ? tasks.length
             : tasks.filter(t => t.source === tab.id).length;
@@ -83,12 +83,15 @@ export function KanbanBoard({ tasks, isLoading, onTaskMove, onOpenSettings, onDi
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
+              role="tab"
+              aria-selected={isActive}
+              aria-label={tab.id === 'all' ? `Show all tasks (${count})` : `Show ${count} tasks from ${tab.label}`}
               className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${isActive ? 'border-[var(--accent)] text-[var(--text-primary)]' : tab.color + ' hover:text-gray-700'}`}
               style={isActive ? { borderBottomColor: 'var(--accent)', color: 'var(--text-primary)' } : {}}
             >
               {tab.label}
               {count > 0 && (
-                <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${isActive ? 'bg-gray-100' : 'bg-gray-100'}`}>
+                <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${isActive ? 'bg-gray-100' : 'bg-gray-100'}`} aria-hidden="true">
                   {count}
                 </span>
               )}

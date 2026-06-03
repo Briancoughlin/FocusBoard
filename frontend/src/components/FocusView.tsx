@@ -143,6 +143,11 @@ export function FocusView({ tasks, kanbanTasks, isLoading, onTaskMove, onDismiss
         ref={handleRef}
         onPointerDown={handlePointerDown}
         className="flex-shrink-0 h-4 flex items-center justify-center cursor-row-resize group z-10 select-none"
+        role="separator"
+        aria-orientation="horizontal"
+        aria-label="Drag to resize calendar and task panels"
+        title="Drag to resize calendar and task panels"
+        tabIndex={0}
       >
         <div className="w-20 h-1.5 rounded-full bg-gray-300 group-hover:bg-blue-400 transition-colors" />
       </div>
@@ -174,6 +179,8 @@ export function FocusView({ tasks, kanbanTasks, isLoading, onTaskMove, onDismiss
               value={selectedEpic}
               onChange={e => setSelectedEpic(e.target.value)}
               className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 max-w-xs"
+              aria-label="Filter by epic"
+              title="Filter by epic"
             >
               <option value="all">All epics</option>
               {epics.map(e => (
@@ -184,6 +191,8 @@ export function FocusView({ tasks, kanbanTasks, isLoading, onTaskMove, onDismiss
               <button
                 onClick={() => setSelectedEpic('all')}
                 className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                aria-label="Clear epic filter"
+                title="Clear epic filter"
               >
                 ✕ Clear
               </button>

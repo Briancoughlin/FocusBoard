@@ -79,6 +79,8 @@ export function TaskCard({ task, index, onDismiss, onPin, pinned }: Props) {
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
+          role="article"
+          aria-label={task.title}
           className={`
             rounded-lg border mb-2 cursor-grab active:cursor-grabbing
             shadow-sm hover:shadow-md transition-all duration-150 overflow-hidden
@@ -96,10 +98,13 @@ export function TaskCard({ task, index, onDismiss, onPin, pinned }: Props) {
               <SourceBadge source={task.source} />
               <div className="flex items-center gap-1">
               {badge && (
-                <span className={`flex items-center gap-0.5 text-xs font-semibold px-1.5 py-0.5 rounded-full ${
-                  urgency === 'overdue' ? 'bg-red-100 text-red-600' : 'bg-orange-100 text-orange-600'
-                }`}>
-                  <Flame size={10} />
+                <span
+                  className={`flex items-center gap-0.5 text-xs font-semibold px-1.5 py-0.5 rounded-full ${
+                    urgency === 'overdue' ? 'bg-red-100 text-red-600' : 'bg-orange-100 text-orange-600'
+                  }`}
+                  aria-label={`Urgency: ${badge}`}
+                >
+                  <Flame size={10} aria-hidden="true" />
                   {badge}
                 </span>
               )}
@@ -117,18 +122,21 @@ export function TaskCard({ task, index, onDismiss, onPin, pinned }: Props) {
                   onClick={e => { e.stopPropagation(); onPin(task.id); }}
                   className="transition-colors p-0.5 rounded"
                   style={{ color: pinned ? '#f59e0b' : 'var(--text-secondary)' }}
-                  title={pinned ? 'Unpin from Focus' : 'Pin to Focus view'}
+                  title={pinned ? 'Unpin from Focus view' : 'Pin to Focus view'}
+                  aria-label={pinned ? 'Unpin from Focus view' : 'Pin to Focus view'}
+                  aria-pressed={pinned}
                 >
-                  <Pin size={13} fill={pinned ? '#f59e0b' : 'none'} />
+                  <Pin size={13} fill={pinned ? '#f59e0b' : 'none'} aria-hidden="true" />
                 </button>
               )}
               <button
                 onClick={e => { e.stopPropagation(); onDismiss(task.id); }}
                 className="transition-colors p-0.5 rounded hover:text-red-400"
                 style={{ color: 'var(--text-secondary)' }}
-                title="Dismiss"
+                title="Dismiss this task"
+                aria-label="Dismiss this task"
               >
-                <X size={12} />
+                <X size={12} aria-hidden="true" />
               </button>
               </div>
             </div>
@@ -175,7 +183,9 @@ export function TaskCard({ task, index, onDismiss, onPin, pinned }: Props) {
               )}
 
               {task.url && (
-                <ExternalLink size={11} style={{ color: 'var(--text-secondary)' }} />
+                <span role="img" aria-label="Open in source" title="Open in source">
+                  <ExternalLink size={11} style={{ color: 'var(--text-secondary)' }} aria-hidden="true" />
+                </span>
               )}
             </div>
           </div>

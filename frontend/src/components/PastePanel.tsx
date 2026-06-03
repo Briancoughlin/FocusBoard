@@ -34,21 +34,21 @@ export function PastePanel({ onTasksExtracted, onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="paste-panel-title">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <div className="flex items-center gap-2">
-            <div className="bg-gradient-to-br from-violet-500 to-purple-600 p-1.5 rounded-lg">
+            <div className="bg-gradient-to-br from-violet-500 to-purple-600 p-1.5 rounded-lg" aria-hidden="true">
               <ClipboardPaste size={16} className="text-white" />
             </div>
             <div>
-              <h2 className="font-semibold text-gray-900">Quick Add from Text</h2>
+              <h2 id="paste-panel-title" className="font-semibold text-gray-900">Quick Add from Text</h2>
               <p className="text-xs text-gray-400">Paste Zoom summaries, meeting notes, emails — Claude extracts the action items</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
-            <X size={18} />
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close Quick Add panel">
+            <X size={18} aria-hidden="true" />
           </button>
         </div>
 
@@ -59,6 +59,7 @@ export function PastePanel({ onTasksExtracted, onClose }: Props) {
             value={text}
             onChange={e => setText(e.target.value)}
             placeholder="Paste your Zoom summary, meeting notes, email thread, or any text with action items..."
+            aria-label="Paste meeting notes or Zoom summary here"
             className="w-full h-48 px-3 py-2.5 text-sm border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent bg-gray-50 placeholder-gray-400"
           />
           {error && <p className="text-xs text-red-500 mt-2">{error}</p>}
@@ -79,6 +80,7 @@ export function PastePanel({ onTasksExtracted, onClose }: Props) {
             <button
               onClick={handleExtract}
               disabled={!text.trim() || loading}
+              aria-label="Extract tasks from pasted text"
               className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium rounded-lg disabled:opacity-40 transition-colors"
             >
               {loading
