@@ -90,18 +90,22 @@ async function checkNotifications() {
       const parts = line.split('|');
       if (parts.length < 3) continue;
       const [id, appName, title, ...rest] = parts;
-      // Last part is launchUrl, everything in between is body
       const launchUrl = rest[rest.length - 1] || '';
       const body = rest.slice(0, -1).join('|');
 
-      if (!id || SEEN_IDS.has(id)) continue;
-      SEEN_IDS.add(id);
+      // Slack groups notifications — take just the first sender/channel from the title
+      // Title format: "#channel-name" or "Person Name" possibly followed by more
+      const firstTitle = title.trim().split(/\s+(?=#|\b[A-Z])/)[0] || title.trim();
+      const notifId = `${id}-${firstTitle.replace(/\W/g, '')}`;
+
+      if (!notifId || SEEN_IDS.has(notifId)) continue;
+      SEEN_IDS.add(notifId);
 
       try {
         const res = await fetch(FOCUSBOARD_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id, title: title.trim(), body: body.trim(), appName: appName.trim(), launchUrl: launchUrl.trim() }),
+          body: JSON.stringify({ id: notifId, title: firstTitle.trim(), body: body.trim(), appName: appName.trim(), launchUrl: launchUrl.trim() }),
         });
 
         if (res.ok) {
