@@ -25,7 +25,7 @@ router.post('/create', async (req, res) => {
     return res.status(400).json({ error: 'Jira not configured' });
   }
 
-  const { summary, description, projectKey, issueType } = req.body;
+  const { summary, description, projectKey, issueType, priority, fixVersion } = req.body;
   if (!summary || !projectKey) {
     return res.status(400).json({ error: 'summary and projectKey are required' });
   }
@@ -38,6 +38,8 @@ router.post('/create', async (req, res) => {
         summary,
         description: description || '',
         issuetype: { name: issueType || 'Task' },
+        ...(priority && { priority: { name: priority } }),
+        ...(fixVersion && { fixVersions: [{ name: fixVersion }] }),
       },
     };
 
