@@ -50,7 +50,6 @@ export function KanbanBoard({ tasks, isLoading, onTaskMove, onOpenSettings, onDi
   );
 
   const filteredTasks = activeTab === 'all' ? tasks
-    :
     : tasks.filter(t => t.source === activeTab);
 
   return (
