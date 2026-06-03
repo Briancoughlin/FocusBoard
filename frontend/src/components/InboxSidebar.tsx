@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, Hash, ExternalLink, Plus, Inbox } from 'lucide-react';
+import { Mail, Hash, ExternalLink, Plus, Inbox, Github } from 'lucide-react';
 import type { Task } from '../types';
 import { getPersistedValue, setPersistedValue } from '../services/persistence';
 
 interface InboxItem {
   id: string;
-  source: 'gmail' | 'slack';
+  source: 'gmail' | 'slack' | 'github';
   title: string;
   preview?: string;
   url?: string;
@@ -45,7 +45,7 @@ export function InboxSidebar({ tasks, onAddToBoard }: Props) {
 
   // Build inbox items from gmail + slack tasks
   const inboxItems: InboxItem[] = tasks
-    .filter(t => t.source === 'gmail' || t.source === 'slack')
+    .filter(t => t.source === 'gmail' || t.source === 'slack' || t.source === 'github')
     .map(t => ({
       id: t.id,
       source: t.source as 'gmail' | 'slack',
@@ -56,9 +56,9 @@ export function InboxSidebar({ tasks, onAddToBoard }: Props) {
       read: readIds.has(t.id),
     }))
     .sort((a, b) => {
-      // Slack items always first
-      if (a.source === 'slack' && b.source !== 'slack') return -1;
-      if (b.source === 'slack' && a.source !== 'slack') return 1;
+      // Slack first, then GitHub CI fails, then others
+      const priority = (s: InboxItem) => s.source === 'slack' ? 0 : (s.source === 'github' && s.title.includes('❌')) ? 1 : 2;
+      if (priority(a) !== priority(b)) return priority(a) - priority(b);
       return new Date(b.receivedAt).getTime() - new Date(a.receivedAt).getTime();
     });
 
@@ -109,6 +109,10 @@ export function InboxSidebar({ tasks, onAddToBoard }: Props) {
               } ${
                 item.source === 'slack' && !item.read
                   ? 'bg-purple-50 border-purple-100 hover:bg-purple-100'
+                  : item.source === 'github' && !item.read && item.title.includes('❌')
+                  ? 'bg-red-50 border-red-100 hover:bg-red-100'
+                  : item.source === 'github' && !item.read && item.title.includes('✅')
+                  ? 'bg-green-50 border-green-100 hover:bg-green-100'
                   : 'border-gray-50 hover:bg-gray-50'
               }`}
             >
@@ -117,10 +121,15 @@ export function InboxSidebar({ tasks, onAddToBoard }: Props) {
                 <div className="flex items-center gap-1.5">
                   {item.source === 'gmail'
                     ? <Mail size={11} className="text-red-400" />
-                    : <Hash size={11} className="text-purple-400" />
+                    : item.source === 'slack'
+                    ? <Hash size={11} className="text-purple-400" />
+                    : <Github size={11} className="text-gray-600" />
                   }
-                  <span className={`text-xs font-medium ${item.source === 'gmail' ? 'text-red-400' : 'text-purple-400'}`}>
-                    {item.source === 'gmail' ? 'Gmail' : 'Slack'}
+                  <span className={`text-xs font-medium ${
+                    item.source === 'gmail' ? 'text-red-400' :
+                    item.source === 'slack' ? 'text-purple-400' : 'text-gray-600'
+                  }`}>
+                    {item.source === 'gmail' ? 'Gmail' : item.source === 'slack' ? 'Slack' : 'GitHub'}
                   </span>
                   {!item.read && (
                     <span className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />

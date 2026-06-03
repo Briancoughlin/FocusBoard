@@ -119,23 +119,64 @@ router.get('/', async (req, res) => {
       });
     }
 
-    // 4. Failed Actions on your PRs (check notifications)
+    // 4. CI and review notifications
     const notifications = await githubFetch(
-      '/notifications?all=false&per_page=20',
+      '/notifications?all=false&per_page=30',
       token, baseUrl
     );
+
     for (const notif of notifications || []) {
-      if (notif.reason === 'ci_activity' || notif.reason === 'review_requested') {
+      const repo = notif.repository.full_name;
+      const subjectTitle = notif.subject.title || '';
+      const url = notif.subject.url
+        ?.replace('api.github.com/repos', 'github.com')
+        ?.replace('/pulls/', '/pull/')
+        ?.replace('/commits/', '/commit/') || notif.repository.html_url;
+
+      if (notif.reason === 'ci_activity') {
+        const isFail = subjectTitle.toLowerCase().includes('fail') ||
+          subjectTitle.toLowerCase().includes('error') ||
+          subjectTitle.toLowerCase().includes('cancelled');
+        const isPass = subjectTitle.toLowerCase().includes('pass') ||
+          subjectTitle.toLowerCase().includes('success') ||
+          subjectTitle.toLowerCase().includes('succeeded');
+
         tasks.push({
-          id: `github-notif-${notif.id}`,
+          id: `github-ci-${notif.id}`,
           sourceId: notif.id,
-          title: `GitHub: ${notif.subject.title}`,
-          description: `${notif.repository.full_name} — ${notif.reason.replace(/_/g, ' ')}`,
+          title: isFail ? `❌ CI Failed: ${repo}` : isPass ? `✅ CI Passed: ${repo}` : `🔄 CI: ${subjectTitle}`,
+          description: `${subjectTitle} — ${repo}`,
+          source: 'github',
+          status: isFail ? 'todo' : 'done',
+          priority: isFail ? 'high' : 'low',
+          dueDate: undefined,
+          url,
+          updatedAt: notif.updated_at,
+        });
+      } else if (notif.reason === 'review_requested') {
+        tasks.push({
+          id: `github-review-notif-${notif.id}`,
+          sourceId: notif.id,
+          title: `👀 Review requested: ${subjectTitle}`,
+          description: `${repo} — your review was requested`,
           source: 'github',
           status: 'todo',
-          priority: notif.reason === 'ci_activity' ? 'high' : 'medium',
+          priority: 'high',
           dueDate: undefined,
-          url: notif.subject.url?.replace('api.github.com/repos', 'github.com').replace('/pulls/', '/pull/') || notif.repository.html_url,
+          url,
+          updatedAt: notif.updated_at,
+        });
+      } else if (notif.reason === 'mention' || notif.reason === 'team_mention') {
+        tasks.push({
+          id: `github-mention-${notif.id}`,
+          sourceId: notif.id,
+          title: `💬 Mentioned: ${subjectTitle}`,
+          description: `${repo} — you were mentioned`,
+          source: 'github',
+          status: 'todo',
+          priority: 'medium',
+          dueDate: undefined,
+          url,
           updatedAt: notif.updated_at,
         });
       }
