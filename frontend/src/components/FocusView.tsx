@@ -110,6 +110,7 @@ export function FocusView({ tasks, kanbanTasks, isLoading, onTaskMove, onDismiss
   const baseWeekTasks = kanbanTasks
     .filter(t => {
       if (pinnedIds.has(t.id)) return true; // always show pinned
+      if (t.source === 'paste') return true; // always show quick add items
       if (t.dueDate) return new Date(t.dueDate) <= endOfWeek;
       return t.source === 'jira' && t.priority === 'high';
     })
