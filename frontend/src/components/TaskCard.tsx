@@ -83,7 +83,7 @@ export function TaskCard({ task, index, onDismiss }: Props) {
             ${task.url ? 'hover:border-blue-300' : ''}
             ${snapshot.isDragging ? 'shadow-lg rotate-1 border-blue-300 ring-2 ring-blue-200' : ''}
           `}
-          style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}
+          style={{ ...provided.draggableProps.style, backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}
         >
           {/* Urgency colour strip */}
           <div className={`h-1 w-full ${bar}`} />
