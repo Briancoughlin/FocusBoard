@@ -99,24 +99,33 @@ router.get('/', async (req, res) => {
           from,
           date: getHeader(headers, 'Date') || '',
           snippet,
+          isSlackDigest,
         };
       });
 
     // Use Claude to extract action items
     const actionItems = await extractActionItems(messages, 'gmail');
 
-    const tasks = actionItems.map((item) => ({
-      id: `gmail-${item.sourceId}`,
-      sourceId: item.sourceId,
-      title: item.title,
-      description: item.description,
-      source: 'gmail',
-      status: 'todo',
-      priority: item.priority || 'medium',
-      dueDate: item.dueDate || undefined,
-      url: `https://mail.google.com/mail/u/0/#inbox/${item.sourceId}`,
-      updatedAt: new Date().toISOString(),
-    }));
+    // Build a lookup of which message IDs are Slack digests
+    const slackMessageIds = new Set(
+      messages.filter(m => m.isSlackDigest).map(m => m.id)
+    );
+
+    const tasks = actionItems.map((item) => {
+      const isSlack = slackMessageIds.has(item.sourceId) || item.isSlackDigest;
+      return {
+        id: `${isSlack ? 'slack' : 'gmail'}-${item.sourceId}`,
+        sourceId: item.sourceId,
+        title: item.title,
+        description: item.description,
+        source: isSlack ? 'slack' : 'gmail',
+        status: 'todo',
+        priority: isSlack ? 'high' : (item.priority || 'medium'), // Slack always bubbles high
+        dueDate: item.dueDate || undefined,
+        url: `https://mail.google.com/mail/u/0/#inbox/${item.sourceId}`,
+        updatedAt: isSlack ? new Date(Date.now() + 86400000).toISOString() : new Date().toISOString(), // Slack gets future timestamp to sort first
+      };
+    });
 
     res.json({ tasks });
   } catch (err) {

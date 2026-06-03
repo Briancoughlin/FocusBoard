@@ -55,7 +55,12 @@ export function InboxSidebar({ tasks, onAddToBoard }: Props) {
       receivedAt: t.updatedAt,
       read: readIds.has(t.id),
     }))
-    .sort((a, b) => new Date(b.receivedAt).getTime() - new Date(a.receivedAt).getTime());
+    .sort((a, b) => {
+      // Slack items always first
+      if (a.source === 'slack' && b.source !== 'slack') return -1;
+      if (b.source === 'slack' && a.source !== 'slack') return 1;
+      return new Date(b.receivedAt).getTime() - new Date(a.receivedAt).getTime();
+    });
 
   const unreadCount = inboxItems.filter(i => !i.read).length;
 
@@ -99,8 +104,12 @@ export function InboxSidebar({ tasks, onAddToBoard }: Props) {
             <div
               key={item.id}
               onClick={() => markRead(item.id)}
-              className={`px-3 py-3 border-b border-gray-50 cursor-pointer transition-colors hover:bg-gray-50 ${
+              className={`px-3 py-3 border-b cursor-pointer transition-colors ${
                 item.read ? 'opacity-50' : ''
+              } ${
+                item.source === 'slack' && !item.read
+                  ? 'bg-purple-50 border-purple-100 hover:bg-purple-100'
+                  : 'border-gray-50 hover:bg-gray-50'
               }`}
             >
               {/* Source + time */}
