@@ -44,15 +44,16 @@ export default function App() {
         getPersistedValue<boolean>('theme-auto', true),
       ]);
 
-      if (!autoMode && manualAccent !== null && manualDark !== null) {
-        applyTheme(manualAccent, manualDark);
+      if (!autoMode) {
+        // Manual mode — use stored values, don't poll Windows
+        const accent = manualAccent || '#0078d4';
+        const isDark = manualDark ?? false;
+        applyTheme(accent, isDark);
         return;
       }
 
       const windowsTheme = await fetchWindowsTheme();
-      const accent = (!autoMode && manualAccent) ? manualAccent : windowsTheme.accentColor;
-      const isDark = (!autoMode && manualDark !== null) ? manualDark : windowsTheme.isDark;
-      applyTheme(accent, isDark);
+      applyTheme(windowsTheme.accentColor, windowsTheme.isDark);
     }
 
     loadTheme();
