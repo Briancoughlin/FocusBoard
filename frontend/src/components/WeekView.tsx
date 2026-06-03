@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, MapPin } from 'lucide-react';
+import { Clock } from 'lucide-react';
 import type { Task } from '../types';
 
 interface Props {
@@ -38,11 +38,11 @@ export function WeekView({ tasks }: Props) {
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between mb-2 px-1">
-        <h2 className="text-sm font-semibold text-gray-600">
+        <h2 className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>
           Week of {weekDays[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} –{' '}
           {weekDays[6].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
         </h2>
-        <span className="text-xs text-gray-400">{calendarTasks.length} events this week</span>
+        <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{calendarTasks.length} events this week</span>
       </div>
 
       <div className="flex gap-2 flex-1 overflow-hidden">
@@ -57,42 +57,44 @@ export function WeekView({ tasks }: Props) {
           return (
             <div
               key={i}
-              className={`flex flex-col flex-1 min-w-0 rounded-xl border overflow-hidden ${
-                isToday ? 'border-blue-400 shadow-md' : 'border-gray-200'
-              } ${isPast ? 'opacity-50' : ''}`}
+              className={`flex flex-col flex-1 min-w-0 rounded-xl overflow-hidden ${isPast ? 'opacity-50' : ''}`}
+              style={{ border: `1px solid ${isToday ? 'var(--accent)' : 'var(--border)'}`, boxShadow: isToday ? '0 2px 8px rgba(0,0,0,0.15)' : 'none' }}
             >
               {/* Day header */}
-              <div className={`px-2 py-1.5 text-center ${isToday ? 'bg-blue-500' : 'bg-gray-50 border-b border-gray-200'}`}>
-                <p className={`text-xs font-medium ${isToday ? 'text-white' : 'text-gray-500'}`}>
+              <div
+                className="px-2 py-1.5 text-center"
+                style={{ backgroundColor: isToday ? 'var(--accent)' : 'var(--bg-card)', borderBottom: `1px solid var(--border)` }}
+              >
+                <p className="text-xs font-medium" style={{ color: isToday ? '#fff' : 'var(--text-secondary)' }}>
                   {DAY_LABELS[i]}
                 </p>
-                <p className={`text-lg font-bold leading-none mt-0.5 ${isToday ? 'text-white' : 'text-gray-800'}`}>
+                <p className="text-lg font-bold leading-none mt-0.5" style={{ color: isToday ? '#fff' : 'var(--text-primary)' }}>
                   {day.getDate()}
                 </p>
               </div>
 
               {/* Events */}
-              <div className="flex-1 overflow-y-auto p-1.5 space-y-1 bg-white">
+              <div className="flex-1 overflow-y-auto p-1.5 space-y-1" style={{ backgroundColor: 'var(--bg-card)' }}>
                 {dayEvents.length === 0 ? (
                   <div className="h-full flex items-center justify-center">
-                    <span className="text-xs text-gray-300">—</span>
+                    <span className="text-xs" style={{ color: 'var(--border)' }}>—</span>
                   </div>
                 ) : (
                   dayEvents.map(event => (
                     <div
                       key={event.id}
                       onClick={() => event.url && window.open(event.url, '_blank')}
-                      className={`p-1.5 rounded-lg text-xs cursor-pointer transition-all hover:shadow-sm ${
-                        isToday
-                          ? 'bg-blue-50 border border-blue-200 hover:bg-blue-100'
-                          : 'bg-gray-50 border border-gray-200 hover:bg-gray-100'
-                      }`}
+                      className="p-1.5 rounded-lg text-xs cursor-pointer transition-all"
+                      style={{
+                        backgroundColor: isToday ? 'var(--accent-light)' : 'var(--bg)',
+                        border: `1px solid var(--border)`,
+                      }}
                     >
-                      <p className="font-medium text-gray-800 line-clamp-2 leading-tight">
+                      <p className="font-medium line-clamp-2 leading-tight" style={{ color: 'var(--text-primary)' }}>
                         {event.title.replace('[All Day] ', '')}
                       </p>
                       {event.dueDate && !event.title.startsWith('[All Day]') && (
-                        <p className="flex items-center gap-0.5 text-gray-400 mt-0.5">
+                        <p className="flex items-center gap-0.5 mt-0.5" style={{ color: 'var(--text-secondary)' }}>
                           <Clock size={9} />
                           {formatTime(event.dueDate)}
                         </p>

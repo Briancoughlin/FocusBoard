@@ -34,12 +34,13 @@ function ItemRow({ item, onRead, onAddToBoard }: {
   return (
     <div
       onClick={() => { onRead(item.id); if (item.url) window.open(item.url, '_blank'); }}
-      className={`px-3 py-2.5 border-b cursor-pointer transition-colors ${item.read ? 'opacity-50' : ''} ${
+      className={`px-3 py-2.5 border-b cursor-pointer transition-colors ${item.read ? 'opacity-40' : ''} ${
         item.source === 'slack' && !item.read ? 'bg-purple-50 border-purple-100 hover:bg-purple-100' :
         item.source === 'github' && !item.read && item.title.includes('❌') ? 'bg-red-50 border-red-100 hover:bg-red-100' :
         item.source === 'github' && !item.read && item.title.includes('✅') ? 'bg-green-50 border-green-100 hover:bg-green-100' :
-        'border-gray-50 hover:bg-gray-50'
+        ''
       }`}
+      style={{ borderColor: 'var(--border)', backgroundColor: item.read || item.source === 'slack' || (item.source === 'github') ? undefined : 'var(--bg-card)' }}
     >
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-1.5">
@@ -48,11 +49,11 @@ function ItemRow({ item, onRead, onAddToBoard }: {
            <Github size={10} className="text-gray-600" />}
           {!item.read && <span className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />}
         </div>
-        <span className="text-xs text-gray-300">{timeAgo(item.receivedAt)}</span>
+        <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{timeAgo(item.receivedAt)}</span>
       </div>
-      <p className="text-xs font-semibold text-gray-800 line-clamp-2 leading-snug mb-1">{item.title}</p>
+      <p className="text-xs font-semibold line-clamp-2 leading-snug mb-1" style={{ color: 'var(--text-primary)' }}>{item.title}</p>
       {item.preview && (
-        <p className="text-xs text-gray-400 line-clamp-1 leading-relaxed">{item.preview}</p>
+        <p className="text-xs line-clamp-1 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{item.preview}</p>
       )}
       <div className="flex items-center gap-2 mt-1.5">
         <button
@@ -87,7 +88,7 @@ function SectionHeader({ icon, title, count, onMarkAll }: {
     <div className="px-3 py-2 flex items-center justify-between sticky top-0 z-10" style={{ backgroundColor: 'var(--bg-sidebar)', borderBottom: '1px solid var(--border)' }}>
       <div className="flex items-center gap-1.5">
         {icon}
-        <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">{title}</span>
+        <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>{title}</span>
         {count > 0 && (
           <span className="text-xs font-bold px-1.5 py-0.5 bg-blue-500 text-white rounded-full">{count}</span>
         )}
@@ -162,7 +163,7 @@ export function InboxSidebar({ tasks, onAddToBoard }: Props) {
       {/* Top bar */}
       <div className="px-3 py-2.5 flex items-center gap-2" style={{ borderBottom: '1px solid var(--border)' }}>
         <Inbox size={14} className="text-gray-500" />
-        <span className="text-sm font-semibold text-gray-700">Notifications</span>
+        <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Notifications</span>
         {totalUnread > 0 && (
           <span className="text-xs font-bold px-1.5 py-0.5 bg-blue-500 text-white rounded-full ml-auto">{totalUnread}</span>
         )}
