@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  security-and-build:
+    name: Security audit & build check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+
+      # --- Backend ---
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: backend
+
+      - name: Audit backend dependencies
+        run: npm audit --audit-level=high
+        working-directory: backend
+        continue-on-error: true  # warn but don't fail on moderate issues
+
+      # --- Frontend ---
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Audit frontend dependencies
+        run: npm audit --audit-level=high
+        working-directory: frontend
+        continue-on-error: true
+
+      - name: TypeScript type check
+        run: npx tsc --noEmit
+        working-directory: frontend
+
+      - name: Build frontend
+        run: npm run build
+        working-directory: frontend
+
+      - name: Confirm no secrets in config
+        run: |
+          if [ -f backend/config.json ]; then
+            echo "WARNING: config.json found in repo - should be gitignored!"
+            exit 1
+          fi
+          echo "config.json not present - good."
+
+      - name: Check for hardcoded secrets
+        run: |
+          # Scan for common secret patterns in source files
+          if grep -r --include="*.ts" --include="*.tsx" --include="*.js" \
+            -E "(sk-ant-|xoxb-|ATATT|AIza|client_secret)" \
+            --exclude-dir=node_modules \
+            --exclude-dir=dist \
+            .; then
+            echo "Potential hardcoded secret found!"
+            exit 1
+          fi
+          echo "No hardcoded secrets found - good."
