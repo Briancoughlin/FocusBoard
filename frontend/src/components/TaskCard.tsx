@@ -1,6 +1,6 @@
 import React from 'react';
 import { Draggable } from '@hello-pangea/dnd';
-import { ExternalLink, Calendar, Flame, X } from 'lucide-react';
+import { ExternalLink, Calendar, Flame, X, Pin } from 'lucide-react';
 import type { Task } from '../types';
 import { SourceBadge } from './SourceBadge';
 
@@ -8,6 +8,8 @@ interface Props {
   task: Task;
   index: number;
   onDismiss: (taskId: string) => void;
+  onPin?: (taskId: string) => void;
+  pinned?: boolean;
 }
 
 export type UrgencyLevel = 'overdue' | 'today' | 'soon' | 'normal';
@@ -65,7 +67,7 @@ function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-export function TaskCard({ task, index, onDismiss }: Props) {
+export function TaskCard({ task, index, onDismiss, onPin, pinned }: Props) {
   const urgency = getUrgencyLevel(task);
   const bar = urgencyBar[urgency];
   const badge = urgencyLabel[urgency];
@@ -109,6 +111,15 @@ export function TaskCard({ task, index, onDismiss }: Props) {
                 }`}>
                   {task.priority === 'high' ? 'High' : task.priority === 'medium' ? 'Med' : 'Low'}
                 </span>
+              )}
+              {onPin && (
+                <button
+                  onClick={e => { e.stopPropagation(); onPin(task.id); }}
+                  className={`transition-colors p-0.5 rounded ${pinned ? 'text-amber-400' : 'text-gray-300 hover:text-amber-400'}`}
+                  title={pinned ? 'Unpin from Focus' : 'Pin to Focus view'}
+                >
+                  <Pin size={12} />
+                </button>
               )}
               <button
                 onClick={e => { e.stopPropagation(); onDismiss(task.id); }}

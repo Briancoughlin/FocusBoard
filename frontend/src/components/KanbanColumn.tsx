@@ -52,6 +52,8 @@ interface Props {
   tasks: Task[];
   isLoading?: boolean;
   onDismiss: (taskId: string) => void;
+  onPin?: (taskId: string) => void;
+  pinnedIds?: Set<string>;
 }
 
 function SkeletonCard() {
@@ -68,7 +70,7 @@ function SkeletonCard() {
   );
 }
 
-export function KanbanColumn({ column, tasks, isLoading, onDismiss }: Props) {
+export function KanbanColumn({ column, tasks, isLoading, onDismiss, onPin, pinnedIds }: Props) {
   return (
     <div className="flex flex-col flex-1 min-w-0">
       {/* Column header */}
@@ -103,7 +105,7 @@ export function KanbanColumn({ column, tasks, isLoading, onDismiss }: Props) {
               </div>
             ) : (
               [...tasks].sort((a, b) => getUrgencyScore(a) - getUrgencyScore(b)).map((task, idx) => (
-                <TaskCard key={task.id} task={task} index={idx} onDismiss={onDismiss} />
+                <TaskCard key={task.id} task={task} index={idx} onDismiss={onDismiss} onPin={onPin} pinned={pinnedIds?.has(task.id) ?? false} />
               ))
             )}
             {provided.placeholder}

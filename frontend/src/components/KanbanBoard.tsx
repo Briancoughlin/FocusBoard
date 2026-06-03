@@ -10,6 +10,8 @@ interface Props {
   onTaskMove: (taskId: string, newStatus: Status) => void;
   onOpenSettings: () => void;
   onDismiss: (taskId: string) => void;
+  onPin: (taskId: string) => void;
+  pinnedIds: Set<string>;
   errors: Array<{ source: string; error: string }>;
 }
 
@@ -38,7 +40,7 @@ function isThisWeek(task: Task): boolean {
   return task.source === 'jira' && task.priority === 'high';
 }
 
-export function KanbanBoard({ tasks, isLoading, onTaskMove, onOpenSettings, onDismiss, errors }: Props) {
+export function KanbanBoard({ tasks, isLoading, onTaskMove, onOpenSettings, onDismiss, onPin, pinnedIds, errors }: Props) {
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
 
   const handleDragEnd = useCallback(
@@ -119,6 +121,8 @@ export function KanbanBoard({ tasks, isLoading, onTaskMove, onOpenSettings, onDi
               tasks={filteredTasks.filter(t => t.status === col.id)}
               isLoading={isLoading}
               onDismiss={onDismiss}
+              onPin={onPin}
+              pinnedIds={pinnedIds}
             />
           ))}
         </div>

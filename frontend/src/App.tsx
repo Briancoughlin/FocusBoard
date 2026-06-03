@@ -40,6 +40,7 @@ export default function App() {
   const [jiraDoneTask, setJiraDoneTask] = useState<Task | null>(null);
   const [jiraCreateTask, setJiraCreateTask] = useState<Task | null>(null);
   const [injectedTasks, setInjectedTasks] = useState<Task[]>([]);
+  const [pinnedIds, setPinnedIds] = useState<Set<string>>(new Set());
   const [showDigest, setShowDigest] = useState(false);
   const [completedToday, setCompletedToday] = useState<number>(0);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
@@ -86,13 +87,15 @@ export default function App() {
       getPersistedValue<string | null>('digest-date', null),
       getPersistedValue<Record<string, string>>('due-date-overrides', {}),
       getPersistedValue<Task[]>('injected-tasks', []),
-    ]).then(([loadedOverrides, loadedPastedTasks, loadedDismissed, loadedCompletedToday, loadedDoneDates, loadedDigestDate, loadedDueDateOverrides, loadedInjectedTasks]) => {
+      getPersistedValue<string[]>('pinned-tasks', []),
+    ]).then(([loadedOverrides, loadedPastedTasks, loadedDismissed, loadedCompletedToday, loadedDoneDates, loadedDigestDate, loadedDueDateOverrides, loadedInjectedTasks, loadedPinnedIds]) => {
       overridesRef.current = loadedOverrides;
       setOverrides(loadedOverrides);
       dueDateOverridesRef.current = loadedDueDateOverrides;
       setDueDateOverrides(loadedDueDateOverrides);
       setPastedTasks(loadedPastedTasks);
       setInjectedTasks(loadedInjectedTasks);
+      setPinnedIds(new Set(loadedPinnedIds));
       setDismissed(new Set(loadedDismissed));
       setDoneDates(loadedDoneDates);
 
@@ -176,6 +179,15 @@ export default function App() {
     setPersistedValue('due-date-overrides', updated);
   }, []);
 
+  const handlePin = useCallback((taskId: string) => {
+    setPinnedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(taskId)) next.delete(taskId); else next.add(taskId);
+      setPersistedValue('pinned-tasks', [...next]);
+      return next;
+    });
+  }, []);
+
   const handleDismiss = useCallback((taskId: string) => {
     setDismissed(prev => {
       const updated = new Set(prev).add(taskId);
@@ -256,6 +268,8 @@ export default function App() {
             onTaskMove={handleTaskMove}
             onOpenSettings={() => setView('settings')}
             onDismiss={handleDismiss}
+            onPin={handlePin}
+            pinnedIds={pinnedIds}
             errors={errors}
           />
         )}
@@ -267,9 +281,11 @@ export default function App() {
             onTaskMove={handleTaskMove}
             onDismiss={handleDismiss}
             onDueDateChange={handleDueDateChange}
+            onPin={handlePin}
+            pinnedIds={pinnedIds}
             onAddToBoard={task => {
               setPastedTasks(prev => {
-                const pinned = { ...task, id: `pinned-${task.id}`, source: 'paste' as const, status: 'todo' as const };
+                const pinned = { ...task, id: `pinned-${task.id}`, source: 'paste' as const, status: 'todo' as const, priority: 'high' as const };
                 const updated = [...prev, pinned];
                 setPersistedValue('pasted-tasks', updated);
                 return updated;

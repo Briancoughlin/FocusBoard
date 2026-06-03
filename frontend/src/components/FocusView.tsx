@@ -16,6 +16,8 @@ interface Props {
   onDismiss: (taskId: string) => void;
   onAddToBoard: (task: Task) => void;
   onDueDateChange: (taskId: string, dateString: string) => void;
+  onPin: (taskId: string) => void;
+  pinnedIds: Set<string>;
 }
 
 const STORAGE_KEY = 'focusboard-split-percent';
@@ -33,7 +35,7 @@ function formatDayLabel(day: Date): string {
   return day.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' });
 }
 
-export function FocusView({ tasks, kanbanTasks, isLoading, onTaskMove, onDismiss, onAddToBoard, onDueDateChange }: Props) {
+export function FocusView({ tasks, kanbanTasks, isLoading, onTaskMove, onDismiss, onAddToBoard, onDueDateChange, onPin, pinnedIds }: Props) {
   const [splitPercent, setSplitPercent] = useState<number>(DEFAULT_SPLIT);
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
 
@@ -106,6 +108,7 @@ export function FocusView({ tasks, kanbanTasks, isLoading, onTaskMove, onDismiss
   // Base week tasks (unfiltered by day)
   const baseWeekTasks = kanbanTasks
     .filter(t => {
+      if (pinnedIds.has(t.id)) return true; // always show pinned
       if (t.dueDate) return new Date(t.dueDate) <= endOfWeek;
       return t.source === 'jira' && t.priority === 'high';
     })
@@ -195,6 +198,8 @@ export function FocusView({ tasks, kanbanTasks, isLoading, onTaskMove, onDismiss
               tasks={weekTasks.filter(t => t.status === col.id)}
               isLoading={isLoading}
               onDismiss={onDismiss}
+              onPin={onPin}
+              pinnedIds={pinnedIds}
             />
           ))}
         </div>
