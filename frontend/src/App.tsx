@@ -121,11 +121,19 @@ export default function App() {
       setLastSynced(new Date());
 
       // Prompt to add channel ID for unmapped Slack channels
-      const slackTasks = newTasks.filter(t => t.source === 'slack' && t.url === 'slack://open');
+      // Prompt to add channel ID for Slack channels that use web URL (not slack:// deep link)
+      const slackTasks = newTasks.filter(t =>
+        t.source === 'slack' &&
+        t.url &&
+        t.url.includes('unity.slack.com/messages/') &&
+        !t.url.includes('slack://channel')
+      );
       if (slackTasks.length > 0 && !slackChannelPrompt) {
-        const title = slackTasks[0].title;
-        const channelMatch = title?.match(/#([\w-]+)/);
-        if (channelMatch) setSlackChannelPrompt(channelMatch[1]);
+        // Extract channel name from URL e.g. https://unity.slack.com/messages/ask-discussions
+        const urlMatch = slackTasks[0].url?.match(/\/messages\/([\w-]+)/);
+        if (urlMatch && !urlMatch[1].startsWith('@')) {
+          setSlackChannelPrompt(urlMatch[1]);
+        }
       }
     } catch (err: any) {
       setErrors([{ source: 'sync', error: err.message }]);

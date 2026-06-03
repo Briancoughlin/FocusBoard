@@ -89,13 +89,19 @@ async function checkNotifications() {
     for (const line of output.split('\n').filter(Boolean)) {
       const parts = line.split('|');
       if (parts.length < 3) continue;
-      const [id, appName, title, ...rest] = parts;
+      const [id, appName, rawTitle, ...rest] = parts;
       const launchUrl = rest[rest.length - 1] || '';
       const body = rest.slice(0, -1).join('|');
 
-      // Slack groups notifications — take just the first sender/channel from the title
-      // Title format: "#channel-name" or "Person Name" possibly followed by more
-      const firstTitle = title.trim().split(/\s+(?=#|\b[A-Z])/)[0] || title.trim();
+      // Slack groups all notifications into one — split on channel/sender boundaries
+      // Pattern: "#channel-name" or "Person Name" separated by spaces
+      const titleParts = rawTitle.trim()
+        .split(/(?=#)|\s+(?=[A-Z][a-z])/)
+        .map(t => t.trim())
+        .filter(Boolean);
+
+      // Only process the first unique sender/channel we haven't seen
+      const firstTitle = titleParts[0] || rawTitle.trim();
       const notifId = `${id}-${firstTitle.replace(/\W/g, '')}`;
 
       if (!notifId || SEEN_IDS.has(notifId)) continue;
