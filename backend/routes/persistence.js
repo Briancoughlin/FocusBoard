@@ -15,6 +15,9 @@ const ALLOWED_KEYS = [
   'digest-date',
   'inbox-read',
   'split-percent',
+  'theme-auto',
+  'theme-accent',
+  'theme-dark',
 ];
 
 function ensureDataDir() {
