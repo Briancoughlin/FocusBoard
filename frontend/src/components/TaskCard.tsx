@@ -116,7 +116,7 @@ export function TaskCard({ task, index, onDismiss, onPin, pinned }: Props) {
                 <button
                   onClick={e => { e.stopPropagation(); onPin(task.id); }}
                   className="transition-colors p-0.5 rounded"
-                  style={{ color: pinned ? '#f59e0b' : 'var(--border)' }}
+                  style={{ color: pinned ? '#f59e0b' : 'var(--text-secondary)' }}
                   title={pinned ? 'Unpin from Focus' : 'Pin to Focus view'}
                 >
                   <Pin size={13} fill={pinned ? '#f59e0b' : 'none'} />
@@ -124,7 +124,8 @@ export function TaskCard({ task, index, onDismiss, onPin, pinned }: Props) {
               )}
               <button
                 onClick={e => { e.stopPropagation(); onDismiss(task.id); }}
-                className="text-gray-300 hover:text-gray-500 transition-colors p-0.5 rounded"
+                className="transition-colors p-0.5 rounded hover:text-red-400"
+                style={{ color: 'var(--text-secondary)' }}
                 title="Dismiss"
               >
                 <X size={12} />
@@ -174,7 +175,7 @@ export function TaskCard({ task, index, onDismiss, onPin, pinned }: Props) {
               )}
 
               {task.url && (
-                <ExternalLink size={11} className="text-gray-300" />
+                <ExternalLink size={11} style={{ color: 'var(--text-secondary)' }} />
               )}
             </div>
           </div>
