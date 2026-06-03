@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, Hash, ExternalLink, Plus, Inbox, Github } from 'lucide-react';
+import { Mail, Hash, ExternalLink, Plus, Inbox, Github, X } from 'lucide-react';
 import type { Task } from '../types';
 import { getPersistedValue, setPersistedValue } from '../services/persistence';
 
@@ -34,7 +34,7 @@ function ItemRow({ item, onRead, onAddToBoard }: {
   return (
     <div
       onClick={() => { onRead(item.id); if (item.url) window.open(item.url, '_blank'); }}
-      className={`px-3 py-2.5 border-b cursor-pointer transition-colors ${item.read ? 'opacity-40' : ''} ${
+      className={`px-3 py-2.5 border-b cursor-pointer transition-colors relative ${item.read ? 'opacity-40' : ''} ${
         item.source === 'slack' && !item.read ? 'bg-purple-50 border-purple-100 hover:bg-purple-100' :
         item.source === 'github' && !item.read && item.title.includes('❌') ? 'bg-red-50 border-red-100 hover:bg-red-100' :
         item.source === 'github' && !item.read && item.title.includes('✅') ? 'bg-green-50 border-green-100 hover:bg-green-100' :
@@ -49,7 +49,16 @@ function ItemRow({ item, onRead, onAddToBoard }: {
            <Github size={10} className="text-gray-600" />}
           {!item.read && <span className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />}
         </div>
-        <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{timeAgo(item.receivedAt)}</span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{timeAgo(item.receivedAt)}</span>
+          <button
+            onClick={e => { e.stopPropagation(); onRead(item.id); }}
+            className="text-gray-300 hover:text-gray-500 transition-colors"
+            title="Dismiss"
+          >
+            <X size={11} />
+          </button>
+        </div>
       </div>
       <p className="text-xs font-semibold line-clamp-2 leading-snug mb-1" style={{ color: 'var(--text-primary)' }}>{item.title}</p>
       {item.preview && (
