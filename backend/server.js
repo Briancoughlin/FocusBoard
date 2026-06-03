@@ -30,8 +30,18 @@ app.use(cookieParser());
 
 // --- Auth middleware for all /api/* routes ---
 app.use('/api', (req, res, next) => {
+  // Always allow requests from localhost — set fresh cookie if missing/stale
+  const isLocalhost = req.socket.remoteAddress === '::1' ||
+    req.socket.remoteAddress === '127.0.0.1' ||
+    req.socket.remoteAddress === '::ffff:127.0.0.1';
+
   const sessionCookie = req.cookies && req.cookies.fb_session;
   if (!sessionCookie || sessionCookie !== AUTH_TOKEN) {
+    if (isLocalhost) {
+      // Auto-grant access from localhost and refresh cookie
+      res.cookie('fb_session', AUTH_TOKEN, { httpOnly: true, sameSite: 'lax' });
+      return next();
+    }
     return res.status(401).json({ error: 'Unauthorized' });
   }
   next();
