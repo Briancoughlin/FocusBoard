@@ -65,7 +65,7 @@ router.get('/', async (req, res) => {
     // Fetch message details in parallel
     const messageDetails = await Promise.allSettled(
       messageIds.map(id =>
-        gmail.users.messages.get({ userId: 'me', id, format: 'metadata', metadataHeaders: ['Subject', 'From', 'Date'] })
+        gmail.users.messages.get({ userId: 'me', id, format: 'full', metadataHeaders: ['Subject', 'From', 'Date'] })
       )
     );
 
@@ -74,12 +74,31 @@ router.get('/', async (req, res) => {
       .map(r => {
         const msg = r.value.data;
         const headers = msg.payload?.headers || [];
+        const subject = getHeader(headers, 'Subject') || '(no subject)';
+        const from = getHeader(headers, 'From') || 'Unknown';
+
+        // For Slack digest emails, extract the full body for better parsing
+        const isSlackDigest = from.toLowerCase().includes('slack') ||
+          subject.toLowerCase().includes('digest') ||
+          subject.toLowerCase().includes('missed messages') ||
+          subject.toLowerCase().includes('mention');
+
+        let snippet = msg.snippet || '';
+        if (isSlackDigest && msg.payload) {
+          // Try to get plain text body
+          const parts = msg.payload.parts || [msg.payload];
+          const textPart = parts.find(p => p.mimeType === 'text/plain');
+          if (textPart?.body?.data) {
+            snippet = decodeBase64(textPart.body.data).slice(0, 2000);
+          }
+        }
+
         return {
           id: msg.id,
-          subject: getHeader(headers, 'Subject') || '(no subject)',
-          from: getHeader(headers, 'From') || 'Unknown',
+          subject,
+          from,
           date: getHeader(headers, 'Date') || '',
-          snippet: msg.snippet || '',
+          snippet,
         };
       });
 

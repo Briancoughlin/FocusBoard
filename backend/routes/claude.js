@@ -33,17 +33,29 @@ export async function extractActionItems(messages, sourceType = 'gmail') {
     .map((m, i) => `[${i + 1}] ID:${m.id} | From: ${m.from} | Date: ${m.date} | Subject: ${m.subject}\nSnippet: ${m.snippet}`)
     .join('\n\n');
 
-  const systemPrompt = `You are an assistant that extracts concrete action items from ${sourceType === 'gmail' ? 'emails' : 'Slack messages'}.
-For each message, determine if it requires an action from the recipient.
+  const systemPrompt = `You are an assistant that extracts concrete action items from emails and Slack notification digests for an ADHD user.
+
+IMPORTANT: Slack sends daily digest emails with subjects like "Your daily digest", "Missed messages", or "You have mentions". These contain multiple Slack messages bundled together. Treat each individual Slack message within a digest as a separate potential action item.
+
+For each message or Slack notification, determine if it requires an action from the recipient.
+
 Return a JSON array of action items. Each item must have:
 - sourceId: the message ID from the input
-- title: concise action title (max 80 chars), start with a verb (e.g. "Reply to...", "Review...", "Send...")
-- description: 1-2 sentences about what needs to be done and who asked
+- title: concise action title (max 80 chars), start with a verb (e.g. "Reply to...", "Review...", "Follow up with...", "Respond to...")
+- description: 1-2 sentences — who asked, what they need, which Slack channel if applicable
 - dueDate: ISO date string if a deadline is mentioned, otherwise null
 - priority: "high" | "medium" | "low" based on urgency/importance
+- isSlackDigest: true if this came from a Slack notification email, false otherwise
 
-Only include messages that genuinely require action. Skip newsletters, automated notifications, FYI messages.
-Return ONLY valid JSON, no markdown, no explanation.`;
+Guidelines:
+- Slack mentions asking questions = high priority, needs a reply
+- Slack DMs = high priority
+- Slack FYI messages with no question = skip
+- Regular emails asking for review/approval/input = medium-high priority
+- Newsletters, automated alerts, CC'd emails with no direct ask = skip
+- If a Slack digest contains 3 mentions, create 3 separate action items each with the same sourceId
+
+Return ONLY valid JSON array, no markdown, no explanation.`;
 
   const response = await client.messages.create({
     model: 'claude-sonnet-4-6',
