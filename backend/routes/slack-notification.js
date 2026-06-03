@@ -67,16 +67,21 @@ router.post('/', (req, res) => {
     slackWorkspaceUrl = cfg.slackWorkspaceUrl || '';
   } catch {}
 
+  // Extract channel/sender from title — format is usually "#channel-name" or "Person Name"
+  // The notification title contains the channel/sender, body contains the message
   const isChannel = title.startsWith('#');
-  const channelName = isChannel ? title.slice(1) : ''; // strip the #
+  const channelName = isChannel ? title.slice(1).split(':')[0].trim() : title.split(':')[0].trim();
 
   let url = 'slack://open';
-  if (slackWorkspaceUrl && isChannel) {
-    // e.g. https://unity.slack.com/archives/ — Slack web opens channel by name
-    url = `${slackWorkspaceUrl.replace(/\/$/, '')}/messages/${channelName}`;
-  } else if (slackWorkspaceUrl && !isChannel) {
-    // DM — open workspace and they can find the person
-    url = slackWorkspaceUrl;
+  if (slackWorkspaceUrl) {
+    const base = slackWorkspaceUrl.replace(/\/$/, '');
+    if (isChannel) {
+      // Opens channel directly in Slack web
+      url = `${base}/messages/${channelName}`;
+    } else {
+      // DM — search for the person
+      url = `${base}/messages/@${channelName.toLowerCase().replace(/\s+/g, '.')}`;
+    }
   }
 
   const task = {
