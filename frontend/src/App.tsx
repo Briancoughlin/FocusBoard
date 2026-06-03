@@ -162,7 +162,7 @@ export default function App() {
         completedToday={completedToday}
       />
 
-      <main className="flex-1 min-h-0 px-6 pt-5 pb-6 overflow-hidden">
+      <main className={`flex-1 min-h-0 px-6 pt-5 pb-6 ${view === 'settings' ? 'overflow-y-auto' : 'overflow-hidden'}`}>
         {view === 'board' && (
           <KanbanBoard
             tasks={kanbanTasks}
