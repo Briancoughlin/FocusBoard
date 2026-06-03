@@ -53,7 +53,8 @@ function ItemRow({ item, onRead, onAddToBoard }: {
           <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{timeAgo(item.receivedAt)}</span>
           <button
             onClick={e => { e.stopPropagation(); onRead(item.id); }}
-            className="text-gray-300 hover:text-gray-500 transition-colors"
+            className="transition-colors hover:text-red-400"
+            style={{ color: 'var(--text-secondary)' }}
             title="Dismiss"
           >
             <X size={11} />
@@ -77,7 +78,8 @@ function ItemRow({ item, onRead, onAddToBoard }: {
             target="_blank"
             rel="noopener noreferrer"
             onClick={e => { e.stopPropagation(); onRead(item.id); }}
-            className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+            className="flex items-center gap-1 text-xs transition-colors"
+            style={{ color: 'var(--text-secondary)' }}
           >
             <ExternalLink size={10} /> Open
           </a>
