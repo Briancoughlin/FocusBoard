@@ -30,6 +30,7 @@ export function getUrgencyScore(task: Task): number {
 export function getUrgencyLevel(task: Task): UrgencyLevel {
   if (task.dueDate) {
     const diffDays = (new Date(task.dueDate).getTime() - Date.now()) / 86400000;
+    if (diffDays < -30) return 'normal'; // ignore ancient due dates from bad AI extraction
     if (diffDays < 0) return 'overdue';
     if (diffDays < 1) return 'today';
     if (diffDays < 4) return 'soon';
@@ -151,7 +152,10 @@ export function TaskCard({ task, index, onDismiss }: Props) {
                 </div>
               ) : (
                 <span className="text-xs text-gray-300">
-                  {task.updatedAt ? `${Math.floor((Date.now() - new Date(task.updatedAt).getTime()) / 86400000)}d ago` : ''}
+                  {task.updatedAt && task.source !== 'paste' ? (() => {
+                    const days = Math.floor((Date.now() - new Date(task.updatedAt).getTime()) / 86400000);
+                    return days > 0 ? `${days}d ago` : 'Today';
+                  })() : ''}
                 </span>
               )}
 
