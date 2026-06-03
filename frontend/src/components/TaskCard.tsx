@@ -76,7 +76,6 @@ export function TaskCard({ task, index, onDismiss }: Props) {
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
-          onClick={() => { if (!snapshot.isDragging && task.url) window.open(task.url, '_blank'); }}
           className={`
             bg-white rounded-lg border border-gray-200 mb-2 cursor-grab active:cursor-grabbing
             shadow-sm hover:shadow-md transition-all duration-150 overflow-hidden
@@ -124,8 +123,11 @@ export function TaskCard({ task, index, onDismiss }: Props) {
               <p className="text-xs font-mono text-blue-400 mb-0.5">{task.ticketKey}</p>
             )}
 
-            {/* Title */}
-            <p className="text-sm font-semibold text-gray-800 leading-snug mb-1 line-clamp-2">
+            {/* Title — click to open */}
+            <p
+              onClick={e => { e.stopPropagation(); if (task.url) window.open(task.url, '_blank'); }}
+              className={`text-sm font-semibold text-gray-800 leading-snug mb-1 line-clamp-2 ${task.url ? 'hover:text-blue-600 cursor-pointer' : ''}`}
+            >
               {task.title}
             </p>
 
