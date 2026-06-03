@@ -7,6 +7,7 @@ interface Props {
   onCreated: (originalTaskId: string, jiraTask: Task) => void;
   onDismiss: () => void;
   suggestedProjectKey?: string; // from active epic filter
+  jiraTasks?: Task[]; // all Jira tasks — used to extract project keys
 }
 
 interface JiraProject {
@@ -16,7 +17,7 @@ interface JiraProject {
 
 const ISSUE_TYPES = ['Task', 'Story', 'Bug', 'Spike'];
 
-export function JiraCreatePrompt({ task, onCreated, onDismiss, suggestedProjectKey }: Props) {
+export function JiraCreatePrompt({ task, onCreated, onDismiss, suggestedProjectKey, jiraTasks = [] }: Props) {
   const [summary, setSummary] = useState(task.title);
   const [description, setDescription] = useState(task.description || '');
   const [projectKey, setProjectKey] = useState('');
@@ -27,25 +28,38 @@ export function JiraCreatePrompt({ task, onCreated, onDismiss, suggestedProjectK
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setLoadingProjects(true);
-    fetch('/api/jira/projects', { credentials: 'include' })
-      .then(r => r.json())
-      .then(data => {
-        const list: JiraProject[] = data.projects || [];
-        // Filter to default project if set, otherwise show all
-        const defaultProject = suggestedProjectKey || data.defaultProject || '';
-        const filtered = defaultProject
-          ? list.filter(p => p.key === defaultProject)
-          : list;
-        setProjects(filtered.length > 0 ? filtered : list);
-        const preferred = filtered.find(p => p.key === defaultProject) || filtered[0] || list[0];
-        if (preferred) setProjectKey(preferred.key);
-      })
-      .catch(err => {
-        setError('Failed to load projects: ' + err.message);
-      })
-      .finally(() => setLoadingProjects(false));
-  }, []);
+    // Extract unique project keys from existing Jira tasks — no extra API call needed
+    const projectKeys = [...new Set(
+      jiraTasks
+        .filter(t => t.ticketKey)
+        .map(t => t.ticketKey!.split('-')[0])
+    )].sort();
+
+    if (projectKeys.length > 0) {
+      const list: JiraProject[] = projectKeys.map(k => ({ key: k, name: k }));
+      const preferred = suggestedProjectKey
+        ? list.find(p => p.key === suggestedProjectKey) || list[0]
+        : list[0];
+      setProjects(list);
+      if (preferred) setProjectKey(preferred.key);
+      setLoadingProjects(false);
+    } else {
+      // Fallback to API if no tasks loaded yet
+      setLoadingProjects(true);
+      fetch('/api/jira/projects', { credentials: 'include' })
+        .then(r => r.json())
+        .then(data => {
+          const list: JiraProject[] = data.projects || [];
+          const defaultProject = suggestedProjectKey || data.defaultProject || '';
+          const filtered = defaultProject ? list.filter(p => p.key === defaultProject) : list;
+          setProjects(filtered.length > 0 ? filtered : list);
+          const preferred = filtered[0] || list[0];
+          if (preferred) setProjectKey(preferred.key);
+        })
+        .catch(err => setError('Failed to load projects: ' + err.message))
+        .finally(() => setLoadingProjects(false));
+    }
+  }, [jiraTasks, suggestedProjectKey]);
 
   async function handleCreate() {
     if (!projectKey) {

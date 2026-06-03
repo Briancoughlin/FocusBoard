@@ -352,6 +352,7 @@ export default function App() {
           onCreated={handleJiraCreated}
           onDismiss={() => setJiraCreateTask(null)}
           suggestedProjectKey={activeEpicKey !== 'all' ? activeEpicKey.split('-')[0] : undefined}
+          jiraTasks={tasks.filter(t => t.source === 'jira')}
         />
       )}
       {pasteOpen && (
