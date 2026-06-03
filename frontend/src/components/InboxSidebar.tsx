@@ -26,13 +26,86 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(diff / 86400)}d ago`;
 }
 
+function ItemRow({ item, onRead, onAddToBoard }: {
+  item: InboxItem;
+  onRead: (id: string) => void;
+  onAddToBoard: (item: InboxItem) => void;
+}) {
+  return (
+    <div
+      onClick={() => onRead(item.id)}
+      className={`px-3 py-2.5 border-b cursor-pointer transition-colors ${item.read ? 'opacity-50' : ''} ${
+        item.source === 'slack' && !item.read ? 'bg-purple-50 border-purple-100 hover:bg-purple-100' :
+        item.source === 'github' && !item.read && item.title.includes('❌') ? 'bg-red-50 border-red-100 hover:bg-red-100' :
+        item.source === 'github' && !item.read && item.title.includes('✅') ? 'bg-green-50 border-green-100 hover:bg-green-100' :
+        'border-gray-50 hover:bg-gray-50'
+      }`}
+    >
+      <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center gap-1.5">
+          {item.source === 'gmail' ? <Mail size={10} className="text-red-400" /> :
+           item.source === 'slack' ? <Hash size={10} className="text-purple-400" /> :
+           <Github size={10} className="text-gray-600" />}
+          {!item.read && <span className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />}
+        </div>
+        <span className="text-xs text-gray-300">{timeAgo(item.receivedAt)}</span>
+      </div>
+      <p className="text-xs font-semibold text-gray-800 line-clamp-2 leading-snug mb-1">{item.title}</p>
+      {item.preview && (
+        <p className="text-xs text-gray-400 line-clamp-1 leading-relaxed">{item.preview}</p>
+      )}
+      <div className="flex items-center gap-2 mt-1.5">
+        <button
+          onClick={e => { e.stopPropagation(); onAddToBoard(item); onRead(item.id); }}
+          className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700 font-medium transition-colors"
+        >
+          <Plus size={10} /> Add to board
+        </button>
+        {item.url && (
+          <a
+            href={item.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={e => { e.stopPropagation(); onRead(item.id); }}
+            className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <ExternalLink size={10} /> Open
+          </a>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SectionHeader({ icon, title, count, onMarkAll }: {
+  icon: React.ReactNode;
+  title: string;
+  count: number;
+  onMarkAll?: () => void;
+}) {
+  return (
+    <div className="px-3 py-2 bg-gray-50 border-b border-gray-200 flex items-center justify-between sticky top-0 z-10">
+      <div className="flex items-center gap-1.5">
+        {icon}
+        <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">{title}</span>
+        {count > 0 && (
+          <span className="text-xs font-bold px-1.5 py-0.5 bg-blue-500 text-white rounded-full">{count}</span>
+        )}
+      </div>
+      {count > 0 && onMarkAll && (
+        <button onClick={onMarkAll} className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
+          All read
+        </button>
+      )}
+    </div>
+  );
+}
+
 export function InboxSidebar({ tasks, onAddToBoard }: Props) {
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    getPersistedValue<string[]>('inbox-read', []).then(ids => {
-      setReadIds(new Set(ids));
-    });
+    getPersistedValue<string[]>('inbox-read', []).then(ids => setReadIds(new Set(ids)));
   }, []);
 
   const markRead = (id: string) => {
@@ -43,139 +116,95 @@ export function InboxSidebar({ tasks, onAddToBoard }: Props) {
     });
   };
 
-  // Build inbox items from gmail + slack tasks
-  const inboxItems: InboxItem[] = tasks
-    .filter(t => t.source === 'gmail' || t.source === 'slack' || t.source === 'github')
-    .map(t => ({
-      id: t.id,
-      source: t.source as 'gmail' | 'slack',
-      title: t.title,
-      preview: t.description,
-      url: t.url,
-      receivedAt: t.updatedAt,
-      read: readIds.has(t.id),
-    }))
+  const markAllRead = (ids: string[]) => {
+    setReadIds(prev => {
+      const next = new Set([...prev, ...ids]);
+      setPersistedValue('inbox-read', [...next]);
+      return next;
+    });
+  };
+
+  const toItem = (t: Task): InboxItem => ({
+    id: t.id,
+    source: t.source as 'gmail' | 'slack' | 'github',
+    title: t.title,
+    preview: t.description,
+    url: t.url,
+    receivedAt: t.updatedAt,
+    read: readIds.has(t.id),
+  });
+
+  const githubItems = tasks
+    .filter(t => t.source === 'github')
+    .map(toItem)
     .sort((a, b) => {
-      // Slack first, then GitHub CI fails, then others
-      const priority = (s: InboxItem) => s.source === 'slack' ? 0 : (s.source === 'github' && s.title.includes('❌')) ? 1 : 2;
-      if (priority(a) !== priority(b)) return priority(a) - priority(b);
+      const p = (i: InboxItem) => i.title.includes('❌') ? 0 : i.title.includes('👀') ? 1 : 2;
+      if (p(a) !== p(b)) return p(a) - p(b);
       return new Date(b.receivedAt).getTime() - new Date(a.receivedAt).getTime();
     });
 
-  const unreadCount = inboxItems.filter(i => !i.read).length;
+  const inboxItems = tasks
+    .filter(t => t.source === 'gmail' || t.source === 'slack')
+    .map(toItem)
+    .sort((a, b) => {
+      if (a.source === 'slack' && b.source !== 'slack') return -1;
+      if (b.source === 'slack' && a.source !== 'slack') return 1;
+      return new Date(b.receivedAt).getTime() - new Date(a.receivedAt).getTime();
+    });
+
+  const githubUnread = githubItems.filter(i => !i.read).length;
+  const inboxUnread = inboxItems.filter(i => !i.read).length;
+  const totalUnread = githubUnread + inboxUnread;
 
   return (
     <div className="flex flex-col h-full bg-white border-l border-gray-200 w-64 flex-shrink-0">
-      {/* Header */}
-      <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Inbox size={15} className="text-gray-500" />
-          <span className="text-sm font-semibold text-gray-700">Inbox</span>
-          {unreadCount > 0 && (
-            <span className="text-xs font-bold px-1.5 py-0.5 bg-blue-500 text-white rounded-full">
-              {unreadCount}
-            </span>
-          )}
-        </div>
-        {unreadCount > 0 && (
-          <button
-            onClick={() => {
-              const next = new Set([...readIds, ...inboxItems.map(i => i.id)]);
-              setReadIds(next);
-              setPersistedValue('inbox-read', [...next]);
-            }}
-            className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            Mark all read
-          </button>
+
+      {/* Top bar */}
+      <div className="px-3 py-2.5 border-b border-gray-200 flex items-center gap-2">
+        <Inbox size={14} className="text-gray-500" />
+        <span className="text-sm font-semibold text-gray-700">Notifications</span>
+        {totalUnread > 0 && (
+          <span className="text-xs font-bold px-1.5 py-0.5 bg-blue-500 text-white rounded-full ml-auto">{totalUnread}</span>
         )}
       </div>
 
-      {/* Items */}
       <div className="flex-1 overflow-y-auto">
+
+        {/* GitHub section */}
+        <SectionHeader
+          icon={<Github size={12} className="text-gray-600" />}
+          title="GitHub"
+          count={githubUnread}
+          onMarkAll={() => markAllRead(githubItems.map(i => i.id))}
+        />
+        {githubItems.length === 0 ? (
+          <div className="px-3 py-4 text-center">
+            <p className="text-xs text-gray-300">No GitHub notifications</p>
+          </div>
+        ) : (
+          githubItems.map(item => (
+            <ItemRow key={item.id} item={item} onRead={markRead} onAddToBoard={onAddToBoard} />
+          ))
+        )}
+
+        {/* Inbox section */}
+        <SectionHeader
+          icon={<Inbox size={12} className="text-gray-500" />}
+          title="Inbox"
+          count={inboxUnread}
+          onMarkAll={() => markAllRead(inboxItems.map(i => i.id))}
+        />
         {inboxItems.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center px-4">
-            <Inbox size={28} className="text-gray-200 mb-2" />
-            <p className="text-sm font-medium text-gray-400">No messages yet</p>
-            <p className="text-xs text-gray-300 mt-1">Gmail and Slack items will appear here once connected</p>
+          <div className="px-3 py-4 text-center">
+            <p className="text-xs text-gray-300">No messages yet</p>
+            <p className="text-xs text-gray-200 mt-1">Gmail & Slack appear here</p>
           </div>
         ) : (
           inboxItems.map(item => (
-            <div
-              key={item.id}
-              onClick={() => markRead(item.id)}
-              className={`px-3 py-3 border-b cursor-pointer transition-colors ${
-                item.read ? 'opacity-50' : ''
-              } ${
-                item.source === 'slack' && !item.read
-                  ? 'bg-purple-50 border-purple-100 hover:bg-purple-100'
-                  : item.source === 'github' && !item.read && item.title.includes('❌')
-                  ? 'bg-red-50 border-red-100 hover:bg-red-100'
-                  : item.source === 'github' && !item.read && item.title.includes('✅')
-                  ? 'bg-green-50 border-green-100 hover:bg-green-100'
-                  : 'border-gray-50 hover:bg-gray-50'
-              }`}
-            >
-              {/* Source + time */}
-              <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-1.5">
-                  {item.source === 'gmail'
-                    ? <Mail size={11} className="text-red-400" />
-                    : item.source === 'slack'
-                    ? <Hash size={11} className="text-purple-400" />
-                    : <Github size={11} className="text-gray-600" />
-                  }
-                  <span className={`text-xs font-medium ${
-                    item.source === 'gmail' ? 'text-red-400' :
-                    item.source === 'slack' ? 'text-purple-400' : 'text-gray-600'
-                  }`}>
-                    {item.source === 'gmail' ? 'Gmail' : item.source === 'slack' ? 'Slack' : 'GitHub'}
-                  </span>
-                  {!item.read && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />
-                  )}
-                </div>
-                <span className="text-xs text-gray-300">{timeAgo(item.receivedAt)}</span>
-              </div>
-
-              {/* Title */}
-              <p className="text-xs font-semibold text-gray-800 line-clamp-2 leading-snug mb-1">
-                {item.title}
-              </p>
-
-              {/* Preview */}
-              {item.preview && (
-                <p className="text-xs text-gray-400 line-clamp-2 leading-relaxed">
-                  {item.preview}
-                </p>
-              )}
-
-              {/* Actions */}
-              <div className="flex items-center gap-2 mt-2">
-                <button
-                  onClick={e => { e.stopPropagation(); onAddToBoard(item); markRead(item.id); }}
-                  className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700 font-medium transition-colors"
-                  title="Add to board as task"
-                >
-                  <Plus size={11} />
-                  Add to board
-                </button>
-                {item.url && (
-                  <a
-                    href={item.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={e => { e.stopPropagation(); markRead(item.id); }}
-                    className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors"
-                  >
-                    <ExternalLink size={11} />
-                    Open
-                  </a>
-                )}
-              </div>
-            </div>
+            <ItemRow key={item.id} item={item} onRead={markRead} onAddToBoard={onAddToBoard} />
           ))
         )}
+
       </div>
     </div>
   );
