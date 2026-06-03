@@ -274,6 +274,12 @@ export default function App() {
 
     // Only inject into local state if In Progress — otherwise let next Jira sync pick it up
     if (jiraTask.status === 'inprogress') {
+      // Mark as pinned so it always shows in Focus view regardless of priority/due date
+      setPinnedIds(prev => {
+        const next = new Set(prev).add(jiraTask.id);
+        setPersistedValue('pinned-tasks', [...next]);
+        return next;
+      });
       setInjectedTasks(prev => {
         const updated = [...prev, jiraTask];
         setPersistedValue('injected-tasks', updated);
