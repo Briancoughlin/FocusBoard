@@ -49,7 +49,16 @@ try {
             $title = if ($texts.Count -gt 0) { $texts[0].Text } else { "" }
             $body  = if ($texts.Count -gt 1) { $texts[1].Text } else { "" }
 
-            Write-Output "$($n.Id)|$appName|$title|$body"
+            # Try to get the activation launch URL from the notification
+            $launchUrl = ""
+            try {
+                $toastXml = $n.Notification.Content.GetXml()
+                if ($toastXml -match 'launch="([^"]*)"') {
+                    $launchUrl = $matches[1]
+                }
+            } catch {}
+
+            Write-Output "$($n.Id)|$appName|$title|$body|$launchUrl"
         } catch {
             # Skip malformed notifications
         }
@@ -80,8 +89,10 @@ async function checkNotifications() {
     for (const line of output.split('\n').filter(Boolean)) {
       const parts = line.split('|');
       if (parts.length < 3) continue;
-      const [id, appName, title, ...bodyParts] = parts;
-      const body = bodyParts.join('|'); // body may contain pipes
+      const [id, appName, title, ...rest] = parts;
+      // Last part is launchUrl, everything in between is body
+      const launchUrl = rest[rest.length - 1] || '';
+      const body = rest.slice(0, -1).join('|');
 
       if (!id || SEEN_IDS.has(id)) continue;
       SEEN_IDS.add(id);
@@ -90,7 +101,7 @@ async function checkNotifications() {
         const res = await fetch(FOCUSBOARD_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id, title: title.trim(), body: body.trim(), appName: appName.trim() }),
+          body: JSON.stringify({ id, title: title.trim(), body: body.trim(), appName: appName.trim(), launchUrl: launchUrl.trim() }),
         });
 
         if (res.ok) {

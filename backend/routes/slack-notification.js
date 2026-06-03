@@ -39,7 +39,7 @@ export function getPendingAndClear() {
 const router = express.Router();
 
 router.post('/', (req, res) => {
-  const { id, title = '', body = '', appName = 'Slack' } = req.body || {};
+  const { id, title = '', body = '', appName = 'Slack', launchUrl = '' } = req.body || {};
 
   if (typeof title !== 'string' || typeof body !== 'string') {
     return res.status(400).json({ error: 'title and body must be strings' });
@@ -78,14 +78,13 @@ router.post('/', (req, res) => {
   const isChannel = title.startsWith('#');
   const channelName = isChannel ? title.slice(1).split(':')[0].trim() : title.split(':')[0].trim();
 
-  let url = 'slack://open';
-  if (slackWorkspaceUrl) {
+  // Prefer the Windows notification launch URL — it opens the exact message
+  let url = launchUrl || 'slack://open';
+  if (!launchUrl && slackWorkspaceUrl) {
     const base = slackWorkspaceUrl.replace(/\/$/, '');
     if (isChannel) {
-      // Opens channel directly in Slack web
       url = `${base}/messages/${channelName}`;
     } else {
-      // DM — search for the person
       url = `${base}/messages/@${channelName.toLowerCase().replace(/\s+/g, '.')}`;
     }
   }
