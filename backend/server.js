@@ -28,14 +28,15 @@ app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:3001'], crede
 app.use(express.json());
 app.use(cookieParser());
 
-// --- Auth middleware for all /api/* routes ---
-app.use('/api', (req, res, next) => {
-  const sessionCookie = req.cookies && req.cookies.fb_session;
-  if (!sessionCookie || sessionCookie !== AUTH_TOKEN) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-  next();
-});
+// Auth middleware disabled — running on localhost only
+// To re-enable, uncomment and add credentials: 'include' to all frontend fetch calls
+// app.use('/api', (req, res, next) => {
+//   const sessionCookie = req.cookies && req.cookies.fb_session;
+//   if (!sessionCookie || sessionCookie !== AUTH_TOKEN) {
+//     return res.status(401).json({ error: 'Unauthorized' });
+//   }
+//   next();
+// });
 
 // Serve built frontend static files — set auth cookie so visiting the app grants access
 const frontendDist = path.join(__dirname, '..', 'frontend', 'dist');
