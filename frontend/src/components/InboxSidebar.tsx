@@ -78,23 +78,29 @@ function ItemRow({ item, onRead, onAddToBoard }: {
   );
 }
 
-function SectionHeader({ icon, title, count, onMarkAll }: {
+function SectionHeader({ icon, title, count, onMarkAll, collapsed, onToggle }: {
   icon: React.ReactNode;
   title: string;
   count: number;
   onMarkAll?: () => void;
+  collapsed: boolean;
+  onToggle: () => void;
 }) {
   return (
-    <div className="px-3 py-2 flex items-center justify-between sticky top-0 z-10" style={{ backgroundColor: 'var(--bg-sidebar)', borderBottom: '1px solid var(--border)' }}>
+    <div className="px-3 py-2 flex items-center justify-between sticky top-0 z-10 cursor-pointer select-none"
+      style={{ backgroundColor: 'var(--bg-sidebar)', borderBottom: '1px solid var(--border)' }}
+      onClick={onToggle}
+    >
       <div className="flex items-center gap-1.5">
+        <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{collapsed ? '▶' : '▼'}</span>
         {icon}
         <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>{title}</span>
         {count > 0 && (
           <span className="text-xs font-bold px-1.5 py-0.5 bg-blue-500 text-white rounded-full">{count}</span>
         )}
       </div>
-      {count > 0 && onMarkAll && (
-        <button onClick={onMarkAll} className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
+      {count > 0 && onMarkAll && !collapsed && (
+        <button onClick={e => { e.stopPropagation(); onMarkAll(); }} className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
           All read
         </button>
       )}
@@ -104,6 +110,8 @@ function SectionHeader({ icon, title, count, onMarkAll }: {
 
 export function InboxSidebar({ tasks, onAddToBoard }: Props) {
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
+  const [githubCollapsed, setGithubCollapsed] = useState(false);
+  const [inboxCollapsed, setInboxCollapsed] = useState(false);
 
   useEffect(() => {
     getPersistedValue<string[]>('inbox-read', []).then(ids => setReadIds(new Set(ids)));
@@ -179,8 +187,10 @@ export function InboxSidebar({ tasks, onAddToBoard }: Props) {
           title="GitHub"
           count={githubUnread}
           onMarkAll={() => markAllRead(githubItems.map(i => i.id))}
+          collapsed={githubCollapsed}
+          onToggle={() => setGithubCollapsed(c => !c)}
         />
-        {githubItems.length === 0 ? (
+        {!githubCollapsed && (githubItems.length === 0 ? (
           <div className="px-3 py-4 text-center" style={{ backgroundColor: 'var(--bg-card)' }}>
             <p className="text-xs" style={{ color: 'var(--border)' }}>No GitHub notifications</p>
           </div>
@@ -188,7 +198,7 @@ export function InboxSidebar({ tasks, onAddToBoard }: Props) {
           githubItems.map(item => (
             <ItemRow key={item.id} item={item} onRead={markRead} onAddToBoard={onAddToBoard} />
           ))
-        )}
+        ))}
 
         {/* Inbox section */}
         <SectionHeader
@@ -196,8 +206,10 @@ export function InboxSidebar({ tasks, onAddToBoard }: Props) {
           title="Inbox"
           count={inboxUnread}
           onMarkAll={() => markAllRead(inboxItems.map(i => i.id))}
+          collapsed={inboxCollapsed}
+          onToggle={() => setInboxCollapsed(c => !c)}
         />
-        {inboxItems.length === 0 ? (
+        {!inboxCollapsed && (inboxItems.length === 0 ? (
           <div className="px-3 py-4 text-center" style={{ backgroundColor: 'var(--bg-card)' }}>
             <p className="text-xs" style={{ color: 'var(--border)' }}>No messages yet</p>
             <p className="text-xs mt-1" style={{ color: 'var(--border)' }}>Gmail & Slack appear here</p>
@@ -206,7 +218,7 @@ export function InboxSidebar({ tasks, onAddToBoard }: Props) {
           inboxItems.map(item => (
             <ItemRow key={item.id} item={item} onRead={markRead} onAddToBoard={onAddToBoard} />
           ))
-        )}
+        ))}
 
       </div>
     </div>
