@@ -104,4 +104,84 @@ router.get('/projects', async (req, res) => {
   }
 });
 
+// POST /api/jira/transition — transition a Jira issue to a new status
+router.post('/transition', async (req, res) => {
+  const cfg = loadConfig();
+  if (!cfg.jiraUrl || !cfg.jiraToken) {
+    return res.status(400).json({ error: 'Jira not configured' });
+  }
+
+  const { issueKey, targetStatus } = req.body;
+  if (!issueKey || !targetStatus) {
+    return res.status(400).json({ error: 'issueKey and targetStatus are required' });
+  }
+
+  // Map targetStatus to candidate status name substrings (case-insensitive)
+  const statusMap = {
+    todo: ['ready', 'to do', 'backlog'],
+    inprogress: ['in progress', 'in review'],
+    waiting: ['hold', 'blocked', 'waiting'],
+    done: ['done', 'closed', 'resolved'],
+  };
+
+  const candidates = statusMap[targetStatus];
+  if (!candidates) {
+    return res.status(400).json({ error: `Unknown targetStatus: ${targetStatus}` });
+  }
+
+  try {
+    // Fetch available transitions
+    const transitionsUrl = `${cfg.jiraUrl}/rest/api/2/issue/${issueKey}/transitions`;
+    const transitionsResponse = await fetch(transitionsUrl, {
+      headers: {
+        'Authorization': `Bearer ${cfg.jiraToken}`,
+        'Accept': 'application/json',
+      },
+    });
+
+    const transitionsText = await transitionsResponse.text();
+    if (!transitionsResponse.ok) {
+      throw new Error(`Jira API error ${transitionsResponse.status}: ${transitionsText.slice(0, 300)}`);
+    }
+
+    const transitionsData = JSON.parse(transitionsText);
+    const transitions = transitionsData.transitions || [];
+
+    // Find matching transition
+    const match = transitions.find(t => {
+      const toName = (t.to?.name || '').toLowerCase();
+      return candidates.some(c => toName.includes(c));
+    });
+
+    if (!match) {
+      return res.json({
+        success: false,
+        error: `No transition found for targetStatus '${targetStatus}'`,
+        availableTransitions: transitions.map(t => ({ id: t.id, name: t.name, toStatus: t.to?.name })),
+      });
+    }
+
+    // Apply the transition
+    const applyResponse = await fetch(transitionsUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${cfg.jiraToken}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({ transition: { id: match.id } }),
+    });
+
+    if (!applyResponse.ok) {
+      const applyText = await applyResponse.text();
+      throw new Error(`Jira transition error ${applyResponse.status}: ${applyText.slice(0, 300)}`);
+    }
+
+    return res.json({ success: true, transitionName: match.name });
+  } catch (err) {
+    console.error('Jira transition error:', err.message);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;

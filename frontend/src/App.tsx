@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { Task, Status } from './types';
-import { syncAll } from './services/api';
+import { syncAll, transitionJiraTicket } from './services/api';
 import { getPersistedValue, setPersistedValue } from './services/persistence';
 import { fetchWindowsTheme, applyTheme } from './services/theme';
 import { Header } from './components/Header';
@@ -160,13 +160,40 @@ export default function App() {
       });
     }
 
-    // Check for Jira done/create prompts — resolve task from current state
+    // Fire Jira transition silently in the background for Jira cards
+    // We use functional updaters so we always have current state, even with empty useCallback deps
+    setRawTasks(currentRaw => {
+      const movedTask = currentRaw.find(t => t.id === taskId);
+      if (movedTask?.source === 'jira' && movedTask?.ticketKey) {
+        transitionJiraTicket(movedTask.ticketKey, newStatus).then(result => {
+          if (!result.success) console.warn('Jira transition failed:', result.error);
+        });
+      }
+      return currentRaw;
+    });
+    setPastedTasks(currentPasted => {
+      const movedTask = currentPasted.find(t => t.id === taskId);
+      if (movedTask?.source === 'jira' && movedTask?.ticketKey) {
+        transitionJiraTicket(movedTask.ticketKey, newStatus).then(result => {
+          if (!result.success) console.warn('Jira transition failed:', result.error);
+        });
+      }
+      return currentPasted;
+    });
+    setInjectedTasks(currentInjected => {
+      const movedTask = currentInjected.find(t => t.id === taskId);
+      if (movedTask?.source === 'jira' && movedTask?.ticketKey) {
+        transitionJiraTicket(movedTask.ticketKey, newStatus).then(result => {
+          if (!result.success) console.warn('Jira transition failed:', result.error);
+        });
+      }
+      return currentInjected;
+    });
+
+    // Check for Jira create prompt — resolve task from current state
     setRawTasks(currentRaw => {
       const allTasks = applyOverrides([...currentRaw], overridesRef.current);
       const moved = allTasks.find(t => t.id === taskId);
-      if (newStatus === 'done' && moved?.source === 'jira') {
-        setJiraDoneTask(moved);
-      }
       if (newStatus === 'inprogress' && moved && moved.source !== 'jira') {
         setJiraCreateTask(moved);
       }

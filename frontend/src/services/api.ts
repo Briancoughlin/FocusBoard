@@ -50,3 +50,17 @@ export async function saveConfig(config: Partial<Config>): Promise<void> {
 export function getGoogleAuthUrl(): string {
   return '/auth/google';
 }
+
+export async function transitionJiraTicket(issueKey: string, targetStatus: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await fetch('/api/jira/transition', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ issueKey, targetStatus }),
+    });
+    return res.json();
+  } catch {
+    return { success: false, error: 'Network error' };
+  }
+}
