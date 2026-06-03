@@ -25,7 +25,7 @@ router.post('/create', async (req, res) => {
     return res.status(400).json({ error: 'Jira not configured' });
   }
 
-  const { summary, description, projectKey, issueType, priority, fixVersion } = req.body;
+  const { summary, description, projectKey, issueType, priority, fixVersion, initialStatus } = req.body;
   if (!summary || !projectKey) {
     return res.status(400).json({ error: 'summary and projectKey are required' });
   }
@@ -68,9 +68,15 @@ router.post('/create', async (req, res) => {
         headers: { 'Authorization': `Bearer ${cfg.jiraToken}`, 'Accept': 'application/json' },
       });
       const transitionsData = await transitionsRes.json();
+      const statusCandidates = {
+        todo: ['ready', 'to do', 'backlog'],
+        inprogress: ['in progress', 'in review'],
+        waiting: ['hold', 'blocked', 'waiting'],
+      };
+      const candidates = statusCandidates[initialStatus || 'inprogress'] || statusCandidates.inprogress;
       const inProgressTransition = (transitionsData.transitions || []).find(t => {
         const name = (t.to?.name || '').toLowerCase();
-        return name.includes('in progress') || name.includes('in review');
+        return candidates.some(c => name.includes(c));
       });
       if (inProgressTransition) {
         await fetch(transitionsUrl, {

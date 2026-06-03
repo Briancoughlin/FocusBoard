@@ -14,6 +14,11 @@ interface JiraProject { key: string; name: string; }
 
 const ISSUE_TYPES = ['Task', 'Story', 'Bug', 'Spike'];
 const PRIORITIES = ['Critical', 'High', 'Medium', 'Low'];
+const STATUSES = [
+  { value: 'todo', label: 'Ready to Start' },
+  { value: 'inprogress', label: 'In Progress' },
+  { value: 'waiting', label: 'On Hold / Blocked' },
+];
 
 export function JiraCreatePrompt({ task, onCreated, onDismiss, suggestedProjectKey, jiraTasks = [] }: Props) {
   const [summary, setSummary] = useState(task.title);
@@ -22,6 +27,7 @@ export function JiraCreatePrompt({ task, onCreated, onDismiss, suggestedProjectK
   const [issueType, setIssueType] = useState('Task');
   const [priority, setPriority] = useState('Medium');
   const [fixVersion, setFixVersion] = useState('');
+  const [initialStatus, setInitialStatus] = useState('inprogress');
   const [projects, setProjects] = useState<JiraProject[]>([]);
   const [fixVersions, setFixVersions] = useState<string[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(true);
@@ -74,7 +80,7 @@ export function JiraCreatePrompt({ task, onCreated, onDismiss, suggestedProjectK
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ summary, description, projectKey, issueType, priority, fixVersion: fixVersion || undefined }),
+        body: JSON.stringify({ summary, description, projectKey, issueType, priority, fixVersion: fixVersion || undefined, initialStatus }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to create ticket');
@@ -85,7 +91,7 @@ export function JiraCreatePrompt({ task, onCreated, onDismiss, suggestedProjectK
         title: summary,
         description,
         source: 'jira',
-        status: 'inprogress',
+        status: initialStatus as any,
         priority: priority.toLowerCase() as 'high' | 'medium' | 'low',
         url: data.url,
         ticketKey: data.key,
@@ -153,7 +159,7 @@ export function JiraCreatePrompt({ task, onCreated, onDismiss, suggestedProjectK
             </div>
           </div>
 
-          {/* Row: Priority + Fix Version */}
+          {/* Row: Priority + Status */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
@@ -162,12 +168,20 @@ export function JiraCreatePrompt({ task, onCreated, onDismiss, suggestedProjectK
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Fix Version</label>
-              <select value={fixVersion} onChange={e => setFixVersion(e.target.value)} className={selectClass}>
-                <option value="">None</option>
-                {fixVersions.map(v => <option key={v} value={v}>{v}</option>)}
+              <label className="block text-sm font-medium text-gray-700 mb-1">Initial Status</label>
+              <select value={initialStatus} onChange={e => setInitialStatus(e.target.value)} className={selectClass}>
+                {STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
               </select>
             </div>
+          </div>
+
+          {/* Fix Version */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Fix Version</label>
+            <select value={fixVersion} onChange={e => setFixVersion(e.target.value)} className={selectClass}>
+              <option value="">None</option>
+              {fixVersions.map(v => <option key={v} value={v}>{v}</option>)}
+            </select>
           </div>
 
           {error && (
