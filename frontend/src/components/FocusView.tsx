@@ -65,14 +65,27 @@ export function FocusView({ tasks, kanbanTasks, isLoading, onTaskMove, onDismiss
     onTaskMove(result.draggableId, result.destination.droppableId as Status);
   }, [onTaskMove]);
 
+  const [selectedEpic, setSelectedEpic] = useState<string>('all');
+
   const endOfWeek = new Date();
   endOfWeek.setDate(endOfWeek.getDate() + (7 - endOfWeek.getDay()));
   endOfWeek.setHours(23, 59, 59, 999);
 
-  const weekTasks = kanbanTasks.filter(t => {
-    if (t.dueDate) return new Date(t.dueDate) <= endOfWeek;
-    return t.source === 'jira' && t.priority === 'high';
-  });
+  // Build epic list from Jira tasks
+  const epics = Array.from(
+    new Map(
+      kanbanTasks
+        .filter(t => t.epicKey)
+        .map(t => [t.epicKey!, { key: t.epicKey!, name: t.epicName || t.epicKey! }])
+    ).values()
+  ).sort((a, b) => a.name.localeCompare(b.name));
+
+  const weekTasks = kanbanTasks
+    .filter(t => {
+      if (t.dueDate) return new Date(t.dueDate) <= endOfWeek;
+      return t.source === 'jira' && t.priority === 'high';
+    })
+    .filter(t => selectedEpic === 'all' || t.epicKey === selectedEpic);
 
 
   return (
@@ -93,7 +106,31 @@ export function FocusView({ tasks, kanbanTasks, isLoading, onTaskMove, onDismiss
       </div>
 
       {/* Kanban pane */}
-      <div style={{ height: `${100 - splitPercent}%` }} className="overflow-hidden pt-1">
+      <div style={{ height: `${100 - splitPercent}%` }} className="overflow-hidden pt-1 flex flex-col">
+        {/* Epic filter */}
+        {epics.length > 0 && (
+          <div className="flex items-center gap-2 px-1 pb-2 flex-shrink-0">
+            <span className="text-xs text-gray-400 font-medium">Epic:</span>
+            <select
+              value={selectedEpic}
+              onChange={e => setSelectedEpic(e.target.value)}
+              className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 max-w-xs"
+            >
+              <option value="all">All epics</option>
+              {epics.map(e => (
+                <option key={e.key} value={e.key}>{e.key} — {e.name}</option>
+              ))}
+            </select>
+            {selectedEpic !== 'all' && (
+              <button
+                onClick={() => setSelectedEpic('all')}
+                className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                ✕ Clear
+              </button>
+            )}
+          </div>
+        )}
         <DragDropContext onDragEnd={handleDragEnd}>
           <div className="flex gap-4 h-full overflow-x-auto pb-2">
             {COLUMNS.map(col => (

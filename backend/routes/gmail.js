@@ -51,12 +51,12 @@ router.get('/', async (req, res) => {
     const auth = getOAuth2Client(cfg);
     const gmail = google.gmail({ version: 'v1', auth });
 
-    // Fetch last 20 inbox messages
+    // Fetch today's inbox messages only
     const listRes = await gmail.users.messages.list({
       userId: 'me',
       labelIds: ['INBOX'],
-      maxResults: 20,
-      q: 'is:unread OR newer_than:3d',
+      maxResults: 50,
+      q: 'newer_than:1d',
     });
 
     const messageIds = (listRes.data.messages || []).map(m => m.id);

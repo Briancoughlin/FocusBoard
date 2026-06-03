@@ -83,6 +83,7 @@ export function SettingsPage() {
         googleClientSecret: '',
         slackToken: '',
         anthropicKey: '',
+        anthropicBaseUrl: cfg.anthropicBaseUrl || '',
       });
     });
   }, []);
@@ -186,7 +187,15 @@ export function SettingsPage() {
           value={form.anthropicKey || ''}
           placeholder={config.anthropicConfigured ? '••••••••••••' : 'sk-ant-...'}
           onChange={v => setField('anthropicKey', v)}
-          hint="Get your key at console.anthropic.com"
+          hint="Standard Anthropic key, or your Unity U-AI token"
+        />
+        <Field
+          label="Base URL (optional)"
+          id="anthropicBaseUrl"
+          value={form.anthropicBaseUrl || ''}
+          placeholder="https://uai-litellm.internal.unity.com"
+          onChange={v => setField('anthropicBaseUrl', v)}
+          hint="Unity employees: use the U-AI gateway URL here. Leave blank for standard Anthropic."
         />
         <a
           href="https://console.anthropic.com/account/keys"

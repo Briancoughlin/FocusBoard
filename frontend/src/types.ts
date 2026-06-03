@@ -12,6 +12,9 @@ export interface Task {
   dueDate?: string;
   url?: string;
   sourceId: string;
+  ticketKey?: string;
+  epicKey?: string;
+  epicName?: string;
   updatedAt: string;
 }
 
@@ -26,6 +29,7 @@ export interface Config {
   googleRefreshToken?: string;
   slackToken?: string;
   anthropicKey?: string;
+  anthropicBaseUrl?: string;
   // Status flags returned by the API
   jiraConfigured?: boolean;
   googleConfigured?: boolean;

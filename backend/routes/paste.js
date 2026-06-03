@@ -43,7 +43,9 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    const client = new Anthropic({ apiKey: cfg.anthropicKey });
+    const clientOptions = { apiKey: cfg.anthropicKey };
+    if (cfg.anthropicBaseUrl) clientOptions.baseURL = cfg.anthropicBaseUrl;
+    const client = new Anthropic(clientOptions);
 
     const message = await client.messages.create({
       model: 'claude-sonnet-4-6',

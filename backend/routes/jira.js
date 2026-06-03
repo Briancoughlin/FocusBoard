@@ -49,7 +49,7 @@ router.get('/', async (req, res) => {
   try {
     const defaultJql = 'assignee=currentUser() AND resolution=Unresolved ORDER BY updated DESC';
     const jql = encodeURIComponent(cfg.jiraJql || defaultJql);
-    const fields = 'summary,status,priority,duedate,assignee,description';
+    const fields = 'summary,status,priority,duedate,assignee,description,customfield_10006';
     // Try REST API v2 for self-hosted Jira Data Center (v3 is Atlassian Cloud only)
     // Paginate through all results
     let allIssues = [];
@@ -68,8 +68,30 @@ router.get('/', async (req, res) => {
       const data = JSON.parse(text);
       allIssues = allIssues.concat(data.issues || []);
       console.log(`Jira: fetched ${allIssues.length} of ${data.total} tickets`);
+      if (startAt === 0 && data.issues?.length > 0) {
+        const sample = data.issues[0].fields;
+        const epicFields = Object.entries(sample)
+          .filter(([k, v]) => v !== null && (k.includes('epic') || k.includes('Epic') || (k.startsWith('customfield') && v && typeof v === 'object' && v.key)));
+        // Log all non-null custom fields from first ticket to find epic
+      }
       if (allIssues.length >= data.total) break;
       startAt += pageSize;
+    }
+
+    // Fetch epic summaries for all unique epic keys
+    const epicKeys = [...new Set(allIssues.map(i => i.fields.customfield_10006).filter(Boolean))];
+    const epicNames = {};
+    if (epicKeys.length > 0) {
+      try {
+        const epicJql = encodeURIComponent(`key in (${epicKeys.join(',')})`);
+        const epicRes = await fetch(`${cfg.jiraUrl}/rest/api/2/search?jql=${epicJql}&fields=summary&maxResults=100`, {
+          headers: { 'Authorization': `Bearer ${cfg.jiraToken}`, 'Accept': 'application/json' },
+        });
+        const epicData = await epicRes.json();
+        (epicData.issues || []).forEach(e => { epicNames[e.key] = e.fields.summary; });
+      } catch (e) {
+        console.error('Failed to fetch epic names:', e.message);
+      }
     }
 
     const tasks = (allIssues || []).map((issue) => ({
@@ -82,6 +104,9 @@ router.get('/', async (req, res) => {
       priority: mapJiraPriority(issue.fields.priority?.name),
       dueDate: issue.fields.duedate || undefined,
       url: `${cfg.jiraUrl}/browse/${issue.key}`,
+      ticketKey: issue.key,
+      epicKey: issue.fields.customfield_10006 || undefined,
+      epicName: issue.fields.customfield_10006 ? (epicNames[issue.fields.customfield_10006] || issue.fields.customfield_10006) : undefined,
       updatedAt: new Date().toISOString(),
     }));
 

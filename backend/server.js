@@ -58,6 +58,7 @@ app.get('/api/config', (req, res) => {
     googleRefreshToken: cfg.googleRefreshToken ? '***' : '',
     slackToken: cfg.slackToken ? '***' : '',
     anthropicKey: cfg.anthropicKey ? '***' : '',
+    anthropicBaseUrl: cfg.anthropicBaseUrl || '',
     // status flags
     jiraJql: cfg.jiraJql || '',
     jiraConfigured: !!(cfg.jiraUrl && cfg.jiraEmail && cfg.jiraToken),
@@ -76,7 +77,7 @@ app.post('/api/config', (req, res) => {
   const fields = [
     'jiraUrl', 'jiraEmail', 'jiraToken', 'jiraJql',
     'googleClientId', 'googleClientSecret',
-    'slackToken', 'anthropicKey',
+    'slackToken', 'anthropicKey', 'anthropicBaseUrl',
   ];
   for (const field of fields) {
     if (incoming[field] !== undefined && incoming[field] !== '***' && incoming[field] !== '') {
@@ -132,6 +133,16 @@ app.get('/auth/google/callback', async (req, res) => {
   } catch (err) {
     res.status(500).send(`OAuth error: ${err.message}`);
   }
+});
+
+// --- Temp debug: fetch all fields for a single Jira ticket ---
+app.get('/api/jira-debug/:key', async (req, res) => {
+  const cfg = loadConfig();
+  const url = `${cfg.jiraUrl}/rest/api/2/issue/${req.params.key}`;
+  const r = await fetch(url, { headers: { 'Authorization': `Bearer ${cfg.jiraToken}`, 'Accept': 'application/json' } });
+  const data = await r.json();
+  const nonNull = Object.entries(data.fields || {}).filter(([k,v]) => v !== null && v !== undefined).reduce((a,[k,v]) => ({...a,[k]:v}), {});
+  res.json(nonNull);
 });
 
 // --- Integration routes ---

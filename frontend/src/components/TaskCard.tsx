@@ -119,6 +119,11 @@ export function TaskCard({ task, index, onDismiss }: Props) {
               </div>
             </div>
 
+            {/* Ticket key */}
+            {task.ticketKey && (
+              <p className="text-xs font-mono text-blue-400 mb-0.5">{task.ticketKey}</p>
+            )}
+
             {/* Title */}
             <p className="text-sm font-semibold text-gray-800 leading-snug mb-1 line-clamp-2">
               {task.title}

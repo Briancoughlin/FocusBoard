@@ -23,7 +23,11 @@ export async function extractActionItems(messages, sourceType = 'gmail') {
     throw new Error('Anthropic API key not configured');
   }
 
-  const client = new Anthropic({ apiKey: cfg.anthropicKey });
+  const clientOptions = { apiKey: cfg.anthropicKey };
+  if (cfg.anthropicBaseUrl) {
+    clientOptions.baseURL = cfg.anthropicBaseUrl;
+  }
+  const client = new Anthropic(clientOptions);
 
   const messageList = messages
     .map((m, i) => `[${i + 1}] ID:${m.id} | From: ${m.from} | Date: ${m.date} | Subject: ${m.subject}\nSnippet: ${m.snippet}`)
