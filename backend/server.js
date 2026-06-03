@@ -133,8 +133,11 @@ app.post('/api/config', (req, res) => {
     'githubToken', 'githubBaseUrl',
   ];
   for (const field of fields) {
-    if (incoming[field] !== undefined && incoming[field] !== '***' && incoming[field] !== '') {
-      merged[field] = incoming[field];
+    const val = incoming[field];
+    if (val !== undefined && val !== '***' && val !== '') {
+      // Only accept strings, max 2000 chars
+      if (typeof val !== 'string' || val.length > 2000) continue;
+      merged[field] = val;
     }
   }
   saveConfig(merged);
@@ -188,15 +191,6 @@ app.get('/auth/google/callback', async (req, res) => {
   }
 });
 
-// --- Temp debug: fetch all fields for a single Jira ticket ---
-app.get('/api/jira-debug/:key', async (req, res) => {
-  const cfg = loadConfig();
-  const url = `${cfg.jiraUrl}/rest/api/2/issue/${req.params.key}`;
-  const r = await fetch(url, { headers: { 'Authorization': `Bearer ${cfg.jiraToken}`, 'Accept': 'application/json' } });
-  const data = await r.json();
-  const nonNull = Object.entries(data.fields || {}).filter(([k,v]) => v !== null && v !== undefined).reduce((a,[k,v]) => ({...a,[k]:v}), {});
-  res.json(nonNull);
-});
 
 // --- Integration routes ---
 app.use('/api/jira', jiraRouter);
