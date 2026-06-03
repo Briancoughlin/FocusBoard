@@ -122,7 +122,7 @@ export default function App() {
       // Prompt to add channel ID for unmapped Slack channels
       const slackTasks = newTasks.filter(t => t.source === 'slack' && t.url === 'slack://open');
       if (slackTasks.length > 0 && !slackChannelPrompt) {
-        const title = slackTasks[0].originalTitle || slackTasks[0].title;
+        const title = slackTasks[0].title;
         const channelMatch = title?.match(/#([\w-]+)/);
         if (channelMatch) setSlackChannelPrompt(channelMatch[1]);
       }
