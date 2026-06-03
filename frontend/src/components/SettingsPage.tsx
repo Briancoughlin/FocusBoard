@@ -112,7 +112,7 @@ export function SettingsPage() {
     setTestStates(s => ({ ...s, [source]: 'testing' }));
     setTestMessages(m => ({ ...m, [source]: '' }));
     try {
-      const res = await fetch(url);
+      const res = await fetch(url, { credentials: 'include' });
       const data = await res.json();
       if (data.error) {
         setTestStates(s => ({ ...s, [source]: 'error' }));

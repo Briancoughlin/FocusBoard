@@ -17,7 +17,7 @@ export function PastePanel({ onTasksExtracted, onClose }: Props) {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/paste', {
+      const res = await fetch('/api/paste', { credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text }),
