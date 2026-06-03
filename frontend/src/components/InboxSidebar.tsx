@@ -33,7 +33,7 @@ function ItemRow({ item, onRead, onAddToBoard }: {
 }) {
   return (
     <div
-      onClick={() => onRead(item.id)}
+      onClick={() => { onRead(item.id); if (item.url) window.open(item.url, '_blank'); }}
       className={`px-3 py-2.5 border-b cursor-pointer transition-colors ${item.read ? 'opacity-50' : ''} ${
         item.source === 'slack' && !item.read ? 'bg-purple-50 border-purple-100 hover:bg-purple-100' :
         item.source === 'github' && !item.read && item.title.includes('❌') ? 'bg-red-50 border-red-100 hover:bg-red-100' :
