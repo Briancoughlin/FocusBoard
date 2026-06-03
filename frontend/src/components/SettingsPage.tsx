@@ -108,6 +108,7 @@ export function SettingsPage() {
         googleClientId: cfg.googleClientId || '',
         googleClientSecret: '',
         slackToken: '',
+        slackWorkspaceUrl: cfg.slackWorkspaceUrl || '',
         githubToken: '',
         githubBaseUrl: cfg.githubBaseUrl || '',
         anthropicKey: '',
@@ -431,7 +432,15 @@ export function SettingsPage() {
         configured={config.slackConfigured}
       >
         <Field
-          label="Bot Token"
+          label="Workspace URL"
+          id="slackWorkspaceUrl"
+          value={form.slackWorkspaceUrl || ''}
+          placeholder="https://yourworkspace.slack.com"
+          onChange={v => setField('slackWorkspaceUrl', v)}
+          hint="Used to open channels directly from notifications. Find it in your browser when using Slack web."
+        />
+        <Field
+          label="Bot Token (optional)"
           id="slackToken"
           type="password"
           value={form.slackToken || ''}

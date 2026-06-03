@@ -2,6 +2,7 @@ import express from 'express';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { decryptConfig } from '../crypto-utils.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = path.join(__dirname, '..', 'data');
@@ -57,12 +58,26 @@ router.post('/', (req, res) => {
     ? `${title}: ${shortBody}`
     : `Slack: ${title}`;
 
-  // Build a Slack deep link — opens the DM or channel search in Slack desktop app
+  // Build Slack URL — use workspace URL from config if available
+  const CONFIG_PATH = path.join(__dirname, '..', 'config.json');
+  let slackWorkspaceUrl = '';
+  try {
+    const raw = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
+    const cfg = raw.encrypted ? decryptConfig(raw) : raw;
+    slackWorkspaceUrl = cfg.slackWorkspaceUrl || '';
+  } catch {}
+
   const isChannel = title.startsWith('#');
-  const isDM = title && !isChannel;
-  const slackUrl = isChannel
-    ? `slack://channel?team=&id=` // channel name search fallback
-    : `slack://open`; // opens Slack app directly
+  const channelName = isChannel ? title.slice(1) : ''; // strip the #
+
+  let url = 'slack://open';
+  if (slackWorkspaceUrl && isChannel) {
+    // e.g. https://unity.slack.com/archives/ — Slack web opens channel by name
+    url = `${slackWorkspaceUrl.replace(/\/$/, '')}/messages/${channelName}`;
+  } else if (slackWorkspaceUrl && !isChannel) {
+    // DM — open workspace and they can find the person
+    url = slackWorkspaceUrl;
+  }
 
   const task = {
     id: taskId,
@@ -73,7 +88,7 @@ router.post('/', (req, res) => {
     priority: 'high',
     status: 'todo',
     updatedAt: new Date().toISOString(),
-    url: 'slack://open', // always open Slack app on click
+    url,
     appName,
     originalTitle: title,
   };

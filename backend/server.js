@@ -128,7 +128,7 @@ app.post('/api/config', (req, res) => {
   const fields = [
     'jiraUrl', 'jiraEmail', 'jiraToken', 'jiraJql',
     'googleClientId', 'googleClientSecret',
-    'slackToken', 'anthropicKey', 'anthropicBaseUrl',
+    'slackToken', 'slackWorkspaceUrl', 'anthropicKey', 'anthropicBaseUrl',
     'githubToken', 'githubBaseUrl',
   ];
   for (const field of fields) {
