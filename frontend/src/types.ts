@@ -1,4 +1,4 @@
-export type Source = 'jira' | 'gmail' | 'calendar' | 'slack' | 'paste';
+export type Source = 'jira' | 'gmail' | 'calendar' | 'slack' | 'paste' | 'github';
 export type Status = 'todo' | 'inprogress' | 'waiting' | 'done';
 export type Priority = 'high' | 'medium' | 'low';
 
@@ -30,6 +30,9 @@ export interface Config {
   slackToken?: string;
   anthropicKey?: string;
   anthropicBaseUrl?: string;
+  githubToken?: string;
+  githubBaseUrl?: string;
+  githubConfigured?: boolean;
   // Status flags returned by the API
   jiraConfigured?: boolean;
   googleConfigured?: boolean;

@@ -11,6 +11,7 @@ import calendarRouter from './routes/calendar.js';
 import slackRouter from './routes/slack.js';
 import pasteRouter from './routes/paste.js';
 import persistenceRouter from './routes/persistence.js';
+import githubRouter from './routes/github.js';
 import { loadOrCreateToken } from './auth.js';
 import { encryptConfig, decryptConfig } from './crypto-utils.js';
 
@@ -97,6 +98,9 @@ app.get('/api/config', (req, res) => {
     googleConfigured: !!(cfg.googleClientId && cfg.googleClientSecret && cfg.googleAccessToken),
     slackConfigured: !!cfg.slackToken,
     anthropicConfigured: !!cfg.anthropicKey,
+    githubToken: cfg.githubToken ? '***' : '',
+    githubBaseUrl: cfg.githubBaseUrl || '',
+    githubConfigured: !!cfg.githubToken,
   });
 });
 
@@ -110,6 +114,7 @@ app.post('/api/config', (req, res) => {
     'jiraUrl', 'jiraEmail', 'jiraToken', 'jiraJql',
     'googleClientId', 'googleClientSecret',
     'slackToken', 'anthropicKey', 'anthropicBaseUrl',
+    'githubToken', 'githubBaseUrl',
   ];
   for (const field of fields) {
     if (incoming[field] !== undefined && incoming[field] !== '***' && incoming[field] !== '') {
@@ -184,6 +189,7 @@ app.use('/api/calendar', calendarRouter);
 app.use('/api/slack', slackRouter);
 app.use('/api/paste', pasteRouter);
 app.use('/api/persistence', persistenceRouter);
+app.use('/api/github', githubRouter);
 
 // --- Sync all sources ---
 app.get('/api/sync', async (req, res) => {
@@ -194,6 +200,7 @@ app.get('/api/sync', async (req, res) => {
     { name: 'gmail', url: 'http://localhost:3001/api/gmail' },
     { name: 'calendar', url: 'http://localhost:3001/api/calendar' },
     { name: 'slack', url: 'http://localhost:3001/api/slack' },
+    { name: 'github', url: 'http://localhost:3001/api/github' },
   ];
 
   await Promise.allSettled(

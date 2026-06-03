@@ -23,7 +23,8 @@ const TABS: { id: FilterTab; label: string; color: string; activeColor: string }
   { id: 'jira',     label: 'Jira',       color: 'text-blue-400 border-transparent',  activeColor: 'text-blue-600 border-blue-600' },
   { id: 'gmail',    label: 'Gmail',      color: 'text-red-400 border-transparent',   activeColor: 'text-red-600 border-red-600' },
   { id: 'slack',    label: 'Slack',      color: 'text-purple-400 border-transparent',activeColor: 'text-purple-600 border-purple-600' },
-  { id: 'paste',    label: 'Zoom/Notes', color: 'text-violet-400 border-transparent',activeColor: 'text-violet-600 border-violet-600' },
+  { id: 'paste',    label: 'Zoom/Notes', color: 'text-violet-400 border-transparent', activeColor: 'text-violet-600 border-violet-600' },
+  { id: 'github',   label: 'GitHub',     color: 'text-gray-400 border-transparent',   activeColor: 'text-gray-700 border-gray-700' },
 ];
 
 function isThisWeek(task: Task): boolean {

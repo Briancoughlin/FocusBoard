@@ -6,7 +6,8 @@ const config: Record<Source, { label: string; bg: string; text: string }> = {
   gmail: { label: 'Gmail', bg: 'bg-red-100', text: 'text-red-700' },
   calendar: { label: 'Calendar', bg: 'bg-green-100', text: 'text-green-700' },
   slack: { label: 'Slack', bg: 'bg-purple-100', text: 'text-purple-700' },
-  paste: { label: 'Notes', bg: 'bg-violet-100', text: 'text-violet-700' },
+  paste:   { label: 'Notes',  bg: 'bg-violet-100', text: 'text-violet-700' },
+  github:  { label: 'GitHub', bg: 'bg-gray-100',   text: 'text-gray-700' },
 };
 
 interface Props {

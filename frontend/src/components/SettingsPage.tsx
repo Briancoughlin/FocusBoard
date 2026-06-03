@@ -82,6 +82,8 @@ export function SettingsPage() {
         googleClientId: cfg.googleClientId || '',
         googleClientSecret: '',
         slackToken: '',
+        githubToken: '',
+        githubBaseUrl: cfg.githubBaseUrl || '',
         anthropicKey: '',
         anthropicBaseUrl: cfg.anthropicBaseUrl || '',
       });
@@ -338,6 +340,42 @@ export function SettingsPage() {
             className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
           >
             <ExternalLink size={11} /> Slack Apps
+          </a>
+        </div>
+      </Section>
+
+      {/* GitHub */}
+      <Section
+        title="GitHub"
+        description="Pull requests awaiting review, your open PRs, and assigned issues."
+        configured={config.githubConfigured}
+      >
+        <Field
+          label="Personal Access Token"
+          id="githubToken"
+          type="password"
+          value={form.githubToken || ''}
+          placeholder={config.githubConfigured ? '••••••••••••' : 'ghp_...'}
+          onChange={v => setField('githubToken', v)}
+          hint="github.com/settings/tokens — scopes: repo, notifications, read:user"
+        />
+        <Field
+          label="Base URL (optional)"
+          id="githubBaseUrl"
+          value={form.githubBaseUrl || ''}
+          placeholder="https://github.yourcompany.com/api/v3"
+          onChange={v => setField('githubBaseUrl', v)}
+          hint="Leave blank for github.com. For GitHub Enterprise use your internal API URL."
+        />
+        <div className="flex items-center gap-3 mt-1">
+          <TestButton source="github" url="/api/github" />
+          <a
+            href="https://github.com/settings/tokens"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
+          >
+            <ExternalLink size={11} /> Generate token
           </a>
         </div>
       </Section>
