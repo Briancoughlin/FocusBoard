@@ -68,27 +68,34 @@ router.post('/', (req, res) => {
   const CONFIG_PATH = path.join(__dirname, '..', 'config.json');
   let slackWorkspaceUrl = '';
   let teamId = '';
+  let slackChannelMap = {};
   try {
     const raw = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
     const cfg = raw.encrypted ? decryptConfig(raw) : raw;
     slackWorkspaceUrl = cfg.slackWorkspaceUrl || '';
     teamId = cfg.slackTeamId || '';
+    slackChannelMap = cfg.slackChannelMap || {};
   } catch {}
 
   // Extract channel/sender from title
   const isChannel = title.startsWith('#');
   const channelName = isChannel ? title.slice(1).split(':')[0].trim() : title.split(':')[0].trim();
 
-  // Use slack:// protocol to open desktop app directly at the right channel
-  // Use web URL — browser will hand off to Slack desktop app and navigate correctly
+  // Look up channel ID from the map for deep-link support
+  const channelId = isChannel ? (slackChannelMap[channelName] || '') : '';
+
+  // Build the best URL available:
+  //   1. slack:// deep link (if we have teamId + channelId)
+  //   2. Workspace web URL (if configured)
+  //   3. Generic slack://open fallback
   let url = 'slack://open';
-  if (slackWorkspaceUrl) {
+  if (teamId && channelId) {
+    url = `slack://channel?team=${teamId}&id=${channelId}`;
+  } else if (slackWorkspaceUrl) {
     const base = slackWorkspaceUrl.replace(/\/$/, '');
     url = isChannel
       ? `${base}/messages/${channelName}`
       : `${base}/messages/@${channelName.toLowerCase().replace(/\s+/g, '.')}`;
-  } else if (teamId) {
-    url = `slack://open`;
   }
 
   const task = {

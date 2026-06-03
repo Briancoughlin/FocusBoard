@@ -108,6 +108,7 @@ app.get('/api/config', (req, res) => {
     slackToken: cfg.slackToken ? '***' : '',
     slackWorkspaceUrl: cfg.slackWorkspaceUrl || '',
     slackTeamId: cfg.slackTeamId || '',
+    slackChannelMap: cfg.slackChannelMap || {},
     anthropicKey: cfg.anthropicKey ? '***' : '',
     anthropicBaseUrl: cfg.anthropicBaseUrl || '',
     // status flags
@@ -141,6 +142,10 @@ app.post('/api/config', (req, res) => {
       if (typeof val !== 'string' || val.length > 2000) continue;
       merged[field] = val;
     }
+  }
+  // slackChannelMap is stored as a plain object
+  if (incoming.slackChannelMap !== undefined && typeof incoming.slackChannelMap === 'object' && incoming.slackChannelMap !== null) {
+    merged.slackChannelMap = incoming.slackChannelMap;
   }
   saveConfig(merged);
   res.json({ success: true });

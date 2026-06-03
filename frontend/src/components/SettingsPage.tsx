@@ -64,9 +64,15 @@ function Field({ label, id, type = 'text', value, placeholder, onChange, hint }:
   );
 }
 
+interface ChannelRow {
+  name: string;
+  id: string;
+}
+
 export function SettingsPage() {
   const [config, setConfig] = useState<Config>({});
   const [form, setForm] = useState<Record<string, string>>({});
+  const [channelMapRows, setChannelMapRows] = useState<ChannelRow[]>([]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [testStates, setTestStates] = useState<Record<string, TestState>>({});
@@ -109,12 +115,15 @@ export function SettingsPage() {
         googleClientSecret: '',
         slackToken: '',
         slackWorkspaceUrl: cfg.slackWorkspaceUrl || '',
-        slackTeamId: (cfg as any).slackTeamId || '',
+        slackTeamId: cfg.slackTeamId || '',
         githubToken: '',
         githubBaseUrl: cfg.githubBaseUrl || '',
         anthropicKey: '',
         anthropicBaseUrl: cfg.anthropicBaseUrl || '',
       });
+      // Populate channel map rows from saved config
+      const map = cfg.slackChannelMap || {};
+      setChannelMapRows(Object.entries(map).map(([name, id]) => ({ name, id })));
     });
   }, []);
 
@@ -124,11 +133,19 @@ export function SettingsPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await saveConfig(form);
+      // Build slackChannelMap object from rows (skip rows with empty name)
+      const slackChannelMap: Record<string, string> = {};
+      for (const row of channelMapRows) {
+        const name = row.name.trim();
+        if (name) slackChannelMap[name] = row.id.trim();
+      }
+      await saveConfig({ ...form, slackChannelMap } as any);
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
       const updated = await getConfig();
       setConfig(updated);
+      const map = updated.slackChannelMap || {};
+      setChannelMapRows(Object.entries(map).map(([name, id]) => ({ name, id })));
     } catch (err) {
       alert('Failed to save settings');
     } finally {
@@ -467,6 +484,56 @@ export function SettingsPage() {
           >
             <ExternalLink size={11} /> Slack Apps
           </a>
+        </div>
+
+        {/* Channel ID Mapper */}
+        <div className="mt-4 pt-4 border-t border-gray-100">
+          <p className="text-sm font-medium text-gray-700 mb-1">Channel ID Map</p>
+          <p className="text-xs text-gray-400 mb-3">
+            Maps channel names to IDs for deep-linking into the Slack desktop app.
+            Find the channel ID in the Slack URL: <code className="font-mono bg-gray-100 px-1 rounded">app.slack.com/client/TEAM_ID/CHANNEL_ID</code>
+          </p>
+          {channelMapRows.length > 0 && (
+            <div className="mb-2 space-y-2">
+              <div className="grid grid-cols-[1fr_1fr_auto] gap-2 text-xs font-medium text-gray-500 px-1">
+                <span>Channel Name</span>
+                <span>Channel ID</span>
+                <span />
+              </div>
+              {channelMapRows.map((row, idx) => (
+                <div key={idx} className="grid grid-cols-[1fr_1fr_auto] gap-2 items-center">
+                  <input
+                    type="text"
+                    value={row.name}
+                    placeholder="ask-discussions"
+                    onChange={e => setChannelMapRows(rows => rows.map((r, i) => i === idx ? { ...r, name: e.target.value } : r))}
+                    className="px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
+                  />
+                  <input
+                    type="text"
+                    value={row.id}
+                    placeholder="C06AF9683"
+                    onChange={e => setChannelMapRows(rows => rows.map((r, i) => i === idx ? { ...r, id: e.target.value } : r))}
+                    className="px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 font-mono"
+                  />
+                  <button
+                    onClick={() => setChannelMapRows(rows => rows.filter((_, i) => i !== idx))}
+                    className="text-gray-400 hover:text-red-500 transition-colors px-1"
+                    title="Remove"
+                    aria-label="Remove row"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          <button
+            onClick={() => setChannelMapRows(rows => [...rows, { name: '', id: '' }])}
+            className="text-sm text-blue-600 hover:underline"
+          >
+            + Add channel
+          </button>
         </div>
       </Section>
 

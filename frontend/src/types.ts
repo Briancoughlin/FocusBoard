@@ -29,6 +29,8 @@ export interface Config {
   googleRefreshToken?: string;
   slackToken?: string;
   slackWorkspaceUrl?: string;
+  slackTeamId?: string;
+  slackChannelMap?: Record<string, string>;
   anthropicKey?: string;
   anthropicBaseUrl?: string;
   githubToken?: string;
