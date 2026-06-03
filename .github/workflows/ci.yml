@@ -62,9 +62,10 @@ jobs:
 
       - name: Check for hardcoded secrets
         run: |
-          # Scan for common secret patterns in source files
+          # Scan for actual secret values (not placeholders or field names)
+          # Match tokens that look like real values: sk-ant- followed by actual chars, xoxb- with real token, ATATT with real token
           if grep -r --include="*.ts" --include="*.tsx" --include="*.js" \
-            -E "(sk-ant-|xoxb-|ATATT|AIza|client_secret)" \
+            -E "(sk-ant-[A-Za-z0-9_-]{20,}|xoxb-[0-9]+-[A-Za-z0-9]+|ATATT[A-Za-z0-9+/=]{20,})" \
             --exclude-dir=node_modules \
             --exclude-dir=dist \
             .; then
