@@ -87,9 +87,9 @@ export function KanbanColumn({ column, tasks, isLoading, onDismiss }: Props) {
             {...provided.droppableProps}
             className={`
               flex-1 rounded-b-lg p-2 min-h-[120px] transition-colors duration-150 scrollbar-thin overflow-y-auto
-              ${snapshot.isDraggingOver ? `${column.bgColor} ring-2 ring-inset ring-blue-300` : 'bg-gray-100'}
+              ${snapshot.isDraggingOver ? `${column.bgColor} ring-2 ring-inset ring-blue-300` : ''}
             `}
-            style={{ maxHeight: 'calc(100vh - 180px)' }}
+            style={{ maxHeight: 'calc(100vh - 180px)', backgroundColor: snapshot.isDraggingOver ? undefined : 'var(--bg)' }}
           >
             {isLoading ? (
               <>
