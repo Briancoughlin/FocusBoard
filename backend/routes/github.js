@@ -121,7 +121,7 @@ router.get('/', async (req, res) => {
 
     // 4. CI and review notifications
     const notifications = await githubFetch(
-      '/notifications?all=false&per_page=30',
+      '/notifications?all=true&per_page=30',
       token, baseUrl
     );
 
@@ -134,12 +134,9 @@ router.get('/', async (req, res) => {
         ?.replace('/commits/', '/commit/') || notif.repository.html_url;
 
       if (notif.reason === 'ci_activity') {
-        const isFail = subjectTitle.toLowerCase().includes('fail') ||
-          subjectTitle.toLowerCase().includes('error') ||
-          subjectTitle.toLowerCase().includes('cancelled');
-        const isPass = subjectTitle.toLowerCase().includes('pass') ||
-          subjectTitle.toLowerCase().includes('success') ||
-          subjectTitle.toLowerCase().includes('succeeded');
+        const lower = subjectTitle.toLowerCase();
+        const isFail = lower.includes('fail') || lower.includes('error') || lower.includes('cancel');
+        const isPass = lower.includes('pass') || lower.includes('success') || lower.includes('succeed');
 
         tasks.push({
           id: `github-ci-${notif.id}`,
