@@ -59,10 +59,34 @@ router.post('/create', async (req, res) => {
     }
 
     const data = JSON.parse(text);
+    const issueKey = data.key;
+
+    // Immediately transition to In Progress
+    try {
+      const transitionsUrl = `${cfg.jiraUrl}/rest/api/2/issue/${issueKey}/transitions`;
+      const transitionsRes = await fetch(transitionsUrl, {
+        headers: { 'Authorization': `Bearer ${cfg.jiraToken}`, 'Accept': 'application/json' },
+      });
+      const transitionsData = await transitionsRes.json();
+      const inProgressTransition = (transitionsData.transitions || []).find(t => {
+        const name = (t.to?.name || '').toLowerCase();
+        return name.includes('in progress') || name.includes('in review');
+      });
+      if (inProgressTransition) {
+        await fetch(transitionsUrl, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${cfg.jiraToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ transition: { id: inProgressTransition.id } }),
+        });
+      }
+    } catch (transitionErr) {
+      console.warn('Could not auto-transition new ticket to In Progress:', transitionErr.message);
+    }
+
     return res.json({
-      key: data.key,
+      key: issueKey,
       id: data.id,
-      url: `${cfg.jiraUrl}/browse/${data.key}`,
+      url: `${cfg.jiraUrl}/browse/${issueKey}`,
     });
   } catch (err) {
     console.error('Jira create error:', err.message);
