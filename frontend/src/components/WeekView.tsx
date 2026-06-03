@@ -38,6 +38,15 @@ function formatTime(dateStr: string): string {
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
+const SOURCE_BORDER: Record<string, string> = {
+  jira:     '#3b82f6', // blue
+  gmail:    '#ef4444', // red
+  github:   '#6b7280', // gray
+  paste:    '#8b5cf6', // violet
+  calendar: '#10b981', // green
+  slack:    '#a855f7', // purple
+};
+
 export function WeekView({ tasks, allTasks, selectedDay, onDaySelect }: Props) {
   const calendarTasks = tasks.filter(t => t.source === 'calendar');
   const weekDays = getWeekDays();
@@ -162,33 +171,55 @@ export function WeekView({ tasks, allTasks, selectedDay, onDaySelect }: Props) {
                         Schedule here
                       </div>
                     )}
-                    {dayEvents.length === 0 && !snapshot.isDraggingOver ? (
-                      <div className="h-full flex items-center justify-center">
-                        <span className="text-xs" style={{ color: 'var(--border)' }}>—</span>
-                      </div>
-                    ) : (
-                      dayEvents.map(event => (
-                        <div
-                          key={event.id}
-                          onClick={e => { e.stopPropagation(); event.url && window.open(event.url, '_blank'); }}
-                          className="p-1.5 rounded-lg text-xs cursor-pointer transition-all"
-                          style={{
-                            backgroundColor: isToday ? 'var(--accent-light)' : 'var(--bg)',
-                            border: `1px solid var(--border)`,
-                          }}
-                        >
-                          <p className="font-medium line-clamp-2 leading-tight" style={{ color: 'var(--text-primary)' }}>
-                            {event.title.replace('[All Day] ', '')}
-                          </p>
-                          {event.dueDate && !event.title.startsWith('[All Day]') && (
-                            <p className="flex items-center gap-0.5 mt-0.5" style={{ color: 'var(--text-secondary)' }}>
-                              <Clock size={9} />
-                              {formatTime(event.dueDate)}
+                    {(() => {
+                      // Scheduled kanban tasks for this day
+                      const scheduledTasks = kanbanTasks.filter(t =>
+                        t.dueDate && isSameDay(new Date(t.dueDate), day)
+                      );
+                      const allItems = [...dayEvents, ...scheduledTasks];
+
+                      if (allItems.length === 0 && !snapshot.isDraggingOver) {
+                        return (
+                          <div className="h-full flex items-center justify-center">
+                            <span className="text-xs" style={{ color: 'var(--border)' }}>—</span>
+                          </div>
+                        );
+                      }
+
+                      return allItems.map(item => {
+                        const borderColor = SOURCE_BORDER[item.source] || 'var(--border)';
+                        const isCalendar = item.source === 'calendar';
+                        return (
+                          <div
+                            key={item.id}
+                            onClick={e => { e.stopPropagation(); item.url && window.open(item.url, '_blank'); }}
+                            className="p-1.5 rounded-lg text-xs cursor-pointer transition-all"
+                            style={{
+                              backgroundColor: 'var(--bg-card)',
+                              borderLeft: `3px solid ${borderColor}`,
+                              border: `1px solid var(--border)`,
+                              borderLeftWidth: '3px',
+                              borderLeftColor: borderColor,
+                            }}
+                          >
+                            <p className="font-medium line-clamp-2 leading-tight" style={{ color: 'var(--text-primary)' }}>
+                              {item.title.replace('[All Day] ', '')}
                             </p>
-                          )}
-                        </div>
-                      ))
-                    )}
+                            {item.dueDate && !isCalendar && (
+                              <p className="text-xs mt-0.5" style={{ color: borderColor, opacity: 0.8 }}>
+                                {item.source}
+                              </p>
+                            )}
+                            {item.dueDate && isCalendar && !item.title.startsWith('[All Day]') && (
+                              <p className="flex items-center gap-0.5 mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+                                <Clock size={9} />
+                                {formatTime(item.dueDate)}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      });
+                    })()}
                     {/* Hidden placeholder — keeps droppable working even with no children */}
                     <div style={{ display: 'none' }}>{provided.placeholder}</div>
                   </div>
