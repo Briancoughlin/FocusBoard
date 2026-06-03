@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { DragDropContext, type DropResult } from '@hello-pangea/dnd';
+import { X } from 'lucide-react';
 import type { Task, Status } from '../types';
 import { WeekView } from './WeekView';
 import { KanbanColumn, COLUMNS } from './KanbanColumn';
@@ -14,6 +15,7 @@ interface Props {
   onTaskMove: (taskId: string, newStatus: Status) => void;
   onDismiss: (taskId: string) => void;
   onAddToBoard: (task: Task) => void;
+  onDueDateChange: (taskId: string, dateString: string) => void;
 }
 
 const STORAGE_KEY = 'focusboard-split-percent';
@@ -21,8 +23,19 @@ const DEFAULT_SPLIT = 35;
 const MIN_SPLIT = 15;
 const MAX_SPLIT = 70;
 
-export function FocusView({ tasks, kanbanTasks, isLoading, onTaskMove, onDismiss, onAddToBoard }: Props) {
+function isSameDay(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
+}
+
+function formatDayLabel(day: Date): string {
+  return day.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' });
+}
+
+export function FocusView({ tasks, kanbanTasks, isLoading, onTaskMove, onDismiss, onAddToBoard, onDueDateChange }: Props) {
   const [splitPercent, setSplitPercent] = useState<number>(DEFAULT_SPLIT);
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null);
 
   useEffect(() => {
     getPersistedValue<number>('split-percent', DEFAULT_SPLIT).then(val => {
@@ -62,8 +75,18 @@ export function FocusView({ tasks, kanbanTasks, isLoading, onTaskMove, onDismiss
 
   const handleDragEnd = useCallback((result: DropResult) => {
     if (!result.destination) return;
-    onTaskMove(result.draggableId, result.destination.droppableId as Status);
-  }, [onTaskMove]);
+
+    const dest = result.destination.droppableId;
+
+    if (dest.startsWith('day-')) {
+      // Dropped onto a calendar day — schedule the task
+      const dateString = dest.replace('day-', ''); // YYYY-MM-DD
+      onDueDateChange(result.draggableId, dateString);
+    } else {
+      // Dropped onto a kanban column — update status
+      onTaskMove(result.draggableId, dest as Status);
+    }
+  }, [onTaskMove, onDueDateChange]);
 
   const [selectedEpic, setSelectedEpic] = useState<string>('all');
 
@@ -80,20 +103,36 @@ export function FocusView({ tasks, kanbanTasks, isLoading, onTaskMove, onDismiss
     ).values()
   ).sort((a, b) => a.name.localeCompare(b.name));
 
-  const weekTasks = kanbanTasks
+  // Base week tasks (unfiltered by day)
+  const baseWeekTasks = kanbanTasks
     .filter(t => {
       if (t.dueDate) return new Date(t.dueDate) <= endOfWeek;
       return t.source === 'jira' && t.priority === 'high';
     })
     .filter(t => selectedEpic === 'all' || t.epicKey === selectedEpic);
 
+  // Apply day filter
+  const weekTasks = selectedDay
+    ? baseWeekTasks.filter(t => {
+        if (t.dueDate && isSameDay(new Date(t.dueDate), selectedDay)) return true;
+        // Always show high priority Jira with no due date
+        if (!t.dueDate && t.source === 'jira' && t.priority === 'high') return true;
+        return false;
+      })
+    : baseWeekTasks;
 
   return (
     <div className="flex h-full overflow-hidden gap-0" style={{ backgroundColor: 'var(--bg)' }}>
+    <DragDropContext onDragEnd={handleDragEnd}>
     <div ref={containerRef} className="flex flex-col flex-1 min-w-0 overflow-hidden">
       {/* Calendar pane */}
       <div style={{ height: `${splitPercent}%` }} className="overflow-hidden pb-1">
-        <WeekView tasks={tasks} />
+        <WeekView
+          tasks={tasks}
+          allTasks={kanbanTasks}
+          selectedDay={selectedDay}
+          onDaySelect={setSelectedDay}
+        />
       </div>
 
       {/* Drag handle */}
@@ -107,6 +146,23 @@ export function FocusView({ tasks, kanbanTasks, isLoading, onTaskMove, onDismiss
 
       {/* Kanban pane */}
       <div style={{ height: `${100 - splitPercent}%` }} className="overflow-hidden pt-1 flex flex-col">
+        {/* Day filter banner */}
+        {selectedDay && (
+          <div
+            className="flex items-center justify-between px-3 py-1.5 mb-2 rounded-lg text-sm font-medium flex-shrink-0"
+            style={{ backgroundColor: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.4)', color: '#b45309' }}
+          >
+            <span>Showing tasks for {formatDayLabel(selectedDay)}</span>
+            <button
+              onClick={() => setSelectedDay(null)}
+              className="ml-2 hover:opacity-70 transition-opacity"
+              aria-label="Clear day filter"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
+
         {/* Epic filter */}
         {epics.length > 0 && (
           <div className="flex items-center gap-2 px-1 pb-2 flex-shrink-0">
@@ -131,21 +187,20 @@ export function FocusView({ tasks, kanbanTasks, isLoading, onTaskMove, onDismiss
             )}
           </div>
         )}
-        <DragDropContext onDragEnd={handleDragEnd}>
-          <div className="flex gap-4 h-full overflow-x-auto pb-2">
-            {COLUMNS.map(col => (
-              <KanbanColumn
-                key={col.id}
-                column={col}
-                tasks={weekTasks.filter(t => t.status === col.id)}
-                isLoading={isLoading}
-                onDismiss={onDismiss}
-              />
-            ))}
-          </div>
-        </DragDropContext>
+        <div className="flex gap-4 h-full overflow-x-auto pb-2">
+          {COLUMNS.map(col => (
+            <KanbanColumn
+              key={col.id}
+              column={col}
+              tasks={weekTasks.filter(t => t.status === col.id)}
+              isLoading={isLoading}
+              onDismiss={onDismiss}
+            />
+          ))}
+        </div>
       </div>
     </div>
+    </DragDropContext>
     <InboxSidebar
       tasks={tasks}
       onAddToBoard={item => {

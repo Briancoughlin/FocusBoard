@@ -18,11 +18,20 @@ function applyOverrides(tasks: Task[], overrides: Record<string, Status>): Task[
   );
 }
 
+// Apply due date overrides on top of fetched tasks
+function applyDueDateOverrides(tasks: Task[], dueDateOverrides: Record<string, string>): Task[] {
+  return tasks.map(task =>
+    dueDateOverrides[task.id] ? { ...task, dueDate: dueDateOverrides[task.id] } : task
+  );
+}
+
 export default function App() {
   const [view, setView] = useState<'board' | 'focus' | 'settings'>('focus');
   const [rawTasks, setRawTasks] = useState<Task[]>([]);
   const [overrides, setOverrides] = useState<Record<string, Status>>({});
   const overridesRef = useRef<Record<string, Status>>({});
+  const [dueDateOverrides, setDueDateOverrides] = useState<Record<string, string>>({});
+  const dueDateOverridesRef = useRef<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [lastSynced, setLastSynced] = useState<Date | null>(null);
   const [errors, setErrors] = useState<Array<{ source: string; error: string }>>([]);
@@ -72,9 +81,12 @@ export default function App() {
       getPersistedValue<{ date: string; count: number } | null>('completed-today', null),
       getPersistedValue<Record<string, string>>('done-dates', {}),
       getPersistedValue<string | null>('digest-date', null),
-    ]).then(([loadedOverrides, loadedPastedTasks, loadedDismissed, loadedCompletedToday, loadedDoneDates, loadedDigestDate]) => {
+      getPersistedValue<Record<string, string>>('due-date-overrides', {}),
+    ]).then(([loadedOverrides, loadedPastedTasks, loadedDismissed, loadedCompletedToday, loadedDoneDates, loadedDigestDate, loadedDueDateOverrides]) => {
       overridesRef.current = loadedOverrides;
       setOverrides(loadedOverrides);
+      dueDateOverridesRef.current = loadedDueDateOverrides;
+      setDueDateOverrides(loadedDueDateOverrides);
       setPastedTasks(loadedPastedTasks);
       setDismissed(new Set(loadedDismissed));
       setDoneDates(loadedDoneDates);
@@ -142,6 +154,13 @@ export default function App() {
     });
   }, []);
 
+  const handleDueDateChange = useCallback((taskId: string, dateString: string) => {
+    const updated = { ...dueDateOverridesRef.current, [taskId]: dateString };
+    dueDateOverridesRef.current = updated;
+    setDueDateOverrides(updated);
+    setPersistedValue('due-date-overrides', updated);
+  }, []);
+
   const handleDismiss = useCallback((taskId: string) => {
     setDismissed(prev => {
       const updated = new Set(prev).add(taskId);
@@ -160,7 +179,10 @@ export default function App() {
 
   const today = new Date().toDateString();
 
-  const tasks = applyOverrides([...rawTasks, ...pastedTasks], overrides)
+  const tasks = applyDueDateOverrides(
+      applyOverrides([...rawTasks, ...pastedTasks], overrides),
+      dueDateOverrides
+    )
     .filter(t => !dismissed.has(t.id))
     .filter(t => t.status !== 'done' || doneDates[t.id] === today);
 
@@ -207,6 +229,7 @@ export default function App() {
             isLoading={isLoading}
             onTaskMove={handleTaskMove}
             onDismiss={handleDismiss}
+            onDueDateChange={handleDueDateChange}
             onAddToBoard={task => {
               setPastedTasks(prev => {
                 const pinned = { ...task, id: `pinned-${task.id}`, source: 'paste' as const, status: 'todo' as const };

@@ -18,6 +18,7 @@ const ALLOWED_KEYS = [
   'theme-auto',
   'theme-accent',
   'theme-dark',
+  'due-date-overrides',
 ];
 
 function ensureDataDir() {
