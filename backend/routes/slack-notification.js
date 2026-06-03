@@ -78,15 +78,21 @@ router.post('/', (req, res) => {
   const isChannel = title.startsWith('#');
   const channelName = isChannel ? title.slice(1).split(':')[0].trim() : title.split(':')[0].trim();
 
-  // Prefer the Windows notification launch URL — it opens the exact message
-  let url = launchUrl || 'slack://open';
-  if (!launchUrl && slackWorkspaceUrl) {
-    const base = slackWorkspaceUrl.replace(/\/$/, '');
+  // Use slack:// protocol to open desktop app directly at the right channel
+  // Team ID extracted from workspace URL or hardcoded from config
+  const teamId = cfg.slackTeamId || '';
+  let url = 'slack://open';
+  if (teamId) {
     if (isChannel) {
-      url = `${base}/messages/${channelName}`;
+      url = `slack://channel?team=${teamId}&channel=${channelName}`;
     } else {
-      url = `${base}/messages/@${channelName.toLowerCase().replace(/\s+/g, '.')}`;
+      url = `slack://user?team=${teamId}&username=${channelName.toLowerCase().replace(/\s+/g, '.')}`;
     }
+  } else if (slackWorkspaceUrl) {
+    const base = slackWorkspaceUrl.replace(/\/$/, '');
+    url = isChannel
+      ? `${base}/messages/${channelName}`
+      : `${base}/messages/@${channelName.toLowerCase().replace(/\s+/g, '.')}`;
   }
 
   const task = {

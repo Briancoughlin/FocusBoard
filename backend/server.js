@@ -106,6 +106,7 @@ app.get('/api/config', (req, res) => {
     googleRefreshToken: cfg.googleRefreshToken ? '***' : '',
     slackToken: cfg.slackToken ? '***' : '',
     slackWorkspaceUrl: cfg.slackWorkspaceUrl || '',
+    slackTeamId: cfg.slackTeamId || '',
     anthropicKey: cfg.anthropicKey ? '***' : '',
     anthropicBaseUrl: cfg.anthropicBaseUrl || '',
     // status flags
@@ -129,7 +130,7 @@ app.post('/api/config', (req, res) => {
   const fields = [
     'jiraUrl', 'jiraEmail', 'jiraToken', 'jiraJql',
     'googleClientId', 'googleClientSecret',
-    'slackToken', 'slackWorkspaceUrl', 'anthropicKey', 'anthropicBaseUrl',
+    'slackToken', 'slackWorkspaceUrl', 'slackTeamId', 'anthropicKey', 'anthropicBaseUrl',
     'githubToken', 'githubBaseUrl',
   ];
   for (const field of fields) {

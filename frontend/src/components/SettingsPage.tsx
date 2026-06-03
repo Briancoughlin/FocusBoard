@@ -109,6 +109,7 @@ export function SettingsPage() {
         googleClientSecret: '',
         slackToken: '',
         slackWorkspaceUrl: cfg.slackWorkspaceUrl || '',
+        slackTeamId: (cfg as any).slackTeamId || '',
         githubToken: '',
         githubBaseUrl: cfg.githubBaseUrl || '',
         anthropicKey: '',
@@ -431,6 +432,14 @@ export function SettingsPage() {
         description="Fetch DMs and mentions from your Slack workspace."
         configured={config.slackConfigured}
       >
+        <Field
+          label="Team ID"
+          id="slackTeamId"
+          value={form.slackTeamId || ''}
+          placeholder="E016WLPF0G6"
+          onChange={v => setField('slackTeamId', v)}
+          hint="From your Slack URL: app.slack.com/client/TEAM_ID/..."
+        />
         <Field
           label="Workspace URL"
           id="slackWorkspaceUrl"
