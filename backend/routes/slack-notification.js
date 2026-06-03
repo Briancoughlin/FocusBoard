@@ -67,20 +67,19 @@ router.post('/', (req, res) => {
   // Build Slack URL — use workspace URL from config if available
   const CONFIG_PATH = path.join(__dirname, '..', 'config.json');
   let slackWorkspaceUrl = '';
+  let teamId = '';
   try {
     const raw = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
     const cfg = raw.encrypted ? decryptConfig(raw) : raw;
     slackWorkspaceUrl = cfg.slackWorkspaceUrl || '';
+    teamId = cfg.slackTeamId || '';
   } catch {}
 
-  // Extract channel/sender from title — format is usually "#channel-name" or "Person Name"
-  // The notification title contains the channel/sender, body contains the message
+  // Extract channel/sender from title
   const isChannel = title.startsWith('#');
   const channelName = isChannel ? title.slice(1).split(':')[0].trim() : title.split(':')[0].trim();
 
   // Use slack:// protocol to open desktop app directly at the right channel
-  // Team ID extracted from workspace URL or hardcoded from config
-  const teamId = cfg.slackTeamId || '';
   let url = 'slack://open';
   if (teamId) {
     if (isChannel) {
