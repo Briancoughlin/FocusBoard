@@ -40,6 +40,7 @@ export default function App() {
   const [pasteOpen, setPasteOpen] = useState(false);
   const [jiraDoneTask, setJiraDoneTask] = useState<Task | null>(null);
   const [jiraCreateTask, setJiraCreateTask] = useState<Task | null>(null);
+  const [activeEpicKey, setActiveEpicKey] = useState<string>('all');
   const [slackChannelPrompt, setSlackChannelPrompt] = useState<string | null>(null);
   const [injectedTasks, setInjectedTasks] = useState<Task[]>([]);
   const [pinnedIds, setPinnedIds] = useState<Set<string>>(new Set());
@@ -309,6 +310,7 @@ export default function App() {
             onDueDateChange={handleDueDateChange}
             onPin={handlePin}
             pinnedIds={pinnedIds}
+            onEpicChange={setActiveEpicKey}
             onAddToBoard={task => {
               setPastedTasks(prev => {
                 const pinned = { ...task, id: `pinned-${task.id}`, source: 'paste' as const, status: 'todo' as const, priority: 'high' as const };
@@ -349,6 +351,7 @@ export default function App() {
           task={jiraCreateTask}
           onCreated={handleJiraCreated}
           onDismiss={() => setJiraCreateTask(null)}
+          suggestedProjectKey={activeEpicKey !== 'all' ? activeEpicKey.split('-')[0] : undefined}
         />
       )}
       {pasteOpen && (

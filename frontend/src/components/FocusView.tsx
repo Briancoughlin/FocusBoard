@@ -18,6 +18,7 @@ interface Props {
   onDueDateChange: (taskId: string, dateString: string) => void;
   onPin: (taskId: string) => void;
   pinnedIds: Set<string>;
+  onEpicChange?: (epicKey: string) => void;
 }
 
 const STORAGE_KEY = 'focusboard-split-percent';
@@ -35,7 +36,7 @@ function formatDayLabel(day: Date): string {
   return day.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' });
 }
 
-export function FocusView({ tasks, kanbanTasks, isLoading, onTaskMove, onDismiss, onAddToBoard, onDueDateChange, onPin, pinnedIds }: Props) {
+export function FocusView({ tasks, kanbanTasks, isLoading, onTaskMove, onDismiss, onAddToBoard, onDueDateChange, onPin, pinnedIds, onEpicChange }: Props) {
   const [splitPercent, setSplitPercent] = useState<number>(DEFAULT_SPLIT);
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
 
@@ -178,7 +179,7 @@ export function FocusView({ tasks, kanbanTasks, isLoading, onTaskMove, onDismiss
             <span className="text-xs text-gray-400 font-medium" title="Filter the kanban to show only tasks from a specific epic">Epic:</span>
             <select
               value={selectedEpic}
-              onChange={e => setSelectedEpic(e.target.value)}
+              onChange={e => { setSelectedEpic(e.target.value); onEpicChange?.(e.target.value); }}
               className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 max-w-xs"
               aria-label="Filter by epic"
               title="Filter the kanban to show only tasks from a specific epic"
@@ -190,7 +191,7 @@ export function FocusView({ tasks, kanbanTasks, isLoading, onTaskMove, onDismiss
             </select>
             {selectedEpic !== 'all' && (
               <button
-                onClick={() => setSelectedEpic('all')}
+                onClick={() => { setSelectedEpic('all'); onEpicChange?.('all'); }}
                 className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
                 aria-label="Clear epic filter"
                 title="Show all epics"

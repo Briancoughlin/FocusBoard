@@ -6,6 +6,7 @@ interface Props {
   task: Task;
   onCreated: (originalTaskId: string, jiraTask: Task) => void;
   onDismiss: () => void;
+  suggestedProjectKey?: string; // from active epic filter
 }
 
 interface JiraProject {
@@ -15,7 +16,7 @@ interface JiraProject {
 
 const ISSUE_TYPES = ['Task', 'Story', 'Bug', 'Spike'];
 
-export function JiraCreatePrompt({ task, onCreated, onDismiss }: Props) {
+export function JiraCreatePrompt({ task, onCreated, onDismiss, suggestedProjectKey }: Props) {
   const [summary, setSummary] = useState(task.title);
   const [description, setDescription] = useState(task.description || '');
   const [projectKey, setProjectKey] = useState('');
@@ -32,7 +33,7 @@ export function JiraCreatePrompt({ task, onCreated, onDismiss }: Props) {
       .then(data => {
         const list: JiraProject[] = data.projects || [];
         // Filter to default project if set, otherwise show all
-        const defaultProject = data.defaultProject || '';
+        const defaultProject = suggestedProjectKey || data.defaultProject || '';
         const filtered = defaultProject
           ? list.filter(p => p.key === defaultProject)
           : list;
