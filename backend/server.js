@@ -6,6 +6,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 import jiraRouter from './routes/jira.js';
+import jiraCreateRouter from './routes/jira-create.js';
 import gmailRouter from './routes/gmail.js';
 import calendarRouter from './routes/calendar.js';
 import slackRouter from './routes/slack.js';
@@ -195,6 +196,7 @@ app.get('/auth/google/callback', async (req, res) => {
 
 // --- Integration routes ---
 app.use('/api/jira', jiraRouter);
+app.use('/api/jira', jiraCreateRouter);
 app.use('/api/gmail', gmailRouter);
 app.use('/api/calendar', calendarRouter);
 app.use('/api/slack', slackRouter);

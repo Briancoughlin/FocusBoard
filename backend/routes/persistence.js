@@ -19,6 +19,7 @@ const ALLOWED_KEYS = [
   'theme-accent',
   'theme-dark',
   'due-date-overrides',
+  'injected-tasks',
 ];
 
 function ensureDataDir() {

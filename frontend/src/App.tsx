@@ -10,6 +10,7 @@ import { PastePanel } from './components/PastePanel';
 import { DailyDigest } from './components/DailyDigest';
 import { FocusView } from './components/FocusView';
 import { JiraDonePrompt } from './components/JiraDonePrompt';
+import { JiraCreatePrompt } from './components/JiraCreatePrompt';
 
 // Apply user overrides on top of fetched tasks
 function applyOverrides(tasks: Task[], overrides: Record<string, Status>): Task[] {
@@ -37,6 +38,8 @@ export default function App() {
   const [errors, setErrors] = useState<Array<{ source: string; error: string }>>([]);
   const [pasteOpen, setPasteOpen] = useState(false);
   const [jiraDoneTask, setJiraDoneTask] = useState<Task | null>(null);
+  const [jiraCreateTask, setJiraCreateTask] = useState<Task | null>(null);
+  const [injectedTasks, setInjectedTasks] = useState<Task[]>([]);
   const [showDigest, setShowDigest] = useState(false);
   const [completedToday, setCompletedToday] = useState<number>(0);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
@@ -82,12 +85,14 @@ export default function App() {
       getPersistedValue<Record<string, string>>('done-dates', {}),
       getPersistedValue<string | null>('digest-date', null),
       getPersistedValue<Record<string, string>>('due-date-overrides', {}),
-    ]).then(([loadedOverrides, loadedPastedTasks, loadedDismissed, loadedCompletedToday, loadedDoneDates, loadedDigestDate, loadedDueDateOverrides]) => {
+      getPersistedValue<Task[]>('injected-tasks', []),
+    ]).then(([loadedOverrides, loadedPastedTasks, loadedDismissed, loadedCompletedToday, loadedDoneDates, loadedDigestDate, loadedDueDateOverrides, loadedInjectedTasks]) => {
       overridesRef.current = loadedOverrides;
       setOverrides(loadedOverrides);
       dueDateOverridesRef.current = loadedDueDateOverrides;
       setDueDateOverrides(loadedDueDateOverrides);
       setPastedTasks(loadedPastedTasks);
+      setInjectedTasks(loadedInjectedTasks);
       setDismissed(new Set(loadedDismissed));
       setDoneDates(loadedDoneDates);
 
@@ -140,17 +145,27 @@ export default function App() {
       });
     }
 
-    // Check for Jira done prompt — need access to tasks derived state
-    // We resolve the task from current rawTasks + pastedTasks
+    // Check for Jira done/create prompts — resolve task from current state
     setRawTasks(currentRaw => {
-      if (newStatus === 'done') {
-        const allTasks = applyOverrides([...currentRaw], overridesRef.current);
-        const moved = allTasks.find(t => t.id === taskId);
-        if (moved?.source === 'jira') {
-          setJiraDoneTask(moved);
-        }
+      const allTasks = applyOverrides([...currentRaw], overridesRef.current);
+      const moved = allTasks.find(t => t.id === taskId);
+      if (newStatus === 'done' && moved?.source === 'jira') {
+        setJiraDoneTask(moved);
+      }
+      if (newStatus === 'inprogress' && moved && moved.source !== 'jira') {
+        setJiraCreateTask(moved);
       }
       return currentRaw;
+    });
+    // Also check pastedTasks / injectedTasks for the inprogress trigger
+    setPastedTasks(currentPasted => {
+      if (newStatus === 'inprogress') {
+        const moved = currentPasted.find(t => t.id === taskId);
+        if (moved && moved.source !== 'jira') {
+          setJiraCreateTask(moved);
+        }
+      }
+      return currentPasted;
     });
   }, []);
 
@@ -177,10 +192,32 @@ export default function App() {
     });
   }, []);
 
+  const handleJiraCreated = useCallback((originalTaskId: string, jiraTask: Task) => {
+    // Remove original task from pastedTasks if present
+    setPastedTasks(prev => {
+      const updated = prev.filter(t => t.id !== originalTaskId);
+      setPersistedValue('pasted-tasks', updated);
+      return updated;
+    });
+    // Remove override for the original task
+    const updatedOverrides = { ...overridesRef.current };
+    delete updatedOverrides[originalTaskId];
+    overridesRef.current = updatedOverrides;
+    setOverrides(updatedOverrides);
+    setPersistedValue('overrides', updatedOverrides);
+    // Add the jira task to injectedTasks
+    setInjectedTasks(prev => {
+      const updated = [...prev, jiraTask];
+      setPersistedValue('injected-tasks', updated);
+      return updated;
+    });
+    setJiraCreateTask(null);
+  }, []);
+
   const today = new Date().toDateString();
 
   const tasks = applyDueDateOverrides(
-      applyOverrides([...rawTasks, ...pastedTasks], overrides),
+      applyOverrides([...rawTasks, ...pastedTasks, ...injectedTasks], overrides),
       dueDateOverrides
     )
     .filter(t => !dismissed.has(t.id))
@@ -256,6 +293,13 @@ export default function App() {
           task={jiraDoneTask}
           onOpen={() => { window.open(jiraDoneTask.url, '_blank'); setJiraDoneTask(null); }}
           onDismiss={() => setJiraDoneTask(null)}
+        />
+      )}
+      {jiraCreateTask && (
+        <JiraCreatePrompt
+          task={jiraCreateTask}
+          onCreated={handleJiraCreated}
+          onDismiss={() => setJiraCreateTask(null)}
         />
       )}
       {pasteOpen && (
