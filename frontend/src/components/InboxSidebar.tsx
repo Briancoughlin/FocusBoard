@@ -40,7 +40,7 @@ function ItemRow({ item, onRead, onAddToBoard }: {
         item.source === 'github' && !item.read && item.title.includes('✅') ? 'bg-green-50 border-green-100 hover:bg-green-100' :
         ''
       }`}
-      style={{ borderColor: 'var(--border)', backgroundColor: item.read || item.source === 'slack' || (item.source === 'github') ? undefined : 'var(--bg-card)' }}
+      style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-card)' }}
     >
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-1.5">
@@ -179,8 +179,8 @@ export function InboxSidebar({ tasks, onAddToBoard }: Props) {
           onMarkAll={() => markAllRead(githubItems.map(i => i.id))}
         />
         {githubItems.length === 0 ? (
-          <div className="px-3 py-4 text-center">
-            <p className="text-xs text-gray-300">No GitHub notifications</p>
+          <div className="px-3 py-4 text-center" style={{ backgroundColor: 'var(--bg-card)' }}>
+            <p className="text-xs" style={{ color: 'var(--border)' }}>No GitHub notifications</p>
           </div>
         ) : (
           githubItems.map(item => (
@@ -196,9 +196,9 @@ export function InboxSidebar({ tasks, onAddToBoard }: Props) {
           onMarkAll={() => markAllRead(inboxItems.map(i => i.id))}
         />
         {inboxItems.length === 0 ? (
-          <div className="px-3 py-4 text-center">
-            <p className="text-xs text-gray-300">No messages yet</p>
-            <p className="text-xs text-gray-200 mt-1">Gmail & Slack appear here</p>
+          <div className="px-3 py-4 text-center" style={{ backgroundColor: 'var(--bg-card)' }}>
+            <p className="text-xs" style={{ color: 'var(--border)' }}>No messages yet</p>
+            <p className="text-xs mt-1" style={{ color: 'var(--border)' }}>Gmail & Slack appear here</p>
           </div>
         ) : (
           inboxItems.map(item => (
