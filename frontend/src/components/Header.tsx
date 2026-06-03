@@ -52,7 +52,7 @@ export function Header({ view, onViewChange, onRefresh, isRefreshing, lastSynced
             }`}
             style={view === v ? { backgroundColor: 'var(--accent)' } : {}}
           >
-            {v}
+            {v === 'board' ? 'Backlog' : v === 'focus' ? 'Focus' : 'Settings'}
           </button>
         ))}
       </nav>
