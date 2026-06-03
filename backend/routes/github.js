@@ -144,7 +144,7 @@ router.get('/', async (req, res) => {
           title: isFail ? `❌ CI Failed: ${repo}` : isPass ? `✅ CI Passed: ${repo}` : `🔄 CI: ${subjectTitle}`,
           description: `${subjectTitle} — ${repo}`,
           source: 'github',
-          status: isFail ? 'todo' : 'done',
+          status: 'todo',
           priority: isFail ? 'high' : 'low',
           dueDate: undefined,
           url,
