@@ -31,8 +31,14 @@ export function JiraCreatePrompt({ task, onCreated, onDismiss }: Props) {
       .then(r => r.json())
       .then(data => {
         const list: JiraProject[] = data.projects || [];
-        setProjects(list);
-        if (list.length > 0) setProjectKey(list[0].key);
+        // Filter to default project if set, otherwise show all
+        const defaultProject = data.defaultProject || '';
+        const filtered = defaultProject
+          ? list.filter(p => p.key === defaultProject)
+          : list;
+        setProjects(filtered.length > 0 ? filtered : list);
+        const preferred = filtered.find(p => p.key === defaultProject) || filtered[0] || list[0];
+        if (preferred) setProjectKey(preferred.key);
       })
       .catch(err => {
         setError('Failed to load projects: ' + err.message);

@@ -111,6 +111,7 @@ export function SettingsPage() {
         jiraEmail: cfg.jiraEmail || '',
         jiraToken: '',
         jiraJql: cfg.jiraJql || '',
+        defaultJiraProject: (cfg as any).defaultJiraProject || '',
         googleClientId: cfg.googleClientId || '',
         googleClientSecret: '',
         slackToken: '',
@@ -365,6 +366,14 @@ export function SettingsPage() {
           placeholder={config.jiraToken ? '••••••••••••' : 'Paste token...'}
           onChange={v => setField('jiraToken', v)}
           hint="Account Settings → Security → API tokens"
+        />
+        <Field
+          label="Default Project Key (optional)"
+          id="defaultJiraProject"
+          value={form.defaultJiraProject || ''}
+          placeholder="e.g. CSD"
+          onChange={v => setField('defaultJiraProject', v)}
+          hint="Project key to pre-select when creating Jira tickets from FocusBoard"
         />
         <Field
           label="JQL Filter (optional)"

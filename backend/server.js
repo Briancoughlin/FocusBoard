@@ -130,7 +130,7 @@ app.post('/api/config', (req, res) => {
   // Only update fields that are provided and not the placeholder '***'
   const merged = { ...existing };
   const fields = [
-    'jiraUrl', 'jiraEmail', 'jiraToken', 'jiraJql',
+    'jiraUrl', 'jiraEmail', 'jiraToken', 'jiraJql', 'defaultJiraProject',
     'googleClientId', 'googleClientSecret',
     'slackToken', 'slackWorkspaceUrl', 'slackTeamId', 'anthropicKey', 'anthropicBaseUrl',
     'githubToken', 'githubBaseUrl',

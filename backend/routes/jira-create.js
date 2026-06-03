@@ -95,7 +95,7 @@ router.get('/projects', async (req, res) => {
       name: p.name,
     }));
 
-    return res.json({ projects });
+    return res.json({ projects, defaultProject: cfg.defaultJiraProject || '' });
   } catch (err) {
     console.error('Jira projects error:', err.message);
     return res.status(500).json({ error: err.message });
