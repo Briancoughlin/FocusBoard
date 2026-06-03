@@ -121,7 +121,7 @@ router.get('/', async (req, res) => {
 
     // 4. CI and review notifications
     const notifications = await githubFetch(
-      '/notifications?all=true&per_page=30',
+      '/notifications?all=false&per_page=30',
       token, baseUrl
     );
 
