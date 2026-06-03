@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -10,6 +11,8 @@ import calendarRouter from './routes/calendar.js';
 import slackRouter from './routes/slack.js';
 import pasteRouter from './routes/paste.js';
 import persistenceRouter from './routes/persistence.js';
+import { loadOrCreateToken } from './auth.js';
+import { encryptConfig, decryptConfig } from './crypto-utils.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CONFIG_PATH = path.join(__dirname, 'config.json');
@@ -17,25 +20,54 @@ const CONFIG_PATH = path.join(__dirname, 'config.json');
 const app = express();
 const PORT = 3001;
 
+// Load or generate auth token at startup
+const AUTH_TOKEN = loadOrCreateToken();
+
 app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:3001'], credentials: true }));
 app.use(express.json());
+app.use(cookieParser());
 
-// Serve built frontend static files
+// --- Auth middleware for all /api/* routes ---
+app.use('/api', (req, res, next) => {
+  const sessionCookie = req.cookies && req.cookies.fb_session;
+  if (!sessionCookie || sessionCookie !== AUTH_TOKEN) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  next();
+});
+
+// Serve built frontend static files — set auth cookie so visiting the app grants access
 const frontendDist = path.join(__dirname, '..', 'frontend', 'dist');
+app.get('/', (req, res) => {
+  res.cookie('fb_session', AUTH_TOKEN, { httpOnly: true, sameSite: 'strict' });
+  res.sendFile(path.join(frontendDist, 'index.html'));
+});
 app.use(express.static(frontendDist));
 
 // --- Config helpers ---
 function loadConfig() {
   if (!fs.existsSync(CONFIG_PATH)) return {};
   try {
-    return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
+    const raw = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
+    if (raw.encrypted === true) {
+      try {
+        return decryptConfig(raw);
+      } catch {
+        return {};
+      }
+    }
+    // Plain JSON — re-save as encrypted for future reads
+    const encrypted = encryptConfig(raw);
+    fs.writeFileSync(CONFIG_PATH, JSON.stringify(encrypted, null, 2), 'utf8');
+    return raw;
   } catch {
     return {};
   }
 }
 
 function saveConfig(data) {
-  fs.writeFileSync(CONFIG_PATH, JSON.stringify(data, null, 2), 'utf8');
+  const encrypted = encryptConfig(data);
+  fs.writeFileSync(CONFIG_PATH, JSON.stringify(encrypted, null, 2), 'utf8');
 }
 
 // Attach config loader to every request
@@ -182,6 +214,7 @@ app.get('/api/sync', async (req, res) => {
 
 // Catch-all for SPA routing — must be after all API routes
 app.get('*', (req, res) => {
+  res.cookie('fb_session', AUTH_TOKEN, { httpOnly: true, sameSite: 'strict' });
   res.sendFile(path.join(frontendDist, 'index.html'));
 });
 

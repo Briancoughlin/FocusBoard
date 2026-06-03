@@ -4,3 +4,4 @@ config.json
 frontend/dist/
 backend/daemon/
 backend/data/
+backend/.auth-token
