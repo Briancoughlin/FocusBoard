@@ -94,13 +94,58 @@ Register-ScheduledTask `
 
 Write-Host "Auto-start registered." -ForegroundColor Green
 
-# --- Step 6: Start FocusBoard now ---
+# --- Step 6: Register notification watcher scheduled task ---
+Write-Host ""
+Write-Host "Setting up notification watcher auto-start..." -ForegroundColor Yellow
+
+$watcherTaskName = "FocusBoardNotifications"
+$existingWatcherTask = Get-ScheduledTask -TaskName $watcherTaskName -ErrorAction SilentlyContinue
+
+if ($existingWatcherTask) {
+    Write-Host "Removing existing notification watcher task..." -ForegroundColor Yellow
+    Unregister-ScheduledTask -TaskName $watcherTaskName -Confirm:$false
+}
+
+$watcherAction = New-ScheduledTaskAction `
+    -Execute $nodePath `
+    -Argument "notification-watcher.js" `
+    -WorkingDirectory "$FocusboardDir\backend"
+
+$watcherTrigger = New-ScheduledTaskTrigger -AtLogOn
+
+$watcherSettings = New-ScheduledTaskSettingsSet `
+    -ExecutionTimeLimit 0 `
+    -RestartCount 3 `
+    -RestartInterval (New-TimeSpan -Minutes 1) `
+    -Hidden
+
+$watcherPrincipal = New-ScheduledTaskPrincipal `
+    -UserId $env:USERNAME `
+    -LogonType Interactive `
+    -RunLevel Highest
+
+Register-ScheduledTask `
+    -TaskName $watcherTaskName `
+    -Action $watcherAction `
+    -Trigger $watcherTrigger `
+    -Settings $watcherSettings `
+    -Principal $watcherPrincipal `
+    -Description "FocusBoard Slack notification watcher" `
+    -Force | Out-Null
+
+Write-Host "Notification watcher auto-start registered." -ForegroundColor Green
+
+# --- Step 7: Start FocusBoard now ---
 Write-Host ""
 Write-Host "Starting FocusBoard..." -ForegroundColor Yellow
 Start-ScheduledTask -TaskName $taskName
-Start-Sleep -Seconds 3
+Start-Sleep -Seconds 2
 
-# --- Step 7: Open browser ---
+Write-Host "Starting notification watcher..." -ForegroundColor Yellow
+Start-ScheduledTask -TaskName $watcherTaskName
+Start-Sleep -Seconds 1
+
+# --- Step 8: Open browser ---
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "   FocusBoard is ready!" -ForegroundColor Green
@@ -112,6 +157,8 @@ Write-Host "Next steps:" -ForegroundColor White
 Write-Host "  1. Go to Settings and enter your API credentials" -ForegroundColor Gray
 Write-Host "  2. Click the install icon in Chrome's address bar to install as a desktop app" -ForegroundColor Gray
 Write-Host "  3. FocusBoard will start automatically every time you log in" -ForegroundColor Gray
+Write-Host "  4. Allow notification access: Windows Settings > Privacy & Security > Notifications" -ForegroundColor Gray
+Write-Host "     Enable 'Allow apps to access your notifications' for Slack notifications to be captured" -ForegroundColor Gray
 Write-Host ""
 
 Start-Process "http://localhost:3001"

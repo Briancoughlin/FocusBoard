@@ -13,6 +13,7 @@ import pasteRouter from './routes/paste.js';
 import persistenceRouter from './routes/persistence.js';
 import githubRouter from './routes/github.js';
 import themeRouter from './routes/theme.js';
+import slackNotificationRouter, { getPendingAndClear } from './routes/slack-notification.js';
 import { loadOrCreateToken } from './auth.js';
 import { encryptConfig, decryptConfig } from './crypto-utils.js';
 
@@ -205,6 +206,13 @@ app.use('/api/paste', pasteRouter);
 app.use('/api/persistence', persistenceRouter);
 app.use('/api/github', githubRouter);
 app.use('/api/theme', themeRouter);
+app.use('/api/slack-notification', slackNotificationRouter);
+
+// --- Pending notification tasks ---
+app.get('/api/slack-notifications/pending', (req, res) => {
+  const tasks = getPendingAndClear();
+  res.json({ tasks });
+});
 
 // --- Sync all sources ---
 app.get('/api/sync', async (req, res) => {
@@ -230,6 +238,12 @@ app.get('/api/sync', async (req, res) => {
       }
     })
   );
+
+  // Include any pending notification tasks captured by the watcher
+  const notifTasks = getPendingAndClear();
+  if (notifTasks.length > 0) {
+    results.tasks.push(...notifTasks);
+  }
 
   res.json(results);
 });

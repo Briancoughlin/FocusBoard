@@ -5,6 +5,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
+    "watch-notifications": "node notification-watcher.js",
     "install-service": "node install-service.js",
     "uninstall-service": "node uninstall-service.js"
   },
