@@ -112,7 +112,7 @@ app.get('/api/config', (req, res) => {
     jiraJql: cfg.jiraJql || '',
     jiraConfigured: !!(cfg.jiraUrl && cfg.jiraEmail && cfg.jiraToken),
     googleConfigured: !!(cfg.googleClientId && cfg.googleClientSecret && cfg.googleAccessToken),
-    slackConfigured: !!cfg.slackToken,
+    slackConfigured: !!(cfg.slackToken || cfg.slackWorkspaceUrl),
     anthropicConfigured: !!cfg.anthropicKey,
     githubToken: cfg.githubToken ? '***' : '',
     githubBaseUrl: cfg.githubBaseUrl || '',

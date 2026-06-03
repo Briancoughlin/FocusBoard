@@ -23,7 +23,8 @@ const router = Router();
 router.get('/', async (req, res) => {
   const cfg = loadConfig();
   if (!cfg.slackToken) {
-    return res.json({ tasks: [], error: 'Slack not configured' });
+    // No bot token but workspace URL may be set — that's fine, notifications come via Windows watcher
+    return res.json({ tasks: [] });
   }
 
   try {
