@@ -2,9 +2,25 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --accent: #0078d4;
+  --accent-light: rgba(0, 120, 212, 0.06);
+  --accent-hover: #106ebe;
+  --bg: #f9fafb;
+  --bg-card: #ffffff;
+  --bg-sidebar: #ffffff;
+  --bg-header: #ffffff;
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --border: #e5e7eb;
+}
+
 @layer base {
   body {
-    @apply bg-gray-50 text-gray-900 antialiased;
+    background-color: var(--bg);
+    color: var(--text-primary);
+    transition: background-color 0.2s, color 0.2s;
+    @apply antialiased;
   }
 }
 

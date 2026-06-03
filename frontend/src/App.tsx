@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { Task, Status } from './types';
 import { syncAll } from './services/api';
 import { getPersistedValue, setPersistedValue } from './services/persistence';
+import { fetchWindowsTheme, applyTheme } from './services/theme';
 import { Header } from './components/Header';
 import { KanbanBoard } from './components/KanbanBoard';
 import { SettingsPage } from './components/SettingsPage';
@@ -33,6 +34,31 @@ export default function App() {
   const [pastedTasks, setPastedTasks] = useState<Task[]>([]);
   const [doneDates, setDoneDates] = useState<Record<string, string>>({});
   const [persistenceLoaded, setPersistenceLoaded] = useState(false);
+
+  // Theme: fetch Windows accent/dark-mode on mount, re-check every 30s
+  useEffect(() => {
+    async function loadTheme() {
+      const [manualAccent, manualDark, autoMode] = await Promise.all([
+        getPersistedValue<string | null>('theme-accent', null),
+        getPersistedValue<boolean | null>('theme-dark', null),
+        getPersistedValue<boolean>('theme-auto', true),
+      ]);
+
+      if (!autoMode && manualAccent !== null && manualDark !== null) {
+        applyTheme(manualAccent, manualDark);
+        return;
+      }
+
+      const windowsTheme = await fetchWindowsTheme();
+      const accent = (!autoMode && manualAccent) ? manualAccent : windowsTheme.accentColor;
+      const isDark = (!autoMode && manualDark !== null) ? manualDark : windowsTheme.isDark;
+      applyTheme(accent, isDark);
+    }
+
+    loadTheme();
+    const interval = setInterval(loadTheme, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Load all persisted values on mount
   useEffect(() => {
@@ -141,16 +167,16 @@ export default function App() {
 
   if (!persistenceLoaded) {
     return (
-      <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
+      <div className="h-screen flex flex-col overflow-hidden" style={{ backgroundColor: 'var(--bg)' }}>
         <div className="flex-1 flex items-center justify-center">
-          <div className="text-gray-400 text-sm">Loading...</div>
+          <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>Loading...</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
+    <div className="h-screen flex flex-col overflow-hidden" style={{ backgroundColor: 'var(--bg)' }}>
       <Header
         view={view}
         onViewChange={setView}
@@ -162,7 +188,7 @@ export default function App() {
         completedToday={completedToday}
       />
 
-      <main className={`flex-1 min-h-0 px-6 pt-5 pb-6 ${view === 'settings' ? 'overflow-y-auto' : 'overflow-hidden'}`}>
+      <main className={`flex-1 min-h-0 px-6 pt-5 pb-6 ${view === 'settings' ? 'overflow-y-auto' : 'overflow-hidden'}`} style={{ backgroundColor: 'var(--bg)' }}>
         {view === 'board' && (
           <KanbanBoard
             tasks={kanbanTasks}

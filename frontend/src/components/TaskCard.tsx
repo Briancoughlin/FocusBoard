@@ -78,11 +78,12 @@ export function TaskCard({ task, index, onDismiss }: Props) {
           {...provided.draggableProps}
           {...provided.dragHandleProps}
           className={`
-            bg-white rounded-lg border border-gray-200 mb-2 cursor-grab active:cursor-grabbing
+            rounded-lg border mb-2 cursor-grab active:cursor-grabbing
             shadow-sm hover:shadow-md transition-all duration-150 overflow-hidden
             ${task.url ? 'hover:border-blue-300' : ''}
             ${snapshot.isDragging ? 'shadow-lg rotate-1 border-blue-300 ring-2 ring-blue-200' : ''}
           `}
+          style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}
         >
           {/* Urgency colour strip */}
           <div className={`h-1 w-full ${bar}`} />
@@ -127,14 +128,15 @@ export function TaskCard({ task, index, onDismiss }: Props) {
             {/* Title — click to open */}
             <p
               onClick={e => { e.stopPropagation(); if (task.url) window.open(task.url, '_blank'); }}
-              className={`text-sm font-semibold text-gray-800 leading-snug mb-1 line-clamp-2 ${task.url ? 'hover:text-blue-600 cursor-pointer' : ''}`}
+              className={`text-sm font-semibold leading-snug mb-1 line-clamp-2 ${task.url ? 'hover:text-blue-600 cursor-pointer' : ''}`}
+              style={{ color: 'var(--text-primary)' }}
             >
               {task.title}
             </p>
 
             {/* Description */}
             {task.description && (
-              <p className="text-xs text-gray-500 leading-relaxed mb-2 line-clamp-2">
+              <p className="text-xs leading-relaxed mb-2 line-clamp-2" style={{ color: 'var(--text-secondary)' }}>
                 {task.description}
               </p>
             )}

@@ -12,6 +12,7 @@ import slackRouter from './routes/slack.js';
 import pasteRouter from './routes/paste.js';
 import persistenceRouter from './routes/persistence.js';
 import githubRouter from './routes/github.js';
+import themeRouter from './routes/theme.js';
 import { loadOrCreateToken } from './auth.js';
 import { encryptConfig, decryptConfig } from './crypto-utils.js';
 
@@ -203,6 +204,7 @@ app.use('/api/slack', slackRouter);
 app.use('/api/paste', pasteRouter);
 app.use('/api/persistence', persistenceRouter);
 app.use('/api/github', githubRouter);
+app.use('/api/theme', themeRouter);
 
 // --- Sync all sources ---
 app.get('/api/sync', async (req, res) => {

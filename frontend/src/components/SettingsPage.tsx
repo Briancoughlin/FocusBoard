@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { CheckCircle, XCircle, ExternalLink, Save, TestTube, Loader2 } from 'lucide-react';
 import type { Config } from '../types';
 import { getConfig, saveConfig, getGoogleAuthUrl } from '../services/api';
+import { getPersistedValue, setPersistedValue } from '../services/persistence';
+import { fetchWindowsTheme, applyTheme } from '../services/theme';
 
 type TestState = 'idle' | 'testing' | 'ok' | 'error';
 
@@ -70,6 +72,30 @@ export function SettingsPage() {
   const [testStates, setTestStates] = useState<Record<string, TestState>>({});
   const [testMessages, setTestMessages] = useState<Record<string, string>>({});
 
+  // Theme state
+  const [themeAuto, setThemeAuto] = useState(true);
+  const [themeAccent, setThemeAccent] = useState('#0078d4');
+  const [themeDark, setThemeDark] = useState(false);
+
+  // Load theme preferences
+  useEffect(() => {
+    Promise.all([
+      getPersistedValue<boolean>('theme-auto', true),
+      getPersistedValue<string | null>('theme-accent', null),
+      getPersistedValue<boolean | null>('theme-dark', null),
+    ]).then(async ([auto, accent, dark]) => {
+      setThemeAuto(auto);
+      if (accent) setThemeAccent(accent);
+      if (dark !== null) setThemeDark(dark);
+      // If no manual accent saved yet, pre-fill with current Windows accent
+      if (!accent) {
+        const wt = await fetchWindowsTheme();
+        setThemeAccent(wt.accentColor);
+        setThemeDark(wt.isDark);
+      }
+    });
+  }, []);
+
   useEffect(() => {
     getConfig().then(cfg => {
       setConfig(cfg);
@@ -131,6 +157,29 @@ export function SettingsPage() {
     window.open(getGoogleAuthUrl(), '_blank', 'width=600,height=700');
   };
 
+  const handleThemeAutoChange = async (auto: boolean) => {
+    setThemeAuto(auto);
+    await setPersistedValue('theme-auto', auto);
+    if (auto) {
+      const wt = await fetchWindowsTheme();
+      applyTheme(wt.accentColor, wt.isDark);
+    } else {
+      applyTheme(themeAccent, themeDark);
+    }
+  };
+
+  const handleThemeAccentChange = async (accent: string) => {
+    setThemeAccent(accent);
+    await setPersistedValue('theme-accent', accent);
+    if (!themeAuto) applyTheme(accent, themeDark);
+  };
+
+  const handleThemeDarkChange = async (dark: boolean) => {
+    setThemeDark(dark);
+    await setPersistedValue('theme-dark', dark);
+    if (!themeAuto) applyTheme(themeAccent, dark);
+  };
+
   function TestButton({ source, url }: { source: string; url: string }) {
     const state = testStates[source] || 'idle';
     const msg = testMessages[source];
@@ -159,8 +208,8 @@ export function SettingsPage() {
     <div className="max-w-2xl mx-auto py-8 px-4 space-y-6 overflow-y-auto h-full">
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-          <p className="text-sm text-gray-500 mt-1">Configure your integrations to start aggregating tasks.</p>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Settings</h1>
+          <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Configure your integrations to start aggregating tasks.</p>
         </div>
         <button
           onClick={handleSave}
@@ -174,6 +223,65 @@ export function SettingsPage() {
           {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
           {saved ? 'Saved!' : 'Save All'}
         </button>
+      </div>
+
+      {/* Appearance */}
+      <div className="rounded-xl border p-6 shadow-sm" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}>
+        <h3 className="font-semibold text-base mb-1" style={{ color: 'var(--text-primary)' }}>Appearance</h3>
+        <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+          Accent colour and dark mode are read from your Windows settings automatically.
+        </p>
+
+        {/* Follow Windows toggle */}
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Follow Windows theme</p>
+            <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+              Automatically use your Windows accent colour and dark/light mode
+            </p>
+          </div>
+          <button
+            role="switch"
+            aria-checked={themeAuto}
+            onClick={() => handleThemeAutoChange(!themeAuto)}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${themeAuto ? 'bg-blue-600' : 'bg-gray-300'}`}
+            style={themeAuto ? { backgroundColor: 'var(--accent)' } : {}}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${themeAuto ? 'translate-x-6' : 'translate-x-1'}`}
+            />
+          </button>
+        </div>
+
+        {/* Manual controls — shown when auto is off */}
+        {!themeAuto && (
+          <div className="space-y-3 pt-3 border-t" style={{ borderColor: 'var(--border)' }}>
+            <div className="flex items-center gap-4">
+              <label className="text-sm font-medium w-28" style={{ color: 'var(--text-primary)' }}>Accent colour</label>
+              <input
+                type="color"
+                value={themeAccent}
+                onChange={e => handleThemeAccentChange(e.target.value)}
+                className="h-8 w-16 rounded cursor-pointer border"
+                style={{ borderColor: 'var(--border)' }}
+              />
+              <span className="text-xs font-mono" style={{ color: 'var(--text-secondary)' }}>{themeAccent}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Dark mode</label>
+              <button
+                role="switch"
+                aria-checked={themeDark}
+                onClick={() => handleThemeDarkChange(!themeDark)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${themeDark ? 'bg-gray-700' : 'bg-gray-300'}`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${themeDark ? 'translate-x-6' : 'translate-x-1'}`}
+                />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Anthropic */}

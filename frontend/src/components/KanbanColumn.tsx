@@ -56,7 +56,7 @@ interface Props {
 
 function SkeletonCard() {
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-3 mb-2 animate-pulse">
+    <div className="rounded-lg border p-3 mb-2 animate-pulse" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}>
       <div className="flex justify-between mb-2">
         <div className="h-4 w-14 bg-gray-200 rounded" />
         <div className="h-2 w-2 bg-gray-200 rounded-full" />
@@ -72,7 +72,7 @@ export function KanbanColumn({ column, tasks, isLoading, onDismiss }: Props) {
   return (
     <div className="flex flex-col flex-1 min-w-0">
       {/* Column header */}
-      <div className={`flex items-center justify-between px-3 py-2 mb-2 rounded-t-lg border-t-4 ${column.borderColor} bg-white shadow-sm`}>
+      <div className={`flex items-center justify-between px-3 py-2 mb-2 rounded-t-lg border-t-4 ${column.borderColor} shadow-sm`} style={{ backgroundColor: 'var(--bg-card)', borderBottomColor: 'var(--border)' }}>
         <h2 className={`font-semibold text-sm ${column.headerColor}`}>{column.label}</h2>
         <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${column.countColor}`}>
           {isLoading ? '…' : tasks.length}

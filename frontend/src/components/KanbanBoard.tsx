@@ -86,7 +86,7 @@ export function KanbanBoard({ tasks, isLoading, onTaskMove, onOpenSettings, onDi
       ))}
 
       {/* Source tabs */}
-      <div className="flex gap-1 mb-4 border-b border-gray-200">
+      <div className="flex gap-1 mb-4 border-b" style={{ borderColor: 'var(--border)' }}>
         {TABS.map(tab => {
           const count = tab.id === 'all' ? tasks.length
             : tab.id === 'week' ? tasks.filter(isThisWeek).length
@@ -96,7 +96,8 @@ export function KanbanBoard({ tasks, isLoading, onTaskMove, onOpenSettings, onDi
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${isActive ? tab.activeColor : tab.color + ' hover:text-gray-700'}`}
+              className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${isActive ? 'border-[var(--accent)] text-[var(--text-primary)]' : tab.color + ' hover:text-gray-700'}`}
+              style={isActive ? { borderBottomColor: 'var(--accent)', color: 'var(--text-primary)' } : {}}
             >
               {tab.label}
               {count > 0 && (

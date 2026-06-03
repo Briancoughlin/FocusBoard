@@ -89,7 +89,7 @@ export function FocusView({ tasks, kanbanTasks, isLoading, onTaskMove, onDismiss
 
 
   return (
-    <div className="flex h-full overflow-hidden gap-0">
+    <div className="flex h-full overflow-hidden gap-0" style={{ backgroundColor: 'var(--bg)' }}>
     <div ref={containerRef} className="flex flex-col flex-1 min-w-0 overflow-hidden">
       {/* Calendar pane */}
       <div style={{ height: `${splitPercent}%` }} className="overflow-hidden pb-1">

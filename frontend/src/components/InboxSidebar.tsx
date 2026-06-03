@@ -84,7 +84,7 @@ function SectionHeader({ icon, title, count, onMarkAll }: {
   onMarkAll?: () => void;
 }) {
   return (
-    <div className="px-3 py-2 bg-gray-50 border-b border-gray-200 flex items-center justify-between sticky top-0 z-10">
+    <div className="px-3 py-2 flex items-center justify-between sticky top-0 z-10" style={{ backgroundColor: 'var(--bg-sidebar)', borderBottom: '1px solid var(--border)' }}>
       <div className="flex items-center gap-1.5">
         {icon}
         <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">{title}</span>
@@ -157,10 +157,10 @@ export function InboxSidebar({ tasks, onAddToBoard }: Props) {
   const totalUnread = githubUnread + inboxUnread;
 
   return (
-    <div className="flex flex-col h-full bg-white border-l border-gray-200 w-64 flex-shrink-0">
+    <div className="flex flex-col h-full w-64 flex-shrink-0" style={{ backgroundColor: 'var(--bg-sidebar)', borderLeft: '1px solid var(--border)' }}>
 
       {/* Top bar */}
-      <div className="px-3 py-2.5 border-b border-gray-200 flex items-center gap-2">
+      <div className="px-3 py-2.5 flex items-center gap-2" style={{ borderBottom: '1px solid var(--border)' }}>
         <Inbox size={14} className="text-gray-500" />
         <span className="text-sm font-semibold text-gray-700">Notifications</span>
         {totalUnread > 0 && (

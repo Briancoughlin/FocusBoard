@@ -25,7 +25,7 @@ function formatLastSynced(d: Date | null): string {
 
 export function Header({ view, onViewChange, onRefresh, isRefreshing, lastSynced, onPaste, onShowDigest, completedToday }: Props) {
   return (
-    <header className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between shadow-sm sticky top-0 z-10">
+    <header className="px-6 py-3 flex items-center justify-between shadow-sm sticky top-0 z-10" style={{ backgroundColor: 'var(--bg-header)', borderBottom: '1px solid var(--border)' }}>
       {/* Left: Brand */}
       <div className="flex items-center gap-2">
         <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-1.5 rounded-lg">
@@ -47,9 +47,10 @@ export function Header({ view, onViewChange, onRefresh, isRefreshing, lastSynced
             onClick={() => onViewChange(v)}
             className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all capitalize ${
               view === v
-                ? 'bg-blue-600 text-white shadow-sm'
+                ? 'text-white shadow-sm'
                 : 'text-gray-500 hover:text-gray-700'
             }`}
+            style={view === v ? { backgroundColor: 'var(--accent)' } : {}}
           >
             {v}
           </button>
