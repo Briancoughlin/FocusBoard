@@ -80,18 +80,15 @@ router.post('/', (req, res) => {
   const channelName = isChannel ? title.slice(1).split(':')[0].trim() : title.split(':')[0].trim();
 
   // Use slack:// protocol to open desktop app directly at the right channel
+  // Use web URL — browser will hand off to Slack desktop app and navigate correctly
   let url = 'slack://open';
-  if (teamId) {
-    if (isChannel) {
-      url = `slack://channel?team=${teamId}&channel=${channelName}`;
-    } else {
-      url = `slack://user?team=${teamId}&username=${channelName.toLowerCase().replace(/\s+/g, '.')}`;
-    }
-  } else if (slackWorkspaceUrl) {
+  if (slackWorkspaceUrl) {
     const base = slackWorkspaceUrl.replace(/\/$/, '');
     url = isChannel
       ? `${base}/messages/${channelName}`
       : `${base}/messages/@${channelName.toLowerCase().replace(/\s+/g, '.')}`;
+  } else if (teamId) {
+    url = `slack://open`;
   }
 
   const task = {
