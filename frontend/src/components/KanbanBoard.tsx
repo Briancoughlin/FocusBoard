@@ -21,24 +21,12 @@ type FilterTab = 'all' | 'week' | Source; // Source already includes 'paste'
 
 const TABS: { id: FilterTab; label: string; color: string; activeColor: string }[] = [
   { id: 'all',      label: 'All',        color: 'text-gray-500 border-transparent',  activeColor: 'text-gray-900 border-gray-900' },
-  { id: 'week',     label: 'This Week',  color: 'text-rose-400 border-transparent',  activeColor: 'text-rose-600 border-rose-600' },
   { id: 'jira',     label: 'Jira',       color: 'text-blue-400 border-transparent',  activeColor: 'text-blue-600 border-blue-600' },
   { id: 'gmail',    label: 'Gmail',      color: 'text-red-400 border-transparent',   activeColor: 'text-red-600 border-red-600' },
   { id: 'paste',    label: 'Zoom/Notes', color: 'text-violet-400 border-transparent', activeColor: 'text-violet-600 border-violet-600' },
   { id: 'github',   label: 'GitHub',     color: 'text-gray-400 border-transparent',   activeColor: 'text-gray-700 border-gray-700' },
 ];
 
-function isThisWeek(task: Task): boolean {
-  const endOfWeek = new Date();
-  endOfWeek.setDate(endOfWeek.getDate() + (7 - endOfWeek.getDay()));
-  endOfWeek.setHours(23, 59, 59, 999);
-
-  if (task.dueDate) {
-    return new Date(task.dueDate) <= endOfWeek;
-  }
-  // High priority Jira tickets count even without a due date
-  return task.source === 'jira' && task.priority === 'high';
-}
 
 export function KanbanBoard({ tasks, isLoading, onTaskMove, onOpenSettings, onDismiss, onPin, pinnedIds, errors }: Props) {
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
@@ -62,7 +50,7 @@ export function KanbanBoard({ tasks, isLoading, onTaskMove, onOpenSettings, onDi
   );
 
   const filteredTasks = activeTab === 'all' ? tasks
-    : activeTab === 'week' ? tasks.filter(isThisWeek)
+    :
     : tasks.filter(t => t.source === activeTab);
 
   return (
@@ -90,7 +78,6 @@ export function KanbanBoard({ tasks, isLoading, onTaskMove, onOpenSettings, onDi
       <div className="flex gap-1 mb-4 border-b" style={{ borderColor: 'var(--border)' }}>
         {TABS.map(tab => {
           const count = tab.id === 'all' ? tasks.length
-            : tab.id === 'week' ? tasks.filter(isThisWeek).length
             : tasks.filter(t => t.source === tab.id).length;
           const isActive = activeTab === tab.id;
           return (
