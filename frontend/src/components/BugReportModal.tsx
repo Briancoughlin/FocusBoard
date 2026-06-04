@@ -94,7 +94,6 @@ export function BugReportModal({ onClose }: Props) {
                   backgroundColor: 'var(--bg)',
                   border: '1px solid var(--border)',
                   color: 'var(--text-primary)',
-                  focusRingColor: 'var(--accent)',
                 }}
               />
             </div>
