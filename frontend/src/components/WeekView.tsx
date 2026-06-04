@@ -1,6 +1,6 @@
 import React from 'react';
 import { Clock } from 'lucide-react';
-import { Droppable } from '@hello-pangea/dnd';
+import { Droppable, Draggable } from '@hello-pangea/dnd';
 import type { Task } from '../types';
 
 interface Props {
@@ -193,26 +193,29 @@ export function WeekView({ tasks, allTasks, selectedDay, onDaySelect }: Props) {
                         );
                       }
 
+                      let draggableIndex = 0;
                       return allItems.map(item => {
                         const borderColor = SOURCE_BORDER[item.source] || 'var(--border)';
                         const isCalendar = item.source === 'calendar';
-                        return (
+                        const cardContent = (dragHandleProps?: object, draggableStyle?: object) => (
                           <div
-                            key={item.id}
                             onClick={e => { e.stopPropagation(); item.url && window.open(item.url, '_blank'); }}
                             role="button"
                             aria-label={item.title.replace('[All Day] ', '')}
                             title={item.title}
                             tabIndex={0}
                             onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); item.url && window.open(item.url, '_blank'); } }}
-                            className="p-1.5 rounded-lg text-xs cursor-pointer transition-all"
+                            className="p-1.5 rounded-lg text-xs transition-all"
                             style={{
                               backgroundColor: 'var(--bg-card)',
                               borderLeft: `3px solid ${borderColor}`,
                               border: `1px solid var(--border)`,
                               borderLeftWidth: '3px',
                               borderLeftColor: borderColor,
+                              cursor: isCalendar ? 'pointer' : 'grab',
+                              ...draggableStyle,
                             }}
+                            {...dragHandleProps}
                           >
                             <p className="font-medium line-clamp-2 leading-tight" style={{ color: 'var(--text-primary)' }}>
                               {item.title.replace('[All Day] ', '')}
@@ -229,6 +232,24 @@ export function WeekView({ tasks, allTasks, selectedDay, onDaySelect }: Props) {
                               </p>
                             )}
                           </div>
+                        );
+
+                        // Calendar events are not draggable, task cards are
+                        if (isCalendar) {
+                          return <div key={item.id}>{cardContent()}</div>;
+                        }
+                        const idx = draggableIndex++;
+                        return (
+                          <Draggable key={item.id} draggableId={item.id} index={idx}>
+                            {(dragProvided) => (
+                              <div
+                                ref={dragProvided.innerRef}
+                                {...dragProvided.draggableProps}
+                              >
+                                {cardContent(dragProvided.dragHandleProps || {}, dragProvided.draggableProps.style)}
+                              </div>
+                            )}
+                          </Draggable>
                         );
                       });
                     })()}
