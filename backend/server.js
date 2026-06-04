@@ -299,10 +299,38 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(frontendDist, 'index.html'));
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`FocusBoard backend running on http://localhost:${PORT}`);
   if (!fs.existsSync(CONFIG_PATH)) {
     saveConfig({});
     console.log('Created empty config.json');
   }
+});
+
+// Handle port-in-use errors gracefully — the most common crash cause.
+// When the scheduled task restarts after a crash, the previous process may
+// still be holding port 3001. We wait 3 seconds and retry once before giving up.
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`Port ${PORT} already in use — retrying in 3 seconds...`);
+    setTimeout(() => {
+      server.close();
+      app.listen(PORT, () => {
+        console.log(`FocusBoard backend running on http://localhost:${PORT} (retry)`);
+      });
+    }, 3000);
+  } else {
+    console.error('Server error:', err.message);
+    process.exit(1);
+  }
+});
+
+// Catch unhandled promise rejections so they don't silently kill the process
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled promise rejection:', reason);
+});
+
+// Catch uncaught exceptions — log and keep running if possible
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught exception:', err.message, err.stack);
 });
