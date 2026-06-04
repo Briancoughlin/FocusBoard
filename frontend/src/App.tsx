@@ -162,11 +162,18 @@ export default function App() {
 
   const fetchTasks = useCallback(async () => {
     setIsLoading(true);
+    const syncStart = Date.now();
     try {
       const result = await syncAll();
+      const syncDuration = Date.now() - syncStart;
       const newTasks = result.tasks || [];
       setRawTasks(newTasks);
-      setErrors(result.errors || []);
+      // Surface slow syncs as a warning error so user knows something is sluggish
+      const errs = result.errors || [];
+      if (syncDuration > 10000) {
+        errs.push({ source: 'sync', error: `Sync took ${(syncDuration/1000).toFixed(1)}s — some sources may be slow` });
+      }
+      setErrors(errs);
       setLastSynced(new Date());
 
       // Prompt to add channel ID for unmapped Slack channels

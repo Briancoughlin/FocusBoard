@@ -127,6 +127,26 @@ app.use((req, _res, next) => {
   next();
 });
 
+// Performance monitoring — log any API request taking over 2 seconds
+const SLOW_THRESHOLD_MS = 2000;
+app.use('/api', (req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    if (duration > SLOW_THRESHOLD_MS) {
+      logger.warn('Slow API call detected', {
+        method: req.method,
+        path: req.path,
+        status: res.statusCode,
+        duration_ms: duration,
+      });
+    } else {
+      logger.debug('API call', { method: req.method, path: req.path, status: res.statusCode, duration_ms: duration });
+    }
+  });
+  next();
+});
+
 // --- Config routes ---
 app.get('/api/config', (req, res) => {
   const cfg = loadConfig();
