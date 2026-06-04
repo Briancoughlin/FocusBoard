@@ -1,3 +1,15 @@
+/**
+ * @file routes/gmail.js
+ * Gmail integration — fetches today's inbox messages and uses Claude to extract
+ * actionable to-do items from them.
+ *
+ * Slack digest emails receive special treatment: they are detected by sender/subject
+ * heuristics, fetched with their full plain-text body (not just the snippet), and
+ * tagged as `source: 'slack'` so the frontend can display them in the Slack section.
+ *
+ * Requires Google OAuth credentials and an Anthropic API key.
+ */
+
 import { Router } from 'express';
 import { google } from 'googleapis';
 import fs from 'fs';
@@ -82,7 +94,9 @@ router.get('/', async (req, res) => {
         const subject = getHeader(headers, 'Subject') || '(no subject)';
         const from = getHeader(headers, 'From') || 'Unknown';
 
-        // For Slack digest emails, extract the full body for better parsing
+        // Detect Slack digest emails by sender name or common subject patterns.
+        // Slack sends several notification email types: "missed messages", daily digests,
+        // and direct @mentions. All carry actionable content worth surfacing.
         const isSlackDigest = from.toLowerCase().includes('slack') ||
           subject.toLowerCase().includes('digest') ||
           subject.toLowerCase().includes('missed messages') ||
@@ -90,7 +104,10 @@ router.get('/', async (req, res) => {
 
         let snippet = msg.snippet || '';
         if (isSlackDigest && msg.payload) {
-          // Try to get plain text body
+          // The Gmail snippet is truncated at ~100 chars — not enough for Claude to
+          // reliably extract action items from multi-message digests. Fetching the
+          // full message (format: 'full') lets us decode the plain-text part and
+          // send up to 2000 chars of actual content to Claude.
           const parts = msg.payload.parts || [msg.payload];
           const textPart = parts.find(p => p.mimeType === 'text/plain');
           if (textPart?.body?.data) {
@@ -111,7 +128,9 @@ router.get('/', async (req, res) => {
     // Use Claude to extract action items
     const actionItems = await extractActionItems(messages, 'gmail');
 
-    // Build a lookup of which message IDs are Slack digests
+    // Build a Set of Gmail message IDs that are Slack digests so we can re-classify
+    // action items returned by Claude. Claude receives the message ID as sourceId, so
+    // we check membership here rather than re-parsing Claude's output.
     const slackMessageIds = new Set(
       messages.filter(m => m.isSlackDigest).map(m => m.id)
     );
@@ -125,10 +144,13 @@ router.get('/', async (req, res) => {
         description: item.description,
         source: isSlack ? 'slack' : 'gmail',
         status: 'todo',
-        priority: isSlack ? 'high' : (item.priority || 'medium'), // Slack always bubbles high
+        // Slack mentions are treated as high priority — they represent direct asks.
+        priority: isSlack ? 'high' : (item.priority || 'medium'),
         dueDate: item.dueDate || undefined,
         url: `https://mail.google.com/mail/u/0/#inbox/${item.sourceId}`,
-        updatedAt: isSlack ? new Date(Date.now() + 86400000).toISOString() : new Date().toISOString(), // Slack gets future timestamp to sort first
+        // Give Slack-sourced tasks a future updatedAt so sort-by-updated places them
+        // above regular Gmail items without needing a separate sort key.
+        updatedAt: isSlack ? new Date(Date.now() + 86400000).toISOString() : new Date().toISOString(),
       };
     });
 

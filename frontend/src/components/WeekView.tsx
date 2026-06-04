@@ -1,3 +1,19 @@
+/**
+ * @file WeekView.tsx
+ * Horizontal weekly calendar strip showing Mon–Sun of the current ISO week.
+ *
+ * Each day column is a `Droppable` target so the user can drag a kanban task card
+ * onto a day to schedule it (set its due date). Dropping on a day fires
+ * `onDueDateChange` via FocusView's `handleDragEnd`.
+ *
+ * Two types of items appear inside a day column:
+ *  - Calendar events (source: 'calendar') — fetched from Google Calendar, show time
+ *  - Scheduled kanban tasks — any non-calendar task with a dueDate on that day
+ *
+ * The day header shows a count badge summarising how many kanban tasks are due
+ * that day. The badge turns red when any of those tasks is high priority or overdue.
+ */
+
 import React from 'react';
 import { Clock, CheckCircle } from 'lucide-react';
 import { Droppable } from '@hello-pangea/dnd';
@@ -22,6 +38,11 @@ function getWeekDays(): Date[] {
   });
 }
 
+/**
+ * Compare two Date objects by calendar date only, ignoring time and timezone offset.
+ * Using getFullYear/Month/Date avoids the UTC-vs-local pitfall of comparing
+ * toDateString() or ISO strings when the user's timezone differs from UTC.
+ */
 function isSameDay(a: Date, b: Date): boolean {
   return a.getFullYear() === b.getFullYear() &&
     a.getMonth() === b.getMonth() &&
@@ -53,7 +74,8 @@ export function WeekView({ tasks, allTasks, selectedDay, onDaySelect, onTaskDone
   const weekDays = getWeekDays();
   const today = new Date();
 
-  // Count kanban tasks due on each day for the badge
+  // Only non-calendar, non-Slack tasks get a due-date badge — calendar events already
+  // appear as their own entries, and Slack items are shown in the inbox sidebar.
   const kanbanTasks = allTasks.filter(t => t.source !== 'calendar' && t.source !== 'slack');
 
   return (
@@ -95,6 +117,8 @@ export function WeekView({ tasks, allTasks, selectedDay, onDaySelect, onTaskDone
             return isSameDay(new Date(t.dueDate), day);
           }).length;
 
+          // Badge turns red if any due task is high priority OR is overdue (past due date).
+          // This gives an at-a-glance urgency signal without opening each task.
           const hasHighPriority = kanbanTasks.some(t => {
             if (!t.dueDate) return false;
             const d = new Date(t.dueDate);
@@ -108,6 +132,9 @@ export function WeekView({ tasks, allTasks, selectedDay, onDaySelect, onTaskDone
           if (isSelected) borderColor = '#f59e0b'; // amber accent for selected
           else if (isToday) borderColor = 'var(--accent)';
 
+          // Each day column is a Droppable so task cards can be dragged here to
+          // set their due date. The droppableId encodes the date as YYYY-MM-DD so
+          // FocusView's handleDragEnd can parse it without additional lookups.
           return (
             <Droppable droppableId={droppableId} key={droppableId}>
               {(provided, snapshot) => (
@@ -196,6 +223,7 @@ export function WeekView({ tasks, allTasks, selectedDay, onDaySelect, onTaskDone
 
                       return allItems.map(item => {
                         const borderColor = SOURCE_BORDER[item.source] || 'var(--border)';
+                        // Calendar events show a time badge; scheduled tasks show their source label.
                         const isCalendar = item.source === 'calendar';
                         const cardContent = () => (
                           <div
@@ -240,7 +268,9 @@ export function WeekView({ tasks, allTasks, selectedDay, onDaySelect, onTaskDone
                         return <div key={item.id} onClick={e => { e.stopPropagation(); item.url && window.open(item.url, '_blank'); }}>{cardContent()}</div>;
                       });
                     })()}
-                    {/* Hidden placeholder — keeps droppable working even with no children */}
+                    {/* @hello-pangea/dnd requires the placeholder to be rendered in the
+                        droppable container to correctly calculate drop positions. Hidden
+                        here because we manage layout manually with space-y-1. */}
                     <div style={{ display: 'none' }}>{provided.placeholder}</div>
                   </div>
                 </div>

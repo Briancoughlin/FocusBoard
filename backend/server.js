@@ -1,3 +1,16 @@
+/**
+ * @file server.js
+ * Express application entry point for the FocusBoard backend.
+ *
+ * Responsibilities:
+ *  - Cookie-based auth middleware that auto-grants localhost access
+ *  - Encrypted config storage (read/write with transparent migration from plain JSON)
+ *  - Google OAuth flow (authorize + callback)
+ *  - Routing to all integration sub-routers (Jira, Gmail, GitHub, Slack, etc.)
+ *  - /api/sync fan-out that aggregates tasks from every source in parallel
+ *  - Static file serving with SPA catch-all for the built frontend
+ */
+
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
@@ -33,8 +46,11 @@ app.use(express.json());
 app.use(cookieParser());
 
 // --- Auth middleware for all /api/* routes ---
+// FocusBoard is a single-user local app. The auth model is intentionally simple:
+// any request from localhost is trusted (the machine owner is always the user).
+// Remote requests — e.g. if someone port-forwards the server — require the
+// session cookie that was set when the browser first visited the frontend.
 app.use('/api', (req, res, next) => {
-  // Always allow requests from localhost — set fresh cookie if missing/stale
   const isLocalhost = req.socket.remoteAddress === '::1' ||
     req.socket.remoteAddress === '127.0.0.1' ||
     req.socket.remoteAddress === '::ffff:127.0.0.1';
@@ -42,7 +58,7 @@ app.use('/api', (req, res, next) => {
   const sessionCookie = req.cookies && req.cookies.fb_session;
   if (!sessionCookie || sessionCookie !== AUTH_TOKEN) {
     if (isLocalhost) {
-      // Auto-grant access from localhost and refresh cookie
+      // Auto-grant and refresh the cookie so the frontend always has a valid one
       res.cookie('fb_session', AUTH_TOKEN, { httpOnly: true, sameSite: 'lax' });
       return next();
     }
@@ -62,6 +78,16 @@ app.get('/', (req, res) => {
 app.use(express.static(frontendDist));
 
 // --- Config helpers ---
+
+/**
+ * Read config.json and return a plain JS object with decrypted values.
+ *
+ * Migration path: if the file is unencrypted (no `encrypted: true` flag) it is
+ * re-saved in encrypted form immediately, so credentials are only stored in
+ * plain text for a single boot at most.
+ *
+ * @returns {Record<string, any>} Decrypted config, or {} if missing/corrupt.
+ */
 function loadConfig() {
   if (!fs.existsSync(CONFIG_PATH)) return {};
   try {
@@ -74,7 +100,7 @@ function loadConfig() {
         return {};
       }
     }
-    // Plain JSON — re-save as encrypted for future reads
+    // Plain JSON on disk — encrypt now and return the plain values for this request
     const encrypted = encryptConfig(raw);
     fs.writeFileSync(CONFIG_PATH, JSON.stringify(encrypted, null, 2), 'utf8');
     return raw;
@@ -83,6 +109,12 @@ function loadConfig() {
   }
 }
 
+/**
+ * Encrypt `data` and atomically overwrite config.json.
+ * Always encrypts — never writes credentials in plain text.
+ *
+ * @param {Record<string, any>} data - Decrypted config values to persist.
+ */
 function saveConfig(data) {
   const encrypted = encryptConfig(data);
   fs.writeFileSync(CONFIG_PATH, JSON.stringify(encrypted, null, 2), 'utf8');
@@ -128,7 +160,8 @@ app.post('/api/config', (req, res) => {
   const existing = loadConfig();
   const incoming = req.body;
 
-  // Only update fields that are provided and not the placeholder '***'
+  // Merge only the allowlisted scalar fields. Skip '***' (the placeholder the
+  // frontend sends back for already-stored secrets it can't read) and empty strings.
   const merged = { ...existing };
   const fields = [
     'jiraUrl', 'jiraEmail', 'jiraToken', 'jiraJql', 'defaultJiraProject',
@@ -139,15 +172,18 @@ app.post('/api/config', (req, res) => {
   for (const field of fields) {
     const val = incoming[field];
     if (val !== undefined && val !== '***' && val !== '') {
-      // Only accept strings, max 2000 chars
       if (typeof val !== 'string' || val.length > 2000) continue;
       merged[field] = val;
     }
   }
-  // slackChannelMap is stored as a plain object
+
+  // slackChannelMap is an object (channel-name → channel-id) rather than a
+  // scalar string, so it can't go through the loop above. It is never masked
+  // with '***' because channel IDs are not sensitive credentials.
   if (incoming.slackChannelMap !== undefined && typeof incoming.slackChannelMap === 'object' && incoming.slackChannelMap !== null) {
     merged.slackChannelMap = incoming.slackChannelMap;
   }
+
   saveConfig(merged);
   res.json({ success: true });
 });
@@ -220,6 +256,10 @@ app.get('/api/slack-notifications/pending', (req, res) => {
 });
 
 // --- Sync all sources ---
+// Fan-out: hit every integration endpoint in parallel and merge their tasks into
+// one response. Promise.allSettled is used so a single failing source (e.g. Jira
+// is unreachable) does not abort the others — the error is collected separately
+// and the frontend can surface it per-source without losing the rest of the data.
 app.get('/api/sync', async (req, res) => {
   const results = { tasks: [], errors: [] };
 
@@ -244,7 +284,9 @@ app.get('/api/sync', async (req, res) => {
     })
   );
 
-  // Include Windows notification tasks (Slack toasts captured locally)
+  // Drain any tasks that arrived via the Windows Slack notification listener
+  // (a separate process that captures toast notifications) and fold them in here.
+  // getPendingAndClear() is destructive — tasks are consumed and won't be returned again.
   const notifTasks = getPendingAndClear();
   if (notifTasks.length > 0) results.tasks.push(...notifTasks);
 

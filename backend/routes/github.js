@@ -1,3 +1,16 @@
+/**
+ * @file routes/github.js
+ * GitHub integration — aggregates actionable items from four sources:
+ *
+ *  1. PRs where your review is explicitly requested (review-requested search)
+ *  2. Your own open PRs (author search) — to track merge status
+ *  3. Issues assigned to you (assignee search)
+ *  4. Unread notifications filtered to CI failures, review requests, and mentions
+ *
+ * Supports GitHub Enterprise (self-hosted) via the `githubBaseUrl` config field.
+ * All requests use Bearer token auth with the GitHub API v2022-11-28 header.
+ */
+
 import { Router } from 'express';
 import fs from 'fs';
 import path from 'path';
@@ -119,7 +132,13 @@ router.get('/', async (req, res) => {
       });
     }
 
-    // 4. CI and review notifications
+    // 4. Unread notifications — filtered to only the reason types that require action.
+    // The notifications API returns all unread events; we only surface:
+    //   - ci_activity: build results that need attention (failures) or awareness (passes)
+    //   - review_requested: in case the search query above missed it (e.g. team reviews)
+    //   - mention / team_mention: direct references that need a response
+    // Other reasons (subscribed, assign, state_change) are intentionally skipped to
+    // avoid flooding the board with low-signal noise.
     const notifications = await githubFetch(
       '/notifications?all=false&per_page=30',
       token, baseUrl
@@ -128,12 +147,17 @@ router.get('/', async (req, res) => {
     for (const notif of notifications || []) {
       const repo = notif.repository.full_name;
       const subjectTitle = notif.subject.title || '';
+
+      // The notifications API returns API URLs (api.github.com/repos/owner/repo/pulls/1).
+      // Transform them to browser URLs so clicking opens the right page.
       const url = notif.subject.url
         ?.replace('api.github.com/repos', 'github.com')
         ?.replace('/pulls/', '/pull/')
         ?.replace('/commits/', '/commit/') || notif.repository.html_url;
 
       if (notif.reason === 'ci_activity') {
+        // Classify CI result from the notification subject title because the
+        // notifications API doesn't expose the workflow conclusion directly.
         const lower = subjectTitle.toLowerCase();
         const isFail = lower.includes('fail') || lower.includes('error') || lower.includes('cancel');
         const isPass = lower.includes('pass') || lower.includes('success') || lower.includes('succeed');

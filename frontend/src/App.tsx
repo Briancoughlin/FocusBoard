@@ -1,3 +1,23 @@
+/**
+ * @file App.tsx
+ * Root component and central state manager for FocusBoard.
+ *
+ * All task data, user overrides, and UI state live here and flow down as props.
+ * The data pipeline is:
+ *
+ *   rawTasks (from API) + pastedTasks + injectedTasks
+ *     → applyOverrides (status overrides from user drag/drop)
+ *     → applyDueDateOverrides (due-date changes from calendar drag)
+ *     → filter dismissed tasks
+ *     → filter done tasks from previous days
+ *     → `tasks` (passed to all views)
+ *
+ * `kanbanTasks` is a further filter of `tasks` that removes calendar events and
+ * Slack items, which are displayed in their own dedicated UI sections.
+ *
+ * Overrides are stored server-side via the persistence API so they survive refreshes.
+ */
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { Task, Status } from './types';
 import { syncAll, transitionJiraTicket } from './services/api';
@@ -14,14 +34,28 @@ import { JiraCreatePrompt } from './components/JiraCreatePrompt';
 import { SlackChannelPrompt } from './components/SlackChannelPrompt';
 import { ReportModal } from './components/ReportModal';
 
-// Apply user overrides on top of fetched tasks
+/**
+ * Merge user-driven status overrides onto the server-fetched tasks.
+ * Overrides win unconditionally — they represent explicit decisions the user made
+ * by dragging a card, which should not be reverted by a background sync.
+ *
+ * @param tasks     - Tasks as returned by the sync API.
+ * @param overrides - Map of task ID → desired status from persistence.
+ */
 function applyOverrides(tasks: Task[], overrides: Record<string, Status>): Task[] {
   return tasks.map(task =>
     overrides[task.id] ? { ...task, status: overrides[task.id] } : task
   );
 }
 
-// Apply due date overrides on top of fetched tasks
+/**
+ * Merge user-set due-date overrides onto tasks.
+ * Applied after applyOverrides so the pipeline is clearly layered:
+ * raw → status override → due-date override → filters.
+ *
+ * @param tasks           - Tasks after status overrides have been applied.
+ * @param dueDateOverrides - Map of task ID → ISO date string (YYYY-MM-DD).
+ */
 function applyDueDateOverrides(tasks: Task[], dueDateOverrides: Record<string, string>): Task[] {
   return tasks.map(task =>
     dueDateOverrides[task.id] ? { ...task, dueDate: dueDateOverrides[task.id] } : task
@@ -88,7 +122,10 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
-  // Load all persisted values on mount
+  // Restore all persisted state in one parallel batch before rendering.
+  // Using Promise.all means we wait for every key before we flip persistenceLoaded,
+  // which prevents a flash where the board renders with empty data then jumps as
+  // overrides load. The render is gated on persistenceLoaded to avoid this.
   useEffect(() => {
     const today = new Date().toDateString();
 
@@ -159,6 +196,21 @@ export default function App() {
     return () => clearInterval(interval);
   }, [fetchTasks]);
 
+  /**
+   * Handle a card being moved to a new kanban column.
+   *
+   * Side effects (beyond updating local state):
+   *  - Persists the new status override so it survives a page refresh / re-sync.
+   *  - For Jira cards: fires a background API call to transition the Jira ticket.
+   *    The call is fire-and-forget — failure is logged but does not revert the card.
+   *  - When a Jira card lands in "done": prompts the user to add a closing comment.
+   *  - When a non-Jira card lands in "inprogress": prompts the user to create a
+   *    Jira ticket for it (so the work is tracked in Jira going forward).
+   *
+   * Functional updaters (`setRawTasks(current => ...)`) are used throughout because
+   * this callback has empty deps — it must read current task arrays via the updater
+   * argument rather than via closed-over state to avoid stale closure bugs.
+   */
   const handleTaskMove = useCallback((taskId: string, newStatus: Status) => {
     const updated = { ...overridesRef.current, [taskId]: newStatus };
     overridesRef.current = updated;
@@ -178,15 +230,15 @@ export default function App() {
       });
     }
 
-    // Fire Jira transition silently in the background for Jira cards
-    // We use functional updaters so we always have current state, even with empty useCallback deps
+    // Attempt to sync the status change back to Jira for Jira-sourced cards.
+    // We search across all three task arrays (rawTasks, pastedTasks, injectedTasks)
+    // because Jira cards can live in any of them depending on how they arrived.
     setRawTasks(currentRaw => {
       const movedTask = currentRaw.find(t => t.id === taskId);
       if (movedTask?.source === 'jira' && movedTask?.ticketKey) {
         transitionJiraTicket(movedTask.ticketKey, newStatus).then(result => {
           if (!result.success) console.warn('Jira transition failed:', result.error);
         });
-        // Prompt for closing comment when moved to done
         if (newStatus === 'done') setJiraDoneTask(movedTask);
       }
       return currentRaw;
@@ -210,7 +262,9 @@ export default function App() {
       return currentInjected;
     });
 
-    // Check for Jira create prompt — resolve task from current state
+    // Offer to create a Jira ticket when a non-Jira task starts being worked on.
+    // We need to apply overrides before searching so we find the task with its
+    // up-to-date status (the override was just written to overridesRef.current).
     setRawTasks(currentRaw => {
       const allTasks = applyOverrides([...currentRaw], overridesRef.current);
       const moved = allTasks.find(t => t.id === taskId);
@@ -219,7 +273,6 @@ export default function App() {
       }
       return currentRaw;
     });
-    // Also check pastedTasks / injectedTasks for the inprogress trigger
     setPastedTasks(currentPasted => {
       if (newStatus === 'inprogress') {
         const moved = currentPasted.find(t => t.id === taskId);
@@ -253,8 +306,12 @@ export default function App() {
     setSlackChannelPrompt(null);
   }, []);
 
+  /**
+   * Toggle a task between 'wontdo' and 'done'.
+   * Calling this on a card that is already 'wontdo' returns it to 'done' so the
+   * user can undo an accidental won't-do marking without dragging.
+   */
   const handleWontDo = useCallback((taskId: string) => {
-    // Toggle between done and wontdo
     const currentStatus = overridesRef.current[taskId];
     const newStatus = currentStatus === 'wontdo' ? 'done' : 'wontdo';
     const updated = { ...overridesRef.current, [taskId]: newStatus as Status };
@@ -322,6 +379,15 @@ export default function App() {
 
   const today = new Date().toDateString();
 
+  // --- Task derivation pipeline ---
+  // Three task arrays are merged then processed through a chain of pure transforms:
+  //   1. applyOverrides: status changes the user made via drag-and-drop
+  //   2. applyDueDateOverrides: due dates changed via calendar drag
+  //   3. Filter dismissed: permanently hidden by the user
+  //   4. Filter stale done: hide tasks completed on previous days (keep today's done
+  //      so the "completed today" counter is accurate and cards don't vanish mid-session)
+  //   5. wontdo tasks pass the done filter because they are displayed in the Done column
+  //      but should never expire like regular done tasks
   const tasks = applyDueDateOverrides(
       applyOverrides([...rawTasks, ...pastedTasks, ...injectedTasks], overrides),
       dueDateOverrides
@@ -329,6 +395,8 @@ export default function App() {
     .filter(t => !dismissed.has(t.id))
     .filter(t => t.status === 'wontdo' || t.status !== 'done' || doneDates[t.id] === today);
 
+  // Calendar events and Slack messages are shown in their own UI sections (WeekView
+  // and InboxSidebar) — exclude them from the kanban columns to avoid duplication.
   const kanbanTasks = tasks.filter(t => t.source !== 'calendar' && t.source !== 'slack');
 
   if (!persistenceLoaded) {

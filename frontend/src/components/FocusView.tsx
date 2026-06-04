@@ -1,3 +1,18 @@
+/**
+ * @file FocusView.tsx
+ * The primary working view — a vertically split pane with:
+ *   - Top: WeekView calendar strip (resizable)
+ *   - Bottom: Kanban columns filtered to the current week's relevant tasks
+ *   - Right: InboxSidebar showing Slack/Gmail items
+ *
+ * The split ratio is persisted and restored across sessions. The pane divider uses
+ * the Pointer Capture API for reliable dragging that works even when the cursor
+ * briefly leaves the handle element.
+ *
+ * DragDropContext wraps both the calendar and the kanban so a single drag gesture
+ * can target either a day column (schedules the task) or a status column (moves it).
+ */
+
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { DragDropContext, type DropResult } from '@hello-pangea/dnd';
 import { X } from 'lucide-react';
@@ -50,6 +65,17 @@ export function FocusView({ tasks, kanbanTasks, isLoading, onTaskMove, onDismiss
   const containerRef = useRef<HTMLDivElement>(null);
   const handleRef = useRef<HTMLDivElement>(null);
 
+  /**
+   * Begin a resize drag on the split handle.
+   *
+   * Pointer capture (`setPointerCapture`) is used instead of document-level
+   * mousemove listeners. This means all pointer events continue routing to the
+   * handle element even when the cursor moves outside it, so fast drags don't
+   * lose tracking. The capture is released on pointerup.
+   *
+   * The final split position is persisted only on drag end (not on every move)
+   * to avoid hammering the persistence API.
+   */
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     e.preventDefault();
     const handle = handleRef.current;
@@ -67,6 +93,7 @@ export function FocusView({ tasks, kanbanTasks, isLoading, onTaskMove, onDismiss
       handle.releasePointerCapture(ev.pointerId);
       handle.removeEventListener('pointermove', onPointerMove);
       handle.removeEventListener('pointerup', onPointerUp);
+      // Use functional updater to read the latest value without a closure dependency
       setSplitPercent(prev => {
         setPersistedValue('split-percent', prev);
         return prev;
@@ -107,22 +134,32 @@ export function FocusView({ tasks, kanbanTasks, isLoading, onTaskMove, onDismiss
     ).values()
   ).sort((a, b) => a.name.localeCompare(b.name));
 
-  // Base week tasks (unfiltered by day)
+  // --- Base week task set ---
+  // Determines which tasks appear in the kanban columns. The intent is to show
+  // only what's relevant to this week, avoiding an overwhelming full backlog view.
+  //
+  // Inclusion rules (any one is sufficient):
+  //   - Pinned by the user → always visible regardless of due date or source
+  //   - Source is 'paste' (quick-add) → always visible; user explicitly added it
+  //   - Has a due date within this week (today through Sunday) → scheduled work
+  //   - Jira ticket with high priority and no due date → urgent backlog item
+  //
+  // wontdo tasks are excluded entirely — they clutter the schedule view.
   const baseWeekTasks = kanbanTasks
-    .filter(t => t.status !== 'wontdo') // never show won't do in schedule
+    .filter(t => t.status !== 'wontdo')
     .filter(t => {
-      if (pinnedIds.has(t.id)) return true; // always show pinned
-      if (t.source === 'paste') return true; // always show quick add items
+      if (pinnedIds.has(t.id)) return true;
+      if (t.source === 'paste') return true;
       if (t.dueDate) return new Date(t.dueDate) <= endOfWeek;
       return t.source === 'jira' && t.priority === 'high';
     })
     .filter(t => selectedEpic === 'all' || t.epicKey === selectedEpic);
 
-  // Apply day filter
+  // When a specific calendar day is selected, narrow the kanban to tasks that
+  // are due that day OR are undated high-priority Jira tickets (always urgent).
   const weekTasks = selectedDay
     ? baseWeekTasks.filter(t => {
         if (t.dueDate && isSameDay(new Date(t.dueDate), selectedDay)) return true;
-        // Always show high priority Jira with no due date
         if (!t.dueDate && t.source === 'jira' && t.priority === 'high') return true;
         return false;
       })
@@ -159,7 +196,8 @@ export function FocusView({ tasks, kanbanTasks, isLoading, onTaskMove, onDismiss
 
       {/* Kanban pane */}
       <div style={{ height: `${100 - splitPercent}%` }} className="overflow-hidden pt-1 flex flex-col">
-        {/* Day filter banner */}
+          {/* Day filter banner — shown when the user has clicked a calendar day.
+            Reminds them that the kanban is filtered and provides a dismiss button. */}
         {selectedDay && (
           <div
             className="flex items-center justify-between px-3 py-1.5 mb-2 rounded-lg text-sm font-medium flex-shrink-0"
