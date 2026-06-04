@@ -29,6 +29,15 @@ function applyDueDateOverrides(tasks: Task[], dueDateOverrides: Record<string, s
 
 export default function App() {
   const [view, setView] = useState<'board' | 'focus' | 'settings'>('focus');
+  const [settingsDirty, setSettingsDirty] = useState(false);
+
+  const handleViewChange = (v: 'board' | 'focus' | 'settings') => {
+    if (settingsDirty && view === 'settings' && v !== 'settings') {
+      if (!window.confirm('You have unsaved changes in Settings. Leave without saving?')) return;
+      setSettingsDirty(false);
+    }
+    setView(v);
+  };
   const [rawTasks, setRawTasks] = useState<Task[]>([]);
   const [overrides, setOverrides] = useState<Record<string, Status>>({});
   const overridesRef = useRef<Record<string, Status>>({});
@@ -322,7 +331,7 @@ export default function App() {
     <div className="h-screen flex flex-col overflow-hidden" style={{ backgroundColor: 'var(--bg)' }}>
       <Header
         view={view}
-        onViewChange={setView}
+        onViewChange={handleViewChange}
         onRefresh={fetchTasks}
         isRefreshing={isLoading}
         lastSynced={lastSynced}
@@ -365,7 +374,7 @@ export default function App() {
             }}
           />
         )}
-        {view === 'settings' && <SettingsPage />}
+        {view === 'settings' && <SettingsPage onDirtyChange={setSettingsDirty} />}
       </main>
       {showDigest && tasks.length > 0 && (
         <DailyDigest

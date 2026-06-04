@@ -69,12 +69,29 @@ interface ChannelRow {
   id: string;
 }
 
-export function SettingsPage() {
+interface SettingsPageProps {
+  onDirtyChange?: (dirty: boolean) => void;
+}
+
+export function SettingsPage({ onDirtyChange }: SettingsPageProps = {}) {
   const [config, setConfig] = useState<Config>({});
   const [form, setForm] = useState<Record<string, string>>({});
   const [channelMapRows, setChannelMapRows] = useState<ChannelRow[]>([]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
+
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (isDirty) { e.preventDefault(); e.returnValue = ''; }
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [isDirty]);
   const [testStates, setTestStates] = useState<Record<string, TestState>>({});
   const [testMessages, setTestMessages] = useState<Record<string, string>>({});
 
@@ -128,8 +145,10 @@ export function SettingsPage() {
     });
   }, []);
 
-  const setField = (key: string, value: string) =>
+  const setField = (key: string, value: string) => {
     setForm(f => ({ ...f, [key]: value }));
+    setIsDirty(true);
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -142,6 +161,7 @@ export function SettingsPage() {
       }
       await saveConfig({ ...form, slackChannelMap } as any);
       setSaved(true);
+      setIsDirty(false);
       setTimeout(() => setSaved(false), 2500);
       const updated = await getConfig();
       setConfig(updated);
@@ -241,7 +261,7 @@ export function SettingsPage() {
           } disabled:opacity-50`}
         >
           {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
-          {saved ? 'Saved!' : 'Save All'}
+          {saved ? 'Saved!' : isDirty ? 'Save All *' : 'Save All'}
         </button>
       </div>
 
@@ -515,18 +535,18 @@ export function SettingsPage() {
                     type="text"
                     value={row.name}
                     placeholder="ask-discussions"
-                    onChange={e => setChannelMapRows(rows => rows.map((r, i) => i === idx ? { ...r, name: e.target.value } : r))}
+                    onChange={e => { setChannelMapRows(rows => rows.map((r, i) => i === idx ? { ...r, name: e.target.value } : r)); setIsDirty(true); }}
                     className="px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
                   />
                   <input
                     type="text"
                     value={row.id}
                     placeholder="C06AF9683"
-                    onChange={e => setChannelMapRows(rows => rows.map((r, i) => i === idx ? { ...r, id: e.target.value } : r))}
+                    onChange={e => { setChannelMapRows(rows => rows.map((r, i) => i === idx ? { ...r, id: e.target.value } : r)); setIsDirty(true); }}
                     className="px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 font-mono"
                   />
                   <button
-                    onClick={() => setChannelMapRows(rows => rows.filter((_, i) => i !== idx))}
+                    onClick={() => { setChannelMapRows(rows => rows.filter((_, i) => i !== idx)); setIsDirty(true); }}
                     className="text-gray-400 hover:text-red-500 transition-colors px-1"
                     title="Remove"
                     aria-label="Remove row"
@@ -538,7 +558,7 @@ export function SettingsPage() {
             </div>
           )}
           <button
-            onClick={() => setChannelMapRows(rows => [...rows, { name: '', id: '' }])}
+            onClick={() => { setChannelMapRows(rows => [...rows, { name: '', id: '' }]); setIsDirty(true); }}
             className="text-sm text-blue-600 hover:underline"
           >
             + Add channel
