@@ -197,7 +197,7 @@ export function WeekView({ tasks, allTasks, selectedDay, onDaySelect }: Props) {
                       return allItems.map(item => {
                         const borderColor = SOURCE_BORDER[item.source] || 'var(--border)';
                         const isCalendar = item.source === 'calendar';
-                        const cardContent = (dragHandleProps?: object, draggableStyle?: object) => (
+                        const cardContent = (dragHandleProps?: object) => (
                           <div
                             onClick={e => { e.stopPropagation(); item.url && window.open(item.url, '_blank'); }}
                             role="button"
@@ -213,7 +213,6 @@ export function WeekView({ tasks, allTasks, selectedDay, onDaySelect }: Props) {
                               borderLeftWidth: '3px',
                               borderLeftColor: borderColor,
                               cursor: isCalendar ? 'pointer' : 'grab',
-                              ...draggableStyle,
                             }}
                             {...dragHandleProps}
                           >
@@ -245,8 +244,9 @@ export function WeekView({ tasks, allTasks, selectedDay, onDaySelect }: Props) {
                               <div
                                 ref={dragProvided.innerRef}
                                 {...dragProvided.draggableProps}
+                                style={dragProvided.draggableProps.style}
                               >
-                                {cardContent(dragProvided.dragHandleProps || {}, dragProvided.draggableProps.style)}
+                                {cardContent(dragProvided.dragHandleProps || {})}
                               </div>
                             )}
                           </Draggable>
