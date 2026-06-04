@@ -33,7 +33,7 @@ import { JiraDonePrompt } from './components/JiraDonePrompt';
 import { JiraCreatePrompt } from './components/JiraCreatePrompt';
 import { SlackChannelPrompt } from './components/SlackChannelPrompt';
 import { ReportModal } from './components/ReportModal';
-import { UpdateBanner } from './components/UpdateBanner';
+import { UpdateBanner, type UpdateInfo } from './components/UpdateBanner';
 
 /**
  * Merge user-driven status overrides onto the server-fetched tasks.
@@ -91,7 +91,7 @@ export default function App() {
   const [pinnedIds, setPinnedIds] = useState<Set<string>>(new Set());
   const [showDigest, setShowDigest] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
-  const [updateInfo, setUpdateInfo] = useState<any>(null);
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   const [updateDismissed, setUpdateDismissed] = useState(false);
   const [completedToday, setCompletedToday] = useState<number>(0);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
@@ -193,12 +193,12 @@ export default function App() {
           setSlackChannelPrompt(urlMatch[1]);
         }
       }
-    } catch (err: any) {
-      setErrors([{ source: 'sync', error: err.message }]);
+    } catch (err: unknown) {
+      setErrors([{ source: 'sync', error: err instanceof Error ? err.message : String(err) }]);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [slackChannelPrompt]);
 
   // Check for updates once on startup, then daily
   useEffect(() => {

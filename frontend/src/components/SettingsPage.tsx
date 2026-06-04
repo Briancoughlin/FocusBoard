@@ -128,7 +128,7 @@ export function SettingsPage({ onDirtyChange }: SettingsPageProps = {}) {
         jiraEmail: cfg.jiraEmail || '',
         jiraToken: '',
         jiraJql: cfg.jiraJql || '',
-        defaultJiraProject: (cfg as any).defaultJiraProject || '',
+        defaultJiraProject: (cfg as Record<string, string>).defaultJiraProject || '',
         googleClientId: cfg.googleClientId || '',
         googleClientSecret: '',
         slackToken: '',
@@ -159,7 +159,7 @@ export function SettingsPage({ onDirtyChange }: SettingsPageProps = {}) {
         const name = row.name.trim();
         if (name) slackChannelMap[name] = row.id.trim();
       }
-      await saveConfig({ ...form, slackChannelMap } as any);
+      await saveConfig({ ...form, slackChannelMap } as unknown as Partial<Config>);
       setSaved(true);
       setIsDirty(false);
       setTimeout(() => setSaved(false), 2500);
@@ -167,7 +167,7 @@ export function SettingsPage({ onDirtyChange }: SettingsPageProps = {}) {
       setConfig(updated);
       const map = updated.slackChannelMap || {};
       setChannelMapRows(Object.entries(map).map(([name, id]) => ({ name, id })));
-    } catch (err) {
+    } catch {
       alert('Failed to save settings');
     } finally {
       setSaving(false);
@@ -187,9 +187,9 @@ export function SettingsPage({ onDirtyChange }: SettingsPageProps = {}) {
         setTestStates(s => ({ ...s, [source]: 'ok' }));
         setTestMessages(m => ({ ...m, [source]: `Connected — ${data.tasks?.length ?? 0} items fetched` }));
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setTestStates(s => ({ ...s, [source]: 'error' }));
-      setTestMessages(m => ({ ...m, [source]: err.message }));
+      setTestMessages(m => ({ ...m, [source]: err instanceof Error ? err.message : String(err) }));
     }
   };
 

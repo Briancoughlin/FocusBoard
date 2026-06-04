@@ -20,7 +20,7 @@ function loadConfig() {
 const router = Router();
 
 router.post('/', async (req, res) => {
-  const { text, source = 'paste' } = req.body || {};
+  const { text } = req.body || {};
   if (!text || typeof text !== 'string') return res.status(400).json({ error: 'text must be a non-empty string' });
   if (text.length > 50000) return res.status(400).json({ error: 'text too long (max 50000 chars)' });
   if (!text.trim()) return res.status(400).json({ error: 'No text provided' });

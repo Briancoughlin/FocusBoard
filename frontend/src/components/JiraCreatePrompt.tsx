@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Loader2 } from 'lucide-react';
-import type { Task } from '../types';
+import type { Task, Status } from '../types';
 
 interface Props {
   task: Task;
@@ -91,7 +91,7 @@ export function JiraCreatePrompt({ task, onCreated, onDismiss, suggestedProjectK
         title: summary,
         description,
         source: 'jira',
-        status: initialStatus as any,
+        status: initialStatus as Status,
         priority: priority.toLowerCase() as 'high' | 'medium' | 'low',
         url: data.url,
         ticketKey: data.key,
@@ -100,8 +100,8 @@ export function JiraCreatePrompt({ task, onCreated, onDismiss, suggestedProjectK
       };
 
       onCreated(task.id, jiraTask);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setCreating(false);
     }

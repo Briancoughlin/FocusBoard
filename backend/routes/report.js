@@ -80,7 +80,6 @@ router.post('/', async (req, res) => {
   }).join('\n');
 
   const periodLabel = period === 'week' ? 'this week' : 'today';
-  const startPhrase = period === 'week' ? 'This week I completed' : 'Today I completed';
 
   const systemPrompt = `You are a senior chief of staff writing executive-ready progress updates for a Product Manager at a tech company.
 

@@ -1,6 +1,5 @@
 import crypto from 'crypto';
 import os from 'os';
-import fs from 'fs';
 
 function deriveKey() {
   const raw = os.hostname() + os.userInfo().username + 'focusboard-v1';

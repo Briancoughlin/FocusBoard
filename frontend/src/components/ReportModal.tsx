@@ -83,8 +83,8 @@ export function ReportModal({ tasks, doneDates, onClose }: Props) {
 
       const data = await res.json();
       setReport(data.report || '');
-    } catch (err: any) {
-      setError(err.message || 'Failed to generate report');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to generate report');
     } finally {
       setLoading(false);
     }

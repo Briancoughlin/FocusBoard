@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowUpCircle, X, Loader2 } from 'lucide-react';
 
-interface UpdateInfo {
+export interface UpdateInfo {
   hasUpdate: boolean;
   currentVersion: string;
   latestVersion: string;

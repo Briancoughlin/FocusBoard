@@ -26,8 +26,8 @@ export function PastePanel({ onTasksExtracted, onClose }: Props) {
       if (data.error) throw new Error(data.error);
       onTasksExtracted(data.tasks || []);
       onClose();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }

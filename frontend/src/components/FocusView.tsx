@@ -19,7 +19,6 @@ import { X } from 'lucide-react';
 import type { Task, Status } from '../types';
 import { WeekView } from './WeekView';
 import { KanbanColumn, COLUMNS } from './KanbanColumn';
-import { getUrgencyScore } from './TaskCard';
 import { InboxSidebar } from './InboxSidebar';
 import { getPersistedValue, setPersistedValue } from '../services/persistence';
 
@@ -37,7 +36,6 @@ interface Props {
   onWontDo?: (taskId: string) => void;
 }
 
-const STORAGE_KEY = 'focusboard-split-percent';
 const DEFAULT_SPLIT = 35;
 const MIN_SPLIT = 15;
 const MAX_SPLIT = 70;

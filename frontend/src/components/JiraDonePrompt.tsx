@@ -27,8 +27,8 @@ export function JiraDonePrompt({ task, onOpen, onDismiss }: Props) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to add comment');
       onDismiss();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err));
       setSubmitting(false);
     }
   };

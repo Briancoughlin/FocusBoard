@@ -40,7 +40,7 @@ export function getPendingAndClear() {
 const router = express.Router();
 
 router.post('/', (req, res) => {
-  const { id, title = '', body = '', appName = 'Slack', launchUrl = '' } = req.body || {};
+  const { id, title = '', body = '', appName = 'Slack' } = req.body || {};
 
   if (typeof title !== 'string' || typeof body !== 'string') {
     return res.status(400).json({ error: 'title and body must be strings' });

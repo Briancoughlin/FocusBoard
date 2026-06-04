@@ -87,7 +87,7 @@ router.get('/', async (req, res) => {
 
   const syncDone = logger.time('Jira sync');
   let pageNum = 0;
-  let epicNames = {};
+  const epicNames = {};
 
   try {
     const defaultJql = 'assignee=currentUser() AND resolution=Unresolved ORDER BY updated DESC';
