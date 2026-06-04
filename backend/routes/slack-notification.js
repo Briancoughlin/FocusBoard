@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { decryptConfig } from '../crypto-utils.js';
+import { logger } from '../logger.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = path.join(__dirname, '..', 'data');
@@ -65,7 +66,7 @@ router.post('/', (req, res) => {
   if (isChannelMsg) {
     const channelName = title.slice(1).split(':')[0].trim();
     if (!slackChannelMapEarly[channelName]) {
-      // Channel not in map — silently ignore
+      logger.warn('Slack channel filtered', { channel: `#${channelName}`, reason: 'not in channel map' });
       return res.json({ task: null, ignored: true });
     }
   }
@@ -133,7 +134,7 @@ router.post('/', (req, res) => {
   const updated = pruneOld([...existing, task]);
   saveNotifications(updated);
 
-  console.log(`[slack-notification] Saved: ${task.title}`);
+  logger.info('Slack notification received', { id: taskId, channel: isChannelMsg ? title.split(':')[0] : 'dm', saved: updated.length });
   res.json({ task });
 });
 

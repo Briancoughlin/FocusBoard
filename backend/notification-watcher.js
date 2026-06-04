@@ -2,6 +2,7 @@ import { execSync } from 'child_process';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import { logger } from './logger.js';
 
 const SEEN_IDS = new Set();
 const POLL_INTERVAL = 10000; // 10 seconds
@@ -78,6 +79,7 @@ const TMP_PS = path.join(os.tmpdir(), 'focusboard-notification-watcher.ps1');
 fs.writeFileSync(TMP_PS, PS_SCRIPT, 'utf8');
 
 async function checkNotifications() {
+  logger.debug('Notification poll cycle start', {});
   try {
     const output = execSync(
       `powershell -NonInteractive -ExecutionPolicy Bypass -File "${TMP_PS}"`,
@@ -115,27 +117,24 @@ async function checkNotifications() {
         });
 
         if (res.ok) {
-          console.log(`[${new Date().toISOString()}] Forwarded notification: ${title}`);
+          logger.info('Notification forwarded', { id: notifId, title: firstTitle });
         } else {
-          console.error(`[${new Date().toISOString()}] FocusBoard rejected notification (${res.status}): ${title}`);
+          logger.warn('FocusBoard rejected notification', { id: notifId, status: res.status });
         }
       } catch (fetchErr) {
-        console.error(`[${new Date().toISOString()}] Could not reach FocusBoard (is server.js running?): ${fetchErr.message}`);
+        logger.error('Could not reach FocusBoard', { error: fetchErr.message });
       }
     }
   } catch (err) {
     const msg = err.stderr || err.message || String(err);
     if (msg.includes('PERMISSION_DENIED')) {
-      console.error(
-        `[${new Date().toISOString()}] PERMISSION REQUIRED: Go to Windows Settings > Privacy & Security > Notifications ` +
-        `and enable "Allow apps to access your notifications". The watcher will retry in ${POLL_INTERVAL / 1000}s.`
-      );
+      logger.error('Notification permission denied — enable in Windows Settings > Privacy & Security > Notifications', { retryIn: POLL_INTERVAL / 1000 });
     } else {
-      console.error(`[${new Date().toISOString()}] Notification check failed: ${msg.trim()}`);
+      logger.error('Notification check failed', { error: msg.trim() });
     }
   }
 }
 
-console.log(`[${new Date().toISOString()}] FocusBoard notification watcher starting (polling every ${POLL_INTERVAL / 1000}s)...`);
+logger.info('FocusBoard notification watcher starting', { pollIntervalSec: POLL_INTERVAL / 1000 });
 checkNotifications();
 setInterval(checkNotifications, POLL_INTERVAL);

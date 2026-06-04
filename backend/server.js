@@ -31,6 +31,7 @@ import slackNotificationRouter, { getPendingAndClear } from './routes/slack-noti
 import reportRouter from './routes/report.js';
 import { loadOrCreateToken } from './auth.js';
 import { encryptConfig, decryptConfig } from './crypto-utils.js';
+import { logger } from './logger.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CONFIG_PATH = path.join(__dirname, 'config.json');
@@ -262,6 +263,9 @@ app.get('/api/slack-notifications/pending', (req, res) => {
 // and the frontend can surface it per-source without losing the rest of the data.
 app.get('/api/sync', async (req, res) => {
   const results = { tasks: [], errors: [] };
+  const syncDone = logger.time('Sync complete');
+
+  logger.info('Sync started', {});
 
   const sources = [
     { name: 'jira', url: 'http://localhost:3001/api/jira' },
@@ -271,15 +275,23 @@ app.get('/api/sync', async (req, res) => {
     { name: 'github', url: 'http://localhost:3001/api/github' },
   ];
 
+  const sourceCounts = {};
+
   await Promise.allSettled(
     sources.map(async (src) => {
       try {
         const r = await fetch(src.url);
         const data = await r.json();
+        const count = data.tasks ? data.tasks.length : 0;
+        sourceCounts[src.name] = count;
         if (data.tasks) results.tasks.push(...data.tasks);
-        if (data.error) results.errors.push({ source: src.name, error: data.error });
+        if (data.error) {
+          results.errors.push({ source: src.name, error: data.error });
+          logger.warn(`Sync source error`, { source: src.name, error: data.error });
+        }
       } catch (err) {
         results.errors.push({ source: src.name, error: err.message });
+        logger.error(`Sync source failed`, { source: src.name, error: err.message });
       }
     })
   );
@@ -289,6 +301,12 @@ app.get('/api/sync', async (req, res) => {
   // getPendingAndClear() is destructive — tasks are consumed and won't be returned again.
   const notifTasks = getPendingAndClear();
   if (notifTasks.length > 0) results.tasks.push(...notifTasks);
+
+  syncDone({
+    ...sourceCounts,
+    total: results.tasks.length,
+    errors: results.errors.length,
+  });
 
   res.json(results);
 });
@@ -300,10 +318,11 @@ app.get('*', (req, res) => {
 });
 
 const server = app.listen(PORT, () => {
-  console.log(`FocusBoard backend running on http://localhost:${PORT}`);
+  logger.info('FocusBoard starting', { port: PORT, node: process.version });
+
   if (!fs.existsSync(CONFIG_PATH)) {
     saveConfig({});
-    console.log('Created empty config.json');
+    logger.info('Created empty config.json', {});
   }
 
   // Config health check — warn about missing credentials so problems are visible at startup
@@ -314,26 +333,21 @@ const server = app.listen(PORT, () => {
     const googleOk = !!(cfg.googleClientId && cfg.googleAccessToken);
     const githubOk = !!cfg.githubToken;
     const anthropicOk = !!cfg.anthropicKey;
+    const slackOk = !!(cfg.slackToken || cfg.slackWorkspaceUrl);
 
     if (cfg.jiraUrl && !cfg.jiraToken) {
-      console.warn('[CONFIG] Jira URL is set but jiraToken is missing — Jira integration will fail');
+      logger.warn('Jira URL is set but jiraToken is missing — Jira integration will fail', {});
     }
     if (cfg.googleClientId && !cfg.googleAccessToken) {
-      console.warn('[CONFIG] Google client ID is set but no access token — visit /auth/google to complete OAuth');
+      logger.warn('Google client ID is set but no access token — visit /auth/google to complete OAuth', {});
     }
     if (!cfg.anthropicKey) {
-      console.info('[CONFIG] anthropicKey not set — AI features (Gmail action extraction, paste) will be unavailable');
+      logger.info('anthropicKey not set — AI features (Gmail action extraction, paste) will be unavailable', {});
     }
 
-    const status = [
-      `Jira: ${jiraOk ? '✓' : '–'}`,
-      `Google: ${googleOk ? '✓' : '–'}`,
-      `GitHub: ${githubOk ? '✓' : '–'}`,
-      `Anthropic: ${anthropicOk ? '✓' : '–'}`,
-    ].join('  ');
-    console.log(`[CONFIG] ${status}`);
+    logger.info('Config health', { jira: jiraOk, google: googleOk, github: githubOk, anthropic: anthropicOk, slack: slackOk });
   } catch (err) {
-    console.warn('[CONFIG] Could not read config for health check:', err.message);
+    logger.warn('Could not read config for health check', { error: err.message });
   }
 });
 
@@ -342,25 +356,26 @@ const server = app.listen(PORT, () => {
 // still be holding port 3001. We wait 3 seconds and retry once before giving up.
 server.on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
-    console.error(`Port ${PORT} already in use — retrying in 3 seconds...`);
+    logger.error(`Port ${PORT} already in use — retrying in 3 seconds...`, { port: PORT });
     setTimeout(() => {
       server.close();
       app.listen(PORT, () => {
-        console.log(`FocusBoard backend running on http://localhost:${PORT} (retry)`);
+        logger.info('FocusBoard backend running (retry)', { port: PORT });
       });
     }, 3000);
   } else {
-    console.error('Server error:', err.message);
+    logger.error('Server error', { error: err.message });
     process.exit(1);
   }
 });
 
 // Catch unhandled promise rejections so they don't silently kill the process
 process.on('unhandledRejection', (reason) => {
-  console.error('Unhandled promise rejection:', reason);
+  const err = reason instanceof Error ? reason : new Error(String(reason));
+  logger.error('Unhandled promise rejection', { error: err.message, stack: err.stack });
 });
 
 // Catch uncaught exceptions — log and keep running if possible
 process.on('uncaughtException', (err) => {
-  console.error('Uncaught exception:', err.message, err.stack);
+  logger.error('Uncaught exception', { error: err.message, stack: err.stack });
 });

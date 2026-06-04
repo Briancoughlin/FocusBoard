@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { decryptConfig, encryptConfig } from '../crypto-utils.js';
+import { logger } from '../logger.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CONFIG_PATH = path.join(__dirname, '..', 'config.json');
@@ -34,6 +35,7 @@ function getOAuth2Client(cfg) {
   });
   // Auto-save refreshed tokens back to config so the new access token persists
   oauth2.on('tokens', (tokens) => {
+    logger.info('Calendar token refreshed', { hasRefreshToken: !!tokens.refresh_token });
     const current = loadConfig();
     saveConfig({
       ...current,
@@ -51,6 +53,9 @@ router.get('/', async (req, res) => {
   if (!cfg.googleClientId || !cfg.googleClientSecret || !cfg.googleAccessToken) {
     return res.json({ tasks: [], error: 'Google Calendar not configured' });
   }
+
+  const syncDone = logger.time('Calendar sync');
+  logger.info('Calendar fetch start', {});
 
   try {
     const auth = getOAuth2Client(cfg);
@@ -106,9 +111,11 @@ router.get('/', async (req, res) => {
         };
       });
 
+    syncDone({ events: tasks.length });
+    logger.info('Calendar events fetched', { count: tasks.length });
     res.json({ tasks });
   } catch (err) {
-    console.error('Calendar error:', err.message);
+    logger.error('Calendar error', { error: err.message });
     res.json({ tasks: [], error: err.message });
   }
 });

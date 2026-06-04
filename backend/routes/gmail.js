@@ -17,6 +17,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { extractActionItems } from './claude.js';
 import { decryptConfig, encryptConfig } from '../crypto-utils.js';
+import { logger } from '../logger.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CONFIG_PATH = path.join(__dirname, '..', 'config.json');
@@ -47,6 +48,7 @@ function getOAuth2Client(cfg) {
   });
   // Auto-save refreshed tokens back to config so the new access token persists
   oauth2.on('tokens', (tokens) => {
+    logger.info('Gmail token refreshed', { hasRefreshToken: !!tokens.refresh_token });
     const current = loadConfig();
     saveConfig({
       ...current,
@@ -76,6 +78,9 @@ router.get('/', async (req, res) => {
     return res.json({ tasks: [], error: 'Anthropic API key required for Gmail action extraction' });
   }
 
+  const syncDone = logger.time('Gmail sync');
+  logger.info('Gmail fetch start', {});
+
   try {
     const auth = getOAuth2Client(cfg);
     const gmail = google.gmail({ version: 'v1', auth });
@@ -89,7 +94,11 @@ router.get('/', async (req, res) => {
     });
 
     const messageIds = (listRes.data.messages || []).map(m => m.id);
-    if (messageIds.length === 0) return res.json({ tasks: [] });
+    logger.info('Gmail messages found', { count: messageIds.length });
+    if (messageIds.length === 0) {
+      syncDone({ messages: 0, slackDigests: 0, actionItems: 0 });
+      return res.json({ tasks: [] });
+    }
 
     // Fetch message details in parallel
     const messageDetails = await Promise.allSettled(
@@ -137,8 +146,12 @@ router.get('/', async (req, res) => {
         };
       });
 
+    const slackDigestCount = messages.filter(m => m.isSlackDigest).length;
+    logger.info('Gmail Slack digests detected', { count: slackDigestCount });
+
     // Use Claude to extract action items
     const actionItems = await extractActionItems(messages, 'gmail');
+    logger.info('Gmail Claude extraction result', { actionItems: actionItems.length });
 
     // Build a Set of Gmail message IDs that are Slack digests so we can re-classify
     // action items returned by Claude. Claude receives the message ID as sourceId, so
@@ -166,9 +179,10 @@ router.get('/', async (req, res) => {
       };
     });
 
+    syncDone({ messages: messageIds.length, slackDigests: slackDigestCount, actionItems: tasks.length });
     res.json({ tasks });
   } catch (err) {
-    console.error('Gmail error:', err.message);
+    logger.error('Gmail error', { error: err.message });
     res.json({ tasks: [], error: err.message });
   }
 });

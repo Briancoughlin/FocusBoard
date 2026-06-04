@@ -17,6 +17,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { decryptConfig } from '../crypto-utils.js';
+import { logger } from '../logger.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CONFIG_PATH = path.join(__dirname, '..', 'config.json');
@@ -84,6 +85,10 @@ router.get('/', async (req, res) => {
     return res.json({ tasks: [], error: 'Jira not configured' });
   }
 
+  const syncDone = logger.time('Jira sync');
+  let pageNum = 0;
+  let epicNames = {};
+
   try {
     const defaultJql = 'assignee=currentUser() AND resolution=Unresolved ORDER BY updated DESC';
     const jql = encodeURIComponent(cfg.jiraJql || defaultJql);
@@ -96,6 +101,8 @@ router.get('/', async (req, res) => {
     let allIssues = [];
     let startAt = 0;
     const pageSize = 200;
+
+    logger.info('Jira pagination start', {});
 
     while (true) {
       const pageUrl = `${cfg.jiraUrl}/rest/api/2/search?jql=${jql}&fields=${fields}&maxResults=${pageSize}&startAt=${startAt}`;
@@ -110,7 +117,8 @@ router.get('/', async (req, res) => {
       }
       const data = JSON.parse(text);
       allIssues = allIssues.concat(data.issues || []);
-      console.log(`Jira: fetched ${allIssues.length} of ${data.total} tickets`);
+      pageNum++;
+      logger.info('Jira page fetched', { page: pageNum, fetched: allIssues.length, total: data.total });
       if (allIssues.length >= data.total) break;
       startAt += pageSize;
     }
@@ -121,7 +129,6 @@ router.get('/', async (req, res) => {
     // summaries, then join by key when building task objects below.
     // This is done in a try/catch so a permissions error on epics doesn't break the whole sync.
     const epicKeys = [...new Set(allIssues.map(i => i.fields.customfield_10006).filter(Boolean))];
-    const epicNames = {};
     if (epicKeys.length > 0) {
       try {
         const epicJql = encodeURIComponent(`key in (${epicKeys.join(',')})`);
@@ -130,8 +137,9 @@ router.get('/', async (req, res) => {
         });
         const epicData = await epicRes.json();
         (epicData.issues || []).forEach(e => { epicNames[e.key] = e.fields.summary; });
+        logger.info('Jira epics resolved', { count: Object.keys(epicNames).length });
       } catch (e) {
-        console.error('Failed to fetch epic names:', e.message);
+        logger.error('Failed to fetch epic names', { error: e.message });
       }
     }
 
@@ -152,9 +160,10 @@ router.get('/', async (req, res) => {
       updatedAt: new Date().toISOString(),
     }));
 
+    syncDone({ tickets: tasks.length, pages: pageNum, epics: Object.keys(epicNames).length });
     res.json({ tasks });
   } catch (err) {
-    console.error('Jira error:', err.message, err.cause);
+    logger.error('Jira error', { error: err.message, cause: String(err.cause || '') });
     res.json({ tasks: [], error: err.message, cause: String(err.cause || '') });
   }
 });

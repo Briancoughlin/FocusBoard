@@ -16,6 +16,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { decryptConfig } from '../crypto-utils.js';
+import { logger } from '../logger.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CONFIG_PATH = path.join(__dirname, '..', 'config.json');
@@ -62,6 +63,8 @@ router.get('/', async (req, res) => {
   const token = cfg.githubToken;
   const baseUrl = cfg.githubBaseUrl || 'https://api.github.com';
 
+  const syncDone = logger.time('GitHub sync');
+
   try {
     const tasks = [];
 
@@ -74,6 +77,7 @@ router.get('/', async (req, res) => {
       `/search/issues?q=is:open+is:pr+review-requested:${username}&per_page=20`,
       token, baseUrl
     );
+    logger.info('GitHub review requests fetched', { count: (reviewRequested.items || []).length });
     for (const pr of reviewRequested.items || []) {
       tasks.push({
         id: `github-review-${pr.id}`,
@@ -95,6 +99,7 @@ router.get('/', async (req, res) => {
       `/search/issues?q=is:open+is:pr+author:${username}&per_page=20`,
       token, baseUrl
     );
+    logger.info('GitHub own PRs fetched', { count: (myPRs.items || []).length });
     for (const pr of myPRs.items || []) {
       tasks.push({
         id: `github-pr-${pr.id}`,
@@ -116,6 +121,7 @@ router.get('/', async (req, res) => {
       `/search/issues?q=is:open+is:issue+assignee:${username}&per_page=20`,
       token, baseUrl
     );
+    logger.info('GitHub assigned issues fetched', { count: (assignedIssues.items || []).length });
     for (const issue of assignedIssues.items || []) {
       tasks.push({
         id: `github-issue-${issue.id}`,
@@ -144,6 +150,7 @@ router.get('/', async (req, res) => {
       token, baseUrl
     );
 
+    logger.info('GitHub notifications fetched', { count: (notifications || []).length });
     for (const notif of notifications || []) {
       const repo = notif.repository.full_name;
       const subjectTitle = notif.subject.title || '';
@@ -220,9 +227,10 @@ router.get('/', async (req, res) => {
       }
     }
 
+    syncDone({ tasks: tasks.length });
     res.json({ tasks });
   } catch (err) {
-    console.error('GitHub error:', err.message);
+    logger.error('GitHub error', { error: err.message });
     res.json({ tasks: [], error: err.message });
   }
 });
