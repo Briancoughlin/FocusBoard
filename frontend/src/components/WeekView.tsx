@@ -90,7 +90,7 @@ export function WeekView({ tasks, allTasks, selectedDay, onDaySelect }: Props) {
 
           // Count kanban tasks due this day for badge
           const dueTodayCount = kanbanTasks.filter(t => {
-            if (!t.dueDate || t.status === 'done') return false;
+            if (!t.dueDate) return false;
             return isSameDay(new Date(t.dueDate), day);
           }).length;
 
