@@ -16,7 +16,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { extractActionItems } from './claude.js';
-import { decryptConfig } from '../crypto-utils.js';
+import { decryptConfig, encryptConfig } from '../crypto-utils.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CONFIG_PATH = path.join(__dirname, '..', 'config.json');
@@ -30,18 +30,30 @@ function loadConfig() {
   } catch { return {}; }
 }
 
+function saveConfig(data) {
+  const encrypted = encryptConfig(data);
+  fs.writeFileSync(CONFIG_PATH, JSON.stringify(encrypted, null, 2), 'utf8');
+}
+
 function getOAuth2Client(cfg) {
   const oauth2 = new google.auth.OAuth2(
     cfg.googleClientId,
     cfg.googleClientSecret,
     'http://localhost:3001/auth/google/callback'
   );
-  if (cfg.googleAccessToken) {
-    oauth2.setCredentials({
-      access_token: cfg.googleAccessToken,
-      refresh_token: cfg.googleRefreshToken,
+  oauth2.setCredentials({
+    access_token: cfg.googleAccessToken,
+    refresh_token: cfg.googleRefreshToken,
+  });
+  // Auto-save refreshed tokens back to config so the new access token persists
+  oauth2.on('tokens', (tokens) => {
+    const current = loadConfig();
+    saveConfig({
+      ...current,
+      googleAccessToken: tokens.access_token || current.googleAccessToken,
+      ...(tokens.refresh_token && { googleRefreshToken: tokens.refresh_token }),
     });
-  }
+  });
   return oauth2;
 }
 

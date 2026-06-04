@@ -95,6 +95,7 @@ export default function App() {
   const [pastedTasks, setPastedTasks] = useState<Task[]>([]);
   const [doneDates, setDoneDates] = useState<Record<string, string>>({});
   const [persistenceLoaded, setPersistenceLoaded] = useState(false);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
   // Theme: fetch Windows accent/dark-mode on mount, re-check every 30s
   useEffect(() => {
@@ -188,6 +189,18 @@ export default function App() {
       setIsLoading(false);
     }
   }, []);
+
+  // Offline detection — placed after fetchTasks is defined so the online handler can call it
+  useEffect(() => {
+    const handleOffline = () => setIsOffline(true);
+    const handleOnline = () => { setIsOffline(false); fetchTasks(); };
+    window.addEventListener('offline', handleOffline);
+    window.addEventListener('online', handleOnline);
+    return () => {
+      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('online', handleOnline);
+    };
+  }, [fetchTasks]);
 
   // Initial fetch + auto-refresh every 5 minutes
   useEffect(() => {
@@ -411,6 +424,22 @@ export default function App() {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden" style={{ backgroundColor: 'var(--bg)' }}>
+      {isOffline && (
+        <div
+          style={{
+            backgroundColor: 'var(--accent)',
+            color: '#fff',
+            textAlign: 'center',
+            padding: '0.4rem 1rem',
+            fontSize: '0.85rem',
+            fontWeight: 500,
+            flexShrink: 0,
+            opacity: 0.92,
+          }}
+        >
+          You're offline — FocusBoard will sync when reconnected
+        </div>
+      )}
       <Header
         view={view}
         onViewChange={handleViewChange}
@@ -434,7 +463,7 @@ export default function App() {
             onPin={handlePin}
             pinnedIds={pinnedIds}
             onWontDo={handleWontDo}
-            errors={errors}
+            errors={isOffline ? [] : errors}
           />
         )}
         {view === 'focus' && (

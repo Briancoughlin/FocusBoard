@@ -305,6 +305,36 @@ const server = app.listen(PORT, () => {
     saveConfig({});
     console.log('Created empty config.json');
   }
+
+  // Config health check — warn about missing credentials so problems are visible at startup
+  try {
+    const cfg = loadConfig();
+
+    const jiraOk = !!(cfg.jiraUrl && cfg.jiraToken);
+    const googleOk = !!(cfg.googleClientId && cfg.googleAccessToken);
+    const githubOk = !!cfg.githubToken;
+    const anthropicOk = !!cfg.anthropicKey;
+
+    if (cfg.jiraUrl && !cfg.jiraToken) {
+      console.warn('[CONFIG] Jira URL is set but jiraToken is missing — Jira integration will fail');
+    }
+    if (cfg.googleClientId && !cfg.googleAccessToken) {
+      console.warn('[CONFIG] Google client ID is set but no access token — visit /auth/google to complete OAuth');
+    }
+    if (!cfg.anthropicKey) {
+      console.info('[CONFIG] anthropicKey not set — AI features (Gmail action extraction, paste) will be unavailable');
+    }
+
+    const status = [
+      `Jira: ${jiraOk ? '✓' : '–'}`,
+      `Google: ${googleOk ? '✓' : '–'}`,
+      `GitHub: ${githubOk ? '✓' : '–'}`,
+      `Anthropic: ${anthropicOk ? '✓' : '–'}`,
+    ].join('  ');
+    console.log(`[CONFIG] ${status}`);
+  } catch (err) {
+    console.warn('[CONFIG] Could not read config for health check:', err.message);
+  }
 });
 
 // Handle port-in-use errors gracefully — the most common crash cause.
