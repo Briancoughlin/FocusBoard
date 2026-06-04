@@ -209,7 +209,9 @@ export function FocusView({ tasks, kanbanTasks, isLoading, onTaskMove, onDismiss
             <KanbanColumn
               key={col.id}
               column={col}
-              tasks={weekTasks.filter(t => t.status === col.id || (col.id === 'done' && t.status === 'wontdo'))}
+              tasks={col.id === 'done'
+                ? [...weekTasks.filter(t => t.status === 'done'), ...kanbanTasks.filter(t => t.status === 'wontdo')]
+                : weekTasks.filter(t => t.status === col.id)}
               isLoading={isLoading}
               onDismiss={onDismiss}
               onPin={onPin}

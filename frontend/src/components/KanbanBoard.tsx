@@ -109,7 +109,9 @@ export function KanbanBoard({ tasks, isLoading, onTaskMove, onOpenSettings, onDi
             <KanbanColumn
               key={col.id}
               column={col}
-              tasks={filteredTasks.filter(t => t.status === col.id || (col.id === 'done' && t.status === 'wontdo'))}
+              tasks={col.id === 'done'
+                ? [...filteredTasks.filter(t => t.status === 'done'), ...tasks.filter(t => t.status === 'wontdo')]
+                : filteredTasks.filter(t => t.status === col.id)}
               isLoading={isLoading}
               onDismiss={onDismiss}
               onPin={onPin}
