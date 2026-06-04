@@ -18,12 +18,22 @@ FocusBoard is built to production standards despite being a personal tool. Here'
 - **Dependency scanning** — Dependabot runs weekly, auto-merging patch/minor updates when CI passes.
 
 ### 🧪 Testing
-- **43 automated tests** covering the most critical business logic:
-  - Jira status mapping (Unity-specific statuses)
-  - AES-256-GCM encrypt/decrypt round-trip
-  - Urgency scoring and level calculation
-  - Task filtering and override logic
-  - Focus view week filter rules
+- **55 automated tests** across 7 test suites:
+  - Jira status mapping (9 tests) — Unity-specific status names
+  - AES-256-GCM encryption (5 tests) — config security
+  - Config merge logic (5 tests) — input validation and secret masking
+  - Task cache (4 tests) — read/write round-trip
+  - Urgency scoring (10 tests) — core ADHD prioritisation logic
+  - Task filtering (7 tests) — overrides, done dates, wontdo
+  - Week view filter (7 tests) — Focus view inclusion rules
+  - Action log buffer (8 tests) — circular buffer behaviour
+- **Code coverage** (measured on pure logic files, excluding React UI components):
+  - `actionLog.ts` — 100% statements
+  - `TaskCard.tsx` (logic only) — 23% statements (JSX rendering excluded by design)
+  - `api.ts` — 0% statements (HTTP calls require a live server; not unit-tested)
+  - `persistence.ts` — 0% statements (localStorage calls; not unit-tested)
+  - `theme.ts` — 0% statements (DOM manipulation; not unit-tested)
+  - *Note: React component JSX rendering and service files that wrap browser APIs are intentionally excluded from coverage measurement. UI behaviour is validated through manual testing and the smoke test suite. The coverage numbers above reflect only the files included in measurement scope.*
 - Tests run on every commit via pre-commit hooks and GitHub Actions CI.
 
 ### 🔄 CI/CD Pipeline

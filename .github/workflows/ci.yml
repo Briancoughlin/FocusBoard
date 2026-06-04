@@ -72,6 +72,11 @@ jobs:
         run: npm test
         working-directory: frontend
 
+      - name: Frontend coverage report
+        run: npm run test:coverage
+        working-directory: frontend
+        continue-on-error: true
+
       - name: TypeScript type check
         run: npx tsc --noEmit
         working-directory: frontend

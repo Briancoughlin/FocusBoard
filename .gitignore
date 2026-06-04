@@ -3,6 +3,7 @@ package-lock.json
 config.json
 .env
 frontend/dist/
+frontend/coverage/
 backend/daemon/
 backend/data/
 backend/logs/
