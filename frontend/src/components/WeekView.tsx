@@ -90,7 +90,7 @@ export function WeekView({ tasks, allTasks, selectedDay, onDaySelect }: Props) {
 
           // Count kanban tasks due this day for badge
           const dueTodayCount = kanbanTasks.filter(t => {
-            if (!t.dueDate) return false;
+            if (!t.dueDate || t.status === 'done') return false;
             return isSameDay(new Date(t.dueDate), day);
           }).length;
 
@@ -181,7 +181,7 @@ export function WeekView({ tasks, allTasks, selectedDay, onDaySelect }: Props) {
                     {(() => {
                       // Scheduled kanban tasks for this day
                       const scheduledTasks = kanbanTasks.filter(t =>
-                        t.dueDate && isSameDay(new Date(t.dueDate), day)
+                        t.dueDate && isSameDay(new Date(t.dueDate), day) && t.status !== 'done'
                       );
                       const allItems = [...dayEvents, ...scheduledTasks];
 
