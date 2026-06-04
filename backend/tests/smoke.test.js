@@ -96,4 +96,20 @@ describe('Smoke tests — server must be running on port 3001', () => {
     assert.ok(typeof result.body.currentVersion === 'string', 'Should have currentVersion string');
   });
 
+  it('GET /api/cache returns { tasks: [] } shape when empty or populated', async () => {
+    let result;
+    try {
+      result = await get('/api/cache');
+    } catch (err) {
+      if (err.name === 'AbortError' || err.code === 'ECONNREFUSED') {
+        console.warn('⚠️  Server not running — skipping smoke tests');
+        return;
+      }
+      throw err;
+    }
+
+    assert.equal(result.ok, true, `Cache should return 200, got ${result.status}`);
+    assert.ok(Array.isArray(result.body.tasks), 'Should have tasks array');
+  });
+
 });

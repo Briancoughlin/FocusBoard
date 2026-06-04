@@ -35,7 +35,7 @@ jobs:
         continue-on-error: true
 
       - name: Run backend unit tests
-        run: node --test tests/jira-status.test.js tests/crypto.test.js tests/config-merge.test.js
+        run: npm test
         working-directory: backend
 
       - name: Run smoke tests (server must start)
@@ -43,7 +43,7 @@ jobs:
           node server.js &
           SERVER_PID=$!
           sleep 4
-          node --test tests/smoke.test.js
+          npm run test:smoke
           kill $SERVER_PID 2>/dev/null || true
         working-directory: backend
         continue-on-error: true

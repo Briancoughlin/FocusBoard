@@ -28,3 +28,7 @@ export function getActionLog(): ActionEntry[] {
 export function formatActionLog(): string {
   return log.map(e => `[${e.ts}] ${e.action}`).join('\n') || 'No actions recorded';
 }
+
+export function clearActionLog(): void {
+  log.splice(0, log.length);
+}
