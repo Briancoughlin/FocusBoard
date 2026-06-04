@@ -33,6 +33,7 @@ import { JiraDonePrompt } from './components/JiraDonePrompt';
 import { JiraCreatePrompt } from './components/JiraCreatePrompt';
 import { SlackChannelPrompt } from './components/SlackChannelPrompt';
 import { ReportModal } from './components/ReportModal';
+import { UpdateBanner } from './components/UpdateBanner';
 
 /**
  * Merge user-driven status overrides onto the server-fetched tasks.
@@ -90,6 +91,8 @@ export default function App() {
   const [pinnedIds, setPinnedIds] = useState<Set<string>>(new Set());
   const [showDigest, setShowDigest] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [updateInfo, setUpdateInfo] = useState<any>(null);
+  const [updateDismissed, setUpdateDismissed] = useState(false);
   const [completedToday, setCompletedToday] = useState<number>(0);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const [pastedTasks, setPastedTasks] = useState<Task[]>([]);
@@ -195,6 +198,20 @@ export default function App() {
     } finally {
       setIsLoading(false);
     }
+  }, []);
+
+  // Check for updates once on startup, then daily
+  useEffect(() => {
+    const checkUpdate = async () => {
+      try {
+        const res = await fetch('/api/update/check', { credentials: 'include' });
+        const data = await res.json();
+        if (data.hasUpdate) setUpdateInfo(data);
+      } catch { /* silent fail */ }
+    };
+    checkUpdate();
+    const interval = setInterval(checkUpdate, 24 * 60 * 60 * 1000);
+    return () => clearInterval(interval);
   }, []);
 
   // Offline detection — placed after fetchTasks is defined so the online handler can call it
@@ -431,6 +448,9 @@ export default function App() {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden" style={{ backgroundColor: 'var(--bg)' }}>
+      {updateInfo && !updateDismissed && (
+        <UpdateBanner update={updateInfo} onDismiss={() => setUpdateDismissed(true)} />
+      )}
       {isOffline && (
         <div
           style={{
