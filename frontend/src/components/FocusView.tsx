@@ -139,6 +139,7 @@ export function FocusView({ tasks, kanbanTasks, isLoading, onTaskMove, onDismiss
           allTasks={kanbanTasks}
           selectedDay={selectedDay}
           onDaySelect={setSelectedDay}
+          onTaskDone={taskId => onTaskMove(taskId, 'done')}
         />
       </div>
 

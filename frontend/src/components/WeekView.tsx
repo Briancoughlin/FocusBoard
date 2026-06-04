@@ -1,6 +1,6 @@
 import React from 'react';
-import { Clock } from 'lucide-react';
-import { Droppable, Draggable } from '@hello-pangea/dnd';
+import { Clock, CheckCircle } from 'lucide-react';
+import { Droppable } from '@hello-pangea/dnd';
 import type { Task } from '../types';
 
 interface Props {
@@ -8,6 +8,7 @@ interface Props {
   allTasks: Task[];
   selectedDay: Date | null;
   onDaySelect: (day: Date | null) => void;
+  onTaskDone?: (taskId: string) => void;
 }
 
 function getWeekDays(): Date[] {
@@ -47,7 +48,7 @@ const SOURCE_BORDER: Record<string, string> = {
   slack:    '#a855f7', // purple
 };
 
-export function WeekView({ tasks, allTasks, selectedDay, onDaySelect }: Props) {
+export function WeekView({ tasks, allTasks, selectedDay, onDaySelect, onTaskDone }: Props) {
   const calendarTasks = tasks.filter(t => t.source === 'calendar');
   const weekDays = getWeekDays();
   const today = new Date();
@@ -193,28 +194,20 @@ export function WeekView({ tasks, allTasks, selectedDay, onDaySelect }: Props) {
                         );
                       }
 
-                      let draggableIndex = 0;
                       return allItems.map(item => {
                         const borderColor = SOURCE_BORDER[item.source] || 'var(--border)';
                         const isCalendar = item.source === 'calendar';
-                        const cardContent = (dragHandleProps?: object) => (
+                        const cardContent = () => (
                           <div
-                            onClick={e => { e.stopPropagation(); item.url && window.open(item.url, '_blank'); }}
-                            role="button"
-                            aria-label={item.title.replace('[All Day] ', '')}
-                            title={item.title}
-                            tabIndex={0}
-                            onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); item.url && window.open(item.url, '_blank'); } }}
-                            className="p-1.5 rounded-lg text-xs transition-all"
+                            className="p-1.5 rounded-lg text-xs transition-all group relative"
                             style={{
                               backgroundColor: 'var(--bg-card)',
                               borderLeft: `3px solid ${borderColor}`,
                               border: `1px solid var(--border)`,
                               borderLeftWidth: '3px',
                               borderLeftColor: borderColor,
-                              cursor: isCalendar ? 'pointer' : 'grab',
+                              cursor: 'pointer',
                             }}
-                            {...dragHandleProps}
                           >
                             <p className="font-medium line-clamp-2 leading-tight" style={{ color: 'var(--text-primary)' }}>
                               {item.title.replace('[All Day] ', '')}
@@ -230,27 +223,21 @@ export function WeekView({ tasks, allTasks, selectedDay, onDaySelect }: Props) {
                                 {formatTime(item.dueDate)}
                               </p>
                             )}
+                            {/* Done button for scheduled tasks */}
+                            {!isCalendar && onTaskDone && (
+                              <button
+                                onClick={e => { e.stopPropagation(); onTaskDone(item.id); }}
+                                className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                title="Mark as done"
+                                aria-label="Mark as done"
+                              >
+                                <CheckCircle size={12} className="text-emerald-500" />
+                              </button>
+                            )}
                           </div>
                         );
 
-                        // Calendar events are not draggable, task cards are
-                        if (isCalendar) {
-                          return <div key={item.id}>{cardContent()}</div>;
-                        }
-                        const idx = draggableIndex++;
-                        return (
-                          <Draggable key={item.id} draggableId={item.id} index={idx}>
-                            {(dragProvided) => (
-                              <div
-                                ref={dragProvided.innerRef}
-                                {...dragProvided.draggableProps}
-                                style={dragProvided.draggableProps.style}
-                              >
-                                {cardContent(dragProvided.dragHandleProps || {})}
-                              </div>
-                            )}
-                          </Draggable>
-                        );
+                        return <div key={item.id} onClick={e => { e.stopPropagation(); item.url && window.open(item.url, '_blank'); }}>{cardContent()}</div>;
                       });
                     })()}
                     {/* Hidden placeholder — keeps droppable working even with no children */}
