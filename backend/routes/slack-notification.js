@@ -51,6 +51,25 @@ router.post('/', (req, res) => {
     return res.status(400).json({ error: 'title or body too long' });
   }
 
+  // Load config to check channel map and workspace settings
+  const CONFIG_PATH = path.join(__dirname, '..', 'config.json');
+  let slackChannelMapEarly = {};
+  try {
+    const raw = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
+    const cfg = raw.encrypted ? decryptConfig(raw) : raw;
+    slackChannelMapEarly = cfg.slackChannelMap || {};
+  } catch {}
+
+  // Only allow notifications from mapped channels or DMs (non-channel messages)
+  const isChannelMsg = title.startsWith('#');
+  if (isChannelMsg) {
+    const channelName = title.slice(1).split(':')[0].trim();
+    if (!slackChannelMapEarly[channelName]) {
+      // Channel not in map — silently ignore
+      return res.json({ task: null, ignored: true });
+    }
+  }
+
   const taskId = `slack-notif-${id || Date.now()}`;
 
   // Don't duplicate — check if we already have this notification
@@ -64,11 +83,10 @@ router.post('/', (req, res) => {
     ? `${title}: ${shortBody}`
     : `Slack: ${title}`;
 
-  // Build Slack URL — use workspace URL from config if available
-  const CONFIG_PATH = path.join(__dirname, '..', 'config.json');
+  // Build Slack URL — reuse already-loaded config
   let slackWorkspaceUrl = '';
   let teamId = '';
-  let slackChannelMap = {};
+  let slackChannelMap = slackChannelMapEarly;
   try {
     const raw = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
     const cfg = raw.encrypted ? decryptConfig(raw) : raw;
