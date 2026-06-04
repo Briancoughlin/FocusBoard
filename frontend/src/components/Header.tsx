@@ -1,5 +1,5 @@
 import React from 'react';
-import { RefreshCw, Settings, Zap, ClipboardPaste, Trophy, Newspaper } from 'lucide-react';
+import { RefreshCw, Settings, Zap, ClipboardPaste, Trophy, Newspaper, BarChart2 } from 'lucide-react';
 
 interface Props {
   view: 'board' | 'focus' | 'settings';
@@ -9,6 +9,7 @@ interface Props {
   lastSynced: Date | null;
   onPaste: () => void;
   onShowDigest: () => void;
+  onShowReport: () => void;
   completedToday: number;
 }
 
@@ -23,7 +24,7 @@ function formatLastSynced(d: Date | null): string {
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-export function Header({ view, onViewChange, onRefresh, isRefreshing, lastSynced, onPaste, onShowDigest, completedToday }: Props) {
+export function Header({ view, onViewChange, onRefresh, isRefreshing, lastSynced, onPaste, onShowDigest, onShowReport, completedToday }: Props) {
   return (
     <header className="px-6 py-3 flex items-center justify-between shadow-sm sticky top-0 z-10" style={{ backgroundColor: 'var(--bg-header)', borderBottom: '1px solid var(--border)' }}>
       {/* Left: Brand */}
@@ -83,6 +84,14 @@ export function Header({ view, onViewChange, onRefresh, isRefreshing, lastSynced
           className="p-2 rounded-lg text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-all"
         >
           <Newspaper size={16} aria-hidden="true" />
+        </button>
+        <button
+          onClick={onShowReport}
+          title="Generate standup report"
+          aria-label="Generate standup report"
+          className="p-2 rounded-lg text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-all"
+        >
+          <BarChart2 size={16} aria-hidden="true" />
         </button>
         <button
           onClick={onPaste}

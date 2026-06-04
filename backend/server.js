@@ -15,6 +15,7 @@ import persistenceRouter from './routes/persistence.js';
 import githubRouter from './routes/github.js';
 import themeRouter from './routes/theme.js';
 import slackNotificationRouter, { getPendingAndClear } from './routes/slack-notification.js';
+import reportRouter from './routes/report.js';
 import { loadOrCreateToken } from './auth.js';
 import { encryptConfig, decryptConfig } from './crypto-utils.js';
 
@@ -210,6 +211,7 @@ app.use('/api/persistence', persistenceRouter);
 app.use('/api/github', githubRouter);
 app.use('/api/theme', themeRouter);
 app.use('/api/slack-notification', slackNotificationRouter);
+app.use('/api/report', reportRouter);
 
 // --- Pending notification tasks ---
 app.get('/api/slack-notifications/pending', (req, res) => {

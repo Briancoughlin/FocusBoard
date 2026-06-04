@@ -12,6 +12,7 @@ import { FocusView } from './components/FocusView';
 import { JiraDonePrompt } from './components/JiraDonePrompt';
 import { JiraCreatePrompt } from './components/JiraCreatePrompt';
 import { SlackChannelPrompt } from './components/SlackChannelPrompt';
+import { ReportModal } from './components/ReportModal';
 
 // Apply user overrides on top of fetched tasks
 function applyOverrides(tasks: Task[], overrides: Record<string, Status>): Task[] {
@@ -54,6 +55,7 @@ export default function App() {
   const [injectedTasks, setInjectedTasks] = useState<Task[]>([]);
   const [pinnedIds, setPinnedIds] = useState<Set<string>>(new Set());
   const [showDigest, setShowDigest] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   const [completedToday, setCompletedToday] = useState<number>(0);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const [pastedTasks, setPastedTasks] = useState<Task[]>([]);
@@ -349,6 +351,7 @@ export default function App() {
         lastSynced={lastSynced}
         onPaste={() => setPasteOpen(true)}
         onShowDigest={() => setShowDigest(true)}
+        onShowReport={() => setReportOpen(true)}
         completedToday={completedToday}
       />
 
@@ -426,6 +429,13 @@ export default function App() {
         <PastePanel
           onTasksExtracted={handlePastedTasks}
           onClose={() => setPasteOpen(false)}
+        />
+      )}
+      {reportOpen && (
+        <ReportModal
+          tasks={tasks}
+          doneDates={doneDates}
+          onClose={() => setReportOpen(false)}
         />
       )}
     </div>
