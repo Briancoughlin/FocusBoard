@@ -5,6 +5,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.2.1] - 2026-06-04
+
+### Added
+- **Task cache** — board loads instantly on startup from cached data, no blank screen
+- **Non-disruptive sync** — background syncs show "Syncing..." in header instead of blanking the board
+- **Bug report button** — 🐛 icon in header creates a GitHub issue with server logs, user action trail, and system state
+- **User action trail** — last 50 actions recorded in memory, included in bug reports
+- **Smoke tests** — 4 end-to-end tests verifying server health and API response shapes
+- **Zero ESLint warnings** — all 19 warnings fixed, clean codebase
+
+### Fixed
+- Subtle grey overlay during background sync instead of blank screen
+
+---
+
 ## [1.2.0] - 2026-06-04
 
 ### Added
