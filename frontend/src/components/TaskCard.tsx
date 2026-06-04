@@ -1,6 +1,6 @@
 import React from 'react';
 import { Draggable } from '@hello-pangea/dnd';
-import { ExternalLink, Calendar, Flame, X, Pin } from 'lucide-react';
+import { ExternalLink, Calendar, Flame, X, Pin, Ban } from 'lucide-react';
 import type { Task } from '../types';
 import { SourceBadge } from './SourceBadge';
 
@@ -10,6 +10,7 @@ interface Props {
   onDismiss: (taskId: string) => void;
   onPin?: (taskId: string) => void;
   pinned?: boolean;
+  onWontDo?: (taskId: string) => void;
 }
 
 export type UrgencyLevel = 'overdue' | 'today' | 'soon' | 'normal';
@@ -67,7 +68,8 @@ function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-export function TaskCard({ task, index, onDismiss, onPin, pinned }: Props) {
+export function TaskCard({ task, index, onDismiss, onPin, pinned, onWontDo }: Props) {
+  const isWontDo = task.status === 'wontdo';
   const urgency = getUrgencyLevel(task);
   const bar = urgencyBar[urgency];
   const badge = urgencyLabel[urgency];
@@ -87,7 +89,7 @@ export function TaskCard({ task, index, onDismiss, onPin, pinned }: Props) {
             ${task.url ? 'hover:border-blue-300' : ''}
             ${snapshot.isDragging ? 'shadow-lg rotate-1 border-blue-300 ring-2 ring-blue-200' : ''}
           `}
-          style={{ ...provided.draggableProps.style, backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}
+          style={{ ...provided.draggableProps.style, backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)', opacity: isWontDo ? 0.6 : 1 }}
         >
           {/* Urgency colour strip */}
           <div
@@ -122,6 +124,17 @@ export function TaskCard({ task, index, onDismiss, onPin, pinned }: Props) {
                 >
                   {task.priority === 'high' ? 'High' : task.priority === 'medium' ? 'Med' : 'Low'}
                 </span>
+              )}
+              {onWontDo && (
+                <button
+                  onClick={e => { e.stopPropagation(); onWontDo(task.id); }}
+                  className="transition-colors p-0.5 rounded"
+                  style={{ color: isWontDo ? '#ef4444' : 'var(--text-secondary)' }}
+                  title={isWontDo ? "Mark as Done instead" : "Mark as Won't Do"}
+                  aria-label={isWontDo ? "Mark as Done instead" : "Mark as Won't Do"}
+                >
+                  <Ban size={12} fill={isWontDo ? '#ef4444' : 'none'} />
+                </button>
               )}
               {onPin && (
                 <button
@@ -162,10 +175,10 @@ export function TaskCard({ task, index, onDismiss, onPin, pinned }: Props) {
             {/* Title — click to open */}
             <p
               onClick={e => { e.stopPropagation(); if (task.url) window.open(task.url, '_blank'); }}
-              className={`text-sm font-semibold leading-snug mb-1 line-clamp-2 ${task.url ? 'hover:text-blue-600 cursor-pointer' : ''}`}
-              style={{ color: 'var(--text-primary)' }}
+              className={`text-sm font-semibold leading-snug mb-1 line-clamp-2 ${task.url ? 'hover:text-blue-600 cursor-pointer' : ''} ${isWontDo ? 'line-through' : ''}`}
+              style={{ color: isWontDo ? 'var(--text-secondary)' : 'var(--text-primary)' }}
             >
-              {task.title}
+              {isWontDo && <span className="text-xs mr-1">🚫</span>}{task.title}
             </p>
 
             {/* Description */}

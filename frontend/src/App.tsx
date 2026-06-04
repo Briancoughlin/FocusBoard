@@ -251,6 +251,16 @@ export default function App() {
     setSlackChannelPrompt(null);
   }, []);
 
+  const handleWontDo = useCallback((taskId: string) => {
+    // Toggle between done and wontdo
+    const currentStatus = overridesRef.current[taskId];
+    const newStatus = currentStatus === 'wontdo' ? 'done' : 'wontdo';
+    const updated = { ...overridesRef.current, [taskId]: newStatus as Status };
+    overridesRef.current = updated;
+    setOverrides(updated);
+    setPersistedValue('overrides', updated);
+  }, []);
+
   const handlePin = useCallback((taskId: string) => {
     setPinnedIds(prev => {
       const next = new Set(prev);
@@ -315,7 +325,7 @@ export default function App() {
       dueDateOverrides
     )
     .filter(t => !dismissed.has(t.id))
-    .filter(t => t.status !== 'done' || doneDates[t.id] === today);
+    .filter(t => t.status === 'wontdo' || t.status !== 'done' || doneDates[t.id] === today);
 
   const kanbanTasks = tasks.filter(t => t.source !== 'calendar' && t.source !== 'slack');
 
@@ -352,6 +362,7 @@ export default function App() {
             onDismiss={handleDismiss}
             onPin={handlePin}
             pinnedIds={pinnedIds}
+            onWontDo={handleWontDo}
             errors={errors}
           />
         )}
@@ -366,6 +377,7 @@ export default function App() {
             onPin={handlePin}
             pinnedIds={pinnedIds}
             onEpicChange={setActiveEpicKey}
+            onWontDo={handleWontDo}
             onAddToBoard={task => {
               setPastedTasks(prev => {
                 const pinned = { ...task, id: `pinned-${task.id}`, source: 'paste' as const, status: 'todo' as const, priority: 'high' as const };

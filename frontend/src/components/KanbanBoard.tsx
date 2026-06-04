@@ -12,6 +12,7 @@ interface Props {
   onDismiss: (taskId: string) => void;
   onPin: (taskId: string) => void;
   pinnedIds: Set<string>;
+  onWontDo: (taskId: string) => void;
   errors: Array<{ source: string; error: string }>;
 }
 
@@ -28,7 +29,7 @@ const TABS: { id: FilterTab; label: string; color: string; activeColor: string; 
 ];
 
 
-export function KanbanBoard({ tasks, isLoading, onTaskMove, onOpenSettings, onDismiss, onPin, pinnedIds, errors }: Props) {
+export function KanbanBoard({ tasks, isLoading, onTaskMove, onOpenSettings, onDismiss, onPin, pinnedIds, onWontDo, errors }: Props) {
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
 
   const handleDragEnd = useCallback(
@@ -108,11 +109,12 @@ export function KanbanBoard({ tasks, isLoading, onTaskMove, onOpenSettings, onDi
             <KanbanColumn
               key={col.id}
               column={col}
-              tasks={filteredTasks.filter(t => t.status === col.id)}
+              tasks={filteredTasks.filter(t => t.status === col.id || (col.id === 'done' && t.status === 'wontdo'))}
               isLoading={isLoading}
               onDismiss={onDismiss}
               onPin={onPin}
               pinnedIds={pinnedIds}
+              onWontDo={onWontDo}
             />
           ))}
         </div>

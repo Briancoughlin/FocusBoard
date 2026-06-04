@@ -1,5 +1,5 @@
 export type Source = 'jira' | 'gmail' | 'calendar' | 'slack' | 'paste' | 'github';
-export type Status = 'todo' | 'inprogress' | 'waiting' | 'done';
+export type Status = 'todo' | 'inprogress' | 'waiting' | 'done' | 'wontdo';
 export type Priority = 'high' | 'medium' | 'low';
 
 export interface Task {

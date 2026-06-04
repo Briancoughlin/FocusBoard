@@ -19,6 +19,7 @@ interface Props {
   onPin: (taskId: string) => void;
   pinnedIds: Set<string>;
   onEpicChange?: (epicKey: string) => void;
+  onWontDo?: (taskId: string) => void;
 }
 
 const STORAGE_KEY = 'focusboard-split-percent';
@@ -36,7 +37,7 @@ function formatDayLabel(day: Date): string {
   return day.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' });
 }
 
-export function FocusView({ tasks, kanbanTasks, isLoading, onTaskMove, onDismiss, onAddToBoard, onDueDateChange, onPin, pinnedIds, onEpicChange }: Props) {
+export function FocusView({ tasks, kanbanTasks, isLoading, onTaskMove, onDismiss, onAddToBoard, onDueDateChange, onPin, pinnedIds, onEpicChange, onWontDo }: Props) {
   const [splitPercent, setSplitPercent] = useState<number>(DEFAULT_SPLIT);
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
 
@@ -207,11 +208,12 @@ export function FocusView({ tasks, kanbanTasks, isLoading, onTaskMove, onDismiss
             <KanbanColumn
               key={col.id}
               column={col}
-              tasks={weekTasks.filter(t => t.status === col.id)}
+              tasks={weekTasks.filter(t => t.status === col.id || (col.id === 'done' && t.status === 'wontdo'))}
               isLoading={isLoading}
               onDismiss={onDismiss}
               onPin={onPin}
               pinnedIds={pinnedIds}
+              onWontDo={onWontDo}
             />
           ))}
         </div>
