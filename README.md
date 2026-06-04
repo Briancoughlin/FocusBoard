@@ -6,6 +6,61 @@ Runs locally on your machine — your data never leaves your computer.
 
 ---
 
+## Production Quality
+
+FocusBoard is built to production standards despite being a personal tool. Here's what's under the hood:
+
+### 🔒 Security
+- **AES-256-GCM encrypted config** — all API tokens and credentials are encrypted at rest, tied to your machine. Useless if copied elsewhere.
+- **Session cookie auth** — the local API requires a session cookie. Remote requests (e.g. port forwarding) are blocked.
+- **No secrets in code** — gitignored config, masked tokens in the UI, secret scanning in CI.
+- **Input validation** — all API endpoints validate types, lengths and allowlists before processing.
+- **Dependency scanning** — Dependabot runs weekly, auto-merging patch/minor updates when CI passes.
+
+### 🧪 Testing
+- **43 automated tests** covering the most critical business logic:
+  - Jira status mapping (Unity-specific statuses)
+  - AES-256-GCM encrypt/decrypt round-trip
+  - Urgency scoring and level calculation
+  - Task filtering and override logic
+  - Focus view week filter rules
+- Tests run on every commit via pre-commit hooks and GitHub Actions CI.
+
+### 🔄 CI/CD Pipeline
+Every push to `main` runs:
+1. Backend tests (`node --test`)
+2. Frontend tests (Vitest)
+3. ESLint (frontend + backend)
+4. TypeScript type check
+5. Frontend build
+6. Security audit (`npm audit --audit-level=high`)
+7. Secret scanning (regex patterns for tokens)
+
+### 🛡️ Error Recovery
+- **React error boundary** — JS errors show a recovery UI, not a white screen
+- **Google token auto-refresh** — OAuth tokens renew silently without re-authentication
+- **Offline detection** — yellow banner when offline, auto-syncs on reconnect
+- **Crash recovery** — EADDRINUSE handled gracefully with auto-retry; uncaught exceptions logged not swallowed
+- **Config health check** — integration status logged on every server startup
+
+### 📊 Observability
+- **Structured JSON logging** — every API call, sync, error and slow request logged to `backend/logs/server-YYYY-MM-DD.log`
+- **Performance monitoring** — API calls over 2 seconds flagged as warnings; syncs over 10 seconds surfaced in the UI
+- **7-day log retention** — automatic log rotation
+
+### 🔁 Updates
+- **GitHub Releases** — versioned releases with changelog notes
+- **In-app update banner** — checks for new versions daily, shows "What's new" link
+- **One-click update** — pulls latest code, rebuilds frontend, restarts server automatically
+
+### 🧹 Code Quality
+- **ESLint** configured for TypeScript/React (frontend) and Node.js (backend)
+- **Pre-commit hooks** (husky) — lint + tests must pass before any commit is allowed
+- **JSDoc comments** on all key files — server, routes, App, FocusView, WeekView
+- **TypeScript** throughout the frontend with strict type checking
+
+---
+
 ## Installation
 
 ### Requirements
