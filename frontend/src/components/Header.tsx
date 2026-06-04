@@ -7,6 +7,7 @@ interface Props {
   onViewChange: (v: 'board' | 'focus' | 'settings') => void;
   onRefresh: () => void;
   isRefreshing: boolean;
+  isSyncing?: boolean;
   lastSynced: Date | null;
   onPaste: () => void;
   onShowDigest: () => void;
@@ -26,7 +27,7 @@ function formatLastSynced(d: Date | null): string {
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-export function Header({ view, onViewChange, onRefresh, isRefreshing, lastSynced, onPaste, onShowDigest, onShowReport, onShowBugReport, completedToday }: Props) {
+export function Header({ view, onViewChange, onRefresh, isRefreshing, isSyncing, lastSynced, onPaste, onShowDigest, onShowReport, onShowBugReport, completedToday }: Props) {
   return (
     <header className="px-6 py-3 flex items-center justify-between shadow-sm sticky top-0 z-10" style={{ backgroundColor: 'var(--bg-header)', borderBottom: '1px solid var(--border)' }}>
       {/* Left: Brand */}
@@ -78,7 +79,7 @@ export function Header({ view, onViewChange, onRefresh, isRefreshing, lastSynced
           </div>
         )}
         <span className="text-xs text-gray-400 hidden sm:inline">
-          {formatLastSynced(lastSynced)}
+          {isSyncing ? 'Syncing...' : formatLastSynced(lastSynced)}
         </span>
         <button
           onClick={onShowDigest}

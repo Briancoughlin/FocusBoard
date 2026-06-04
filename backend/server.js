@@ -31,6 +31,7 @@ import slackNotificationRouter, { getPendingAndClear } from './routes/slack-noti
 import reportRouter from './routes/report.js';
 import updateRouter from './routes/update.js';
 import bugReportRouter from './routes/bug-report.js';
+import cacheRouter from './routes/cache.js';
 import { loadOrCreateToken } from './auth.js';
 import { encryptConfig, decryptConfig } from './crypto-utils.js';
 import { logger } from './logger.js';
@@ -273,6 +274,7 @@ app.use('/api/slack-notification', slackNotificationRouter);
 app.use('/api/report', reportRouter);
 app.use('/api/update', updateRouter);
 app.use('/api/bug-report', bugReportRouter);
+app.use('/api/cache', cacheRouter);
 
 // --- Pending notification tasks ---
 app.get('/api/slack-notifications/pending', (req, res) => {
@@ -331,6 +333,13 @@ app.get('/api/sync', async (req, res) => {
     total: results.tasks.length,
     errors: results.errors.length,
   });
+
+  // Save to cache for fast startup
+  try {
+    const cacheData = JSON.stringify({ tasks: results.tasks, cachedAt: new Date().toISOString() });
+    fs.writeFileSync(path.join(__dirname, 'data', 'task-cache.json'), cacheData, 'utf8');
+    logger.info('Task cache updated', { taskCount: results.tasks.length });
+  } catch {}
 
   res.json(results);
 });

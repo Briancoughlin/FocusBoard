@@ -1,4 +1,4 @@
-import type { Config, SyncResult } from '../types';
+import type { Config, SyncResult, Task } from '../types';
 
 const BASE = '/api';
 
@@ -49,6 +49,14 @@ export async function saveConfig(config: Partial<Config>): Promise<void> {
 
 export function getGoogleAuthUrl(): string {
   return '/auth/google';
+}
+
+export async function loadTaskCache(): Promise<Task[]> {
+  try {
+    const res = await fetch('/api/cache', { credentials: 'include' });
+    const data = await res.json();
+    return data.tasks || [];
+  } catch { return []; }
 }
 
 export async function transitionJiraTicket(issueKey: string, targetStatus: string): Promise<{ success: boolean; error?: string }> {

@@ -8,6 +8,7 @@ import { logAction } from '../services/actionLog';
 interface Props {
   tasks: Task[];
   isLoading: boolean;
+  isSyncing?: boolean;
   onTaskMove: (taskId: string, newStatus: Status) => void;
   onOpenSettings: () => void;
   onDismiss: (taskId: string) => void;
@@ -30,7 +31,7 @@ const TABS: { id: FilterTab; label: string; color: string; activeColor: string; 
 ];
 
 
-export function KanbanBoard({ tasks, isLoading, onTaskMove, onOpenSettings, onDismiss, onPin, pinnedIds, onWontDo, errors }: Props) {
+export function KanbanBoard({ tasks, isLoading, isSyncing, onTaskMove, onOpenSettings, onDismiss, onPin, pinnedIds, onWontDo, errors }: Props) {
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
 
   const handleDragEnd = useCallback(
@@ -55,7 +56,7 @@ export function KanbanBoard({ tasks, isLoading, onTaskMove, onOpenSettings, onDi
     : tasks.filter(t => t.source === activeTab);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full relative">
       {/* Banners */}
       {unconfiguredSources.length > 0 && (
         <div className="mb-3 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between text-sm text-blue-700">
@@ -122,6 +123,12 @@ export function KanbanBoard({ tasks, isLoading, onTaskMove, onOpenSettings, onDi
           ))}
         </div>
       </DragDropContext>
+      {isSyncing && (
+        <div
+          className="absolute inset-0 pointer-events-none transition-opacity duration-300"
+          style={{ backgroundColor: 'rgba(0,0,0,0.03)' }}
+        />
+      )}
     </div>
   );
 }

@@ -20,7 +20,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { Task, Status } from './types';
-import { syncAll, transitionJiraTicket } from './services/api';
+import { syncAll, transitionJiraTicket, loadTaskCache } from './services/api';
 import { getPersistedValue, setPersistedValue } from './services/persistence';
 import { fetchWindowsTheme, applyTheme } from './services/theme';
 import { logAction } from './services/actionLog';
@@ -83,6 +83,8 @@ export default function App() {
   const [dueDateOverrides, setDueDateOverrides] = useState<Record<string, string>>({});
   const dueDateOverridesRef = useRef<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const hasCachedData = useRef(false);
   const [lastSynced, setLastSynced] = useState<Date | null>(null);
   const [errors, setErrors] = useState<Array<{ source: string; error: string }>>([]);
   const [pasteOpen, setPasteOpen] = useState(false);
@@ -168,7 +170,13 @@ export default function App() {
   }, []);
 
   const fetchTasks = useCallback(async () => {
-    setIsLoading(true);
+    // If we have cached data already loaded, use a subtle syncing indicator
+    // instead of replacing the board with the full loading skeleton.
+    if (hasCachedData.current) {
+      setIsSyncing(true);
+    } else {
+      setIsLoading(true);
+    }
     const syncStart = Date.now();
     try {
       const result = await syncAll();
@@ -204,6 +212,7 @@ export default function App() {
       setErrors([{ source: 'sync', error: errMsg }]);
     } finally {
       setIsLoading(false);
+      setIsSyncing(false);
     }
   }, [slackChannelPrompt]);
 
@@ -233,12 +242,34 @@ export default function App() {
     };
   }, [fetchTasks]);
 
-  // Initial fetch + auto-refresh every 5 minutes
+  // Keep a ref to the latest fetchTasks so the interval always calls the current version
+  const fetchTasksRef = useRef(fetchTasks);
+  useEffect(() => { fetchTasksRef.current = fetchTasks; }, [fetchTasks]);
+
+  // Load cache immediately after persistence is ready, then do the real sync.
+  // The interval uses fetchTasksRef so it always calls the latest version (with
+  // correct slackChannelPrompt closure) without restarting on every change.
   useEffect(() => {
-    fetchTasks();
-    const interval = setInterval(fetchTasks, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, [fetchTasks]);
+    if (!persistenceLoaded) return;
+
+    let cancelled = false;
+    loadTaskCache().then(cachedTasks => {
+      if (cancelled) return;
+      if (cachedTasks.length > 0) {
+        setRawTasks(cachedTasks);
+        hasCachedData.current = true;
+        logAction(`Loaded ${cachedTasks.length} tasks from cache`);
+      }
+      // Now do the initial sync (will use subtle indicator if cache was loaded)
+      fetchTasksRef.current();
+    });
+
+    const interval = setInterval(() => fetchTasksRef.current(), 5 * 60 * 1000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [persistenceLoaded]);
 
   /**
    * Handle a card being moved to a new kanban column.
@@ -486,6 +517,7 @@ export default function App() {
         onViewChange={handleViewChange}
         onRefresh={fetchTasks}
         isRefreshing={isLoading}
+        isSyncing={isSyncing}
         lastSynced={lastSynced}
         onPaste={() => { logAction('Quick Add opened'); setPasteOpen(true); }}
         onShowDigest={() => { logAction('Daily digest shown'); setShowDigest(true); }}
@@ -499,6 +531,7 @@ export default function App() {
           <KanbanBoard
             tasks={kanbanTasks}
             isLoading={isLoading}
+            isSyncing={isSyncing}
             onTaskMove={handleTaskMove}
             onOpenSettings={() => setView('settings')}
             onDismiss={handleDismiss}
@@ -513,6 +546,7 @@ export default function App() {
             tasks={tasks}
             kanbanTasks={kanbanTasks}
             isLoading={isLoading}
+            isSyncing={isSyncing}
             onTaskMove={handleTaskMove}
             onDismiss={handleDismiss}
             onDueDateChange={handleDueDateChange}
