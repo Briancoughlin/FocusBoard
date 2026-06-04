@@ -214,4 +214,36 @@ router.post('/transition', async (req, res) => {
   }
 });
 
+// POST /api/jira/comment — add a comment to a Jira issue
+router.post('/comment', async (req, res) => {
+  const cfg = loadConfig();
+  if (!cfg.jiraUrl || !cfg.jiraToken) {
+    return res.status(400).json({ error: 'Jira not configured' });
+  }
+  const { issueKey, comment } = req.body;
+  if (!issueKey || !comment) {
+    return res.status(400).json({ error: 'issueKey and comment are required' });
+  }
+  try {
+    const url = `${cfg.jiraUrl}/rest/api/2/issue/${issueKey}/comment`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${cfg.jiraToken}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({ body: comment }),
+    });
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Jira API error ${response.status}: ${text.slice(0, 200)}`);
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Jira comment error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;

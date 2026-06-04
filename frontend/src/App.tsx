@@ -49,6 +49,7 @@ export default function App() {
   const [pasteOpen, setPasteOpen] = useState(false);
   const [jiraDoneTask, setJiraDoneTask] = useState<Task | null>(null);
   const [jiraCreateTask, setJiraCreateTask] = useState<Task | null>(null);
+  const [jiraDoneTask, setJiraDoneTask] = useState<Task | null>(null);
   const [activeEpicKey, setActiveEpicKey] = useState<string>('all');
   const [slackChannelPrompt, setSlackChannelPrompt] = useState<string | null>(null);
   const [injectedTasks, setInjectedTasks] = useState<Task[]>([]);
@@ -184,6 +185,8 @@ export default function App() {
         transitionJiraTicket(movedTask.ticketKey, newStatus).then(result => {
           if (!result.success) console.warn('Jira transition failed:', result.error);
         });
+        // Prompt for closing comment when moved to done
+        if (newStatus === 'done') setJiraDoneTask(movedTask);
       }
       return currentRaw;
     });
@@ -390,6 +393,13 @@ export default function App() {
           channelName={slackChannelPrompt}
           onSave={handleSlackChannelSave}
           onDismiss={() => setSlackChannelPrompt(null)}
+        />
+      )}
+      {jiraDoneTask && (
+        <JiraDonePrompt
+          task={jiraDoneTask}
+          onOpen={() => { window.open(jiraDoneTask.url, '_blank'); setJiraDoneTask(null); }}
+          onDismiss={() => setJiraDoneTask(null)}
         />
       )}
       {jiraDoneTask && (
