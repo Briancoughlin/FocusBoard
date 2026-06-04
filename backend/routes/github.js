@@ -156,22 +156,39 @@ router.get('/', async (req, res) => {
         ?.replace('/commits/', '/commit/') || notif.repository.html_url;
 
       if (notif.reason === 'ci_activity') {
-        // Classify CI result from the notification subject title because the
-        // notifications API doesn't expose the workflow conclusion directly.
         const lower = subjectTitle.toLowerCase();
         const isFail = lower.includes('fail') || lower.includes('error') || lower.includes('cancel');
         const isPass = lower.includes('pass') || lower.includes('success') || lower.includes('succeed');
+
+        // Fetch the latest workflow run to get commit message and duration
+        let description = `${subjectTitle} — ${repo}`;
+        let runUrl = url;
+        try {
+          const [owner, repoName] = repo.split('/');
+          const runs = await githubFetch(`/repos/${owner}/${repoName}/actions/runs?per_page=1&status=${isFail ? 'failure' : 'success'}`, token, baseUrl);
+          const run = runs.workflow_runs?.[0];
+          if (run) {
+            const commitMsg = run.head_commit?.message?.split('\n')[0] || '';
+            const branch = run.head_branch || 'main';
+            const duration = run.updated_at && run.created_at
+              ? Math.round((new Date(run.updated_at) - new Date(run.created_at)) / 1000)
+              : null;
+            const durationStr = duration ? ` · ${duration < 60 ? `${duration}s` : `${Math.round(duration/60)}m`}` : '';
+            description = `${branch}: ${commitMsg}${durationStr}`;
+            runUrl = run.html_url || url;
+          }
+        } catch { /* fallback to basic description */ }
 
         tasks.push({
           id: `github-ci-${notif.id}`,
           sourceId: notif.id,
           title: isFail ? `❌ CI Failed: ${repo}` : isPass ? `✅ CI Passed: ${repo}` : `🔄 CI: ${subjectTitle}`,
-          description: `${subjectTitle} — ${repo}`,
+          description,
           source: 'github',
           status: 'todo',
           priority: isFail ? 'high' : 'low',
           dueDate: undefined,
-          url,
+          url: runUrl,
           updatedAt: notif.updated_at,
         });
       } else if (notif.reason === 'review_requested') {
