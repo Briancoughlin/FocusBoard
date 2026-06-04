@@ -1,0 +1,38 @@
+#!/bin/sh
+# FocusBoard pre-commit hook — runs lint + tests before allowing a commit
+
+echo "🔍 Running pre-commit checks..."
+
+# Backend lint (errors block, warnings allowed)
+cd backend && npm run lint --silent 2>&1
+if [ $? -ne 0 ]; then
+  echo "❌ Backend lint failed. Fix errors before committing."
+  exit 1
+fi
+cd ..
+
+# Frontend lint
+cd frontend && npm run lint --silent 2>&1
+if [ $? -ne 0 ]; then
+  echo "❌ Frontend lint failed. Fix errors before committing."
+  exit 1
+fi
+cd ..
+
+# Backend tests
+cd backend && node --test tests/*.test.js 2>&1 | tail -3
+if [ $? -ne 0 ]; then
+  echo "❌ Backend tests failed."
+  exit 1
+fi
+cd ..
+
+# Frontend tests
+cd frontend && npm test 2>&1 | tail -5
+if [ $? -ne 0 ]; then
+  echo "❌ Frontend tests failed."
+  exit 1
+fi
+cd ..
+
+echo "✅ All checks passed!"

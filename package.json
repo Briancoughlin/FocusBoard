@@ -1,0 +1,26 @@
+{
+  "name": "focusboard",
+  "version": "1.0.0",
+  "description": "An ADHD-friendly task aggregator that pulls your work from Jira, Gmail, Google Calendar, Slack, GitHub and Zoom meeting notes into a single hub. Designed to reduce context switching and help you stay focused on what matters most.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "husky"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/briancoughlin/focusboard.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/briancoughlin/focusboard/issues"
+  },
+  "homepage": "https://github.com/briancoughlin/focusboard#readme",
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.7"
+  }
+}
