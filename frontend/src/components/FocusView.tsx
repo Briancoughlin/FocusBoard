@@ -21,6 +21,7 @@ import { WeekView } from './WeekView';
 import { KanbanColumn, COLUMNS } from './KanbanColumn';
 import { InboxSidebar } from './InboxSidebar';
 import { getPersistedValue, setPersistedValue } from '../services/persistence';
+import { logAction } from '../services/actionLog';
 
 interface Props {
   tasks: Task[];
@@ -173,7 +174,7 @@ export function FocusView({ tasks, kanbanTasks, isLoading, onTaskMove, onDismiss
           tasks={tasks}
           allTasks={kanbanTasks}
           selectedDay={selectedDay}
-          onDaySelect={setSelectedDay}
+          onDaySelect={(day) => { if (day) logAction('Calendar day selected'); setSelectedDay(day); }}
           onTaskDone={taskId => onTaskMove(taskId, 'done')}
         />
       </div>
@@ -219,7 +220,7 @@ export function FocusView({ tasks, kanbanTasks, isLoading, onTaskMove, onDismiss
             <span className="text-xs text-gray-400 font-medium" title="Filter the kanban to show only tasks from a specific epic">Epic:</span>
             <select
               value={selectedEpic}
-              onChange={e => { setSelectedEpic(e.target.value); onEpicChange?.(e.target.value); }}
+              onChange={e => { logAction('Epic filter changed'); setSelectedEpic(e.target.value); onEpicChange?.(e.target.value); }}
               className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 max-w-xs"
               aria-label="Filter by epic"
               title="Filter the kanban to show only tasks from a specific epic"

@@ -101,7 +101,7 @@ async function githubRequest(method, endpoint, token, body) {
 const router = Router();
 
 router.post('/', async (req, res) => {
-  const { description, userAgent } = req.body || {};
+  const { description, userAgent, actionLog, currentView, lastSynced, taskCount } = req.body || {};
 
   if (!description || typeof description !== 'string' || !description.trim()) {
     return res.status(400).json({ success: false, error: 'Description is required' });
@@ -141,10 +141,25 @@ router.post('/', async (req, res) => {
     ? `\`\`\`\n${logContent}\n\`\`\``
     : '_No log file found_';
 
+  const actionLogBlock = actionLog
+    ? `\`\`\`\n${actionLog}\n\`\`\``
+    : '_No actions recorded_';
+
+  const lastSyncedStr = lastSynced
+    ? new Date(lastSynced).toISOString().replace('T', ' ').slice(0, 19)
+    : 'unknown';
+
   const issueBody = [
     '## User Description',
     '',
     description.trim(),
+    '',
+    '## System State',
+    '',
+    `- View: ${currentView || 'unknown'}`,
+    `- Last synced: ${lastSyncedStr}`,
+    `- Tasks loaded: ${taskCount ?? 'unknown'}`,
+    `- Reported at: ${dateStr} ${timeStr}`,
     '',
     '## System Info',
     '',
@@ -156,7 +171,11 @@ router.post('/', async (req, res) => {
     `| User Agent | ${(userAgent || 'unknown').slice(0, 200)} |`,
     `| Log Source | ${logSource} |`,
     '',
-    '## Last 100 Lines of Server Log',
+    '## User Action Trail',
+    '',
+    actionLogBlock,
+    '',
+    '## Server Log (last 100 lines)',
     '',
     logBlock,
   ].join('\n');

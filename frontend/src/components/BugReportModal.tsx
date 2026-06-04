@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
 import { X, Bug, ExternalLink, AlertCircle } from 'lucide-react';
+import { formatActionLog, logAction } from '../services/actionLog';
 
 interface Props {
   onClose: () => void;
+  currentView?: string;
+  lastSynced?: Date | null;
+  taskCount?: number;
 }
 
 type Phase = 'form' | 'loading' | 'success' | 'error';
 
-export function BugReportModal({ onClose }: Props) {
+export function BugReportModal({ onClose, currentView, lastSynced, taskCount }: Props) {
   const [description, setDescription] = useState('');
   const [phase, setPhase] = useState<Phase>('form');
   const [issueUrl, setIssueUrl] = useState('');
@@ -18,6 +22,7 @@ export function BugReportModal({ onClose }: Props) {
     if (!description.trim()) return;
 
     setPhase('loading');
+    logAction('Bug reported');
 
     try {
       const res = await fetch('/api/bug-report', {
@@ -27,6 +32,10 @@ export function BugReportModal({ onClose }: Props) {
         body: JSON.stringify({
           description: description.trim(),
           userAgent: navigator.userAgent,
+          actionLog: formatActionLog(),
+          currentView: currentView ?? 'unknown',
+          lastSynced: lastSynced ? lastSynced.toISOString() : null,
+          taskCount: taskCount ?? 0,
         }),
       });
       const data = await res.json();

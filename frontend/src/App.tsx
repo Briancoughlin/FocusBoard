@@ -23,6 +23,7 @@ import type { Task, Status } from './types';
 import { syncAll, transitionJiraTicket } from './services/api';
 import { getPersistedValue, setPersistedValue } from './services/persistence';
 import { fetchWindowsTheme, applyTheme } from './services/theme';
+import { logAction } from './services/actionLog';
 import { Header } from './components/Header';
 import { KanbanBoard } from './components/KanbanBoard';
 import { SettingsPage } from './components/SettingsPage';
@@ -73,6 +74,7 @@ export default function App() {
       if (!window.confirm('You have unsaved changes in Settings. Leave without saving?')) return;
       setSettingsDirty(false);
     }
+    logAction(`Switched to ${v} view`);
     setView(v);
   };
   const [rawTasks, setRawTasks] = useState<Task[]>([]);
@@ -173,6 +175,7 @@ export default function App() {
       const syncDuration = Date.now() - syncStart;
       const newTasks = result.tasks || [];
       setRawTasks(newTasks);
+      logAction(`Sync completed — ${newTasks.length} tasks loaded`);
       // Surface slow syncs as a warning error so user knows something is sluggish
       const errs = result.errors || [];
       if (syncDuration > 10000) {
@@ -196,7 +199,9 @@ export default function App() {
         }
       }
     } catch (err: unknown) {
-      setErrors([{ source: 'sync', error: err instanceof Error ? err.message : String(err) }]);
+      const errMsg = err instanceof Error ? err.message : String(err);
+      logAction(`Sync failed: ${errMsg}`);
+      setErrors([{ source: 'sync', error: errMsg }]);
     } finally {
       setIsLoading(false);
     }
@@ -218,8 +223,8 @@ export default function App() {
 
   // Offline detection — placed after fetchTasks is defined so the online handler can call it
   useEffect(() => {
-    const handleOffline = () => setIsOffline(true);
-    const handleOnline = () => { setIsOffline(false); fetchTasks(); };
+    const handleOffline = () => { logAction('Went offline'); setIsOffline(true); };
+    const handleOnline = () => { logAction('Back online — syncing'); setIsOffline(false); fetchTasks(); };
     window.addEventListener('offline', handleOffline);
     window.addEventListener('online', handleOnline);
     return () => {
@@ -251,6 +256,7 @@ export default function App() {
    * argument rather than via closed-over state to avoid stale closure bugs.
    */
   const handleTaskMove = useCallback((taskId: string, newStatus: Status) => {
+    logAction(`Card moved to ${newStatus}`);
     const updated = { ...overridesRef.current, [taskId]: newStatus };
     overridesRef.current = updated;
     setOverrides(updated);
@@ -275,6 +281,7 @@ export default function App() {
     setRawTasks(currentRaw => {
       const movedTask = currentRaw.find(t => t.id === taskId);
       if (movedTask?.source === 'jira' && movedTask?.ticketKey) {
+        logAction(`Jira ticket transitioned to ${newStatus}`);
         transitionJiraTicket(movedTask.ticketKey, newStatus).then(result => {
           if (!result.success) console.warn('Jira transition failed:', result.error);
         });
@@ -351,6 +358,7 @@ export default function App() {
    * user can undo an accidental won't-do marking without dragging.
    */
   const handleWontDo = useCallback((taskId: string) => {
+    logAction("Card marked as Won't Do");
     const currentStatus = overridesRef.current[taskId];
     const newStatus = currentStatus === 'wontdo' ? 'done' : 'wontdo';
     const updated = { ...overridesRef.current, [taskId]: newStatus as Status };
@@ -360,6 +368,7 @@ export default function App() {
   }, []);
 
   const handlePin = useCallback((taskId: string) => {
+    logAction('Card pinned/unpinned');
     setPinnedIds(prev => {
       const next = new Set(prev);
       if (next.has(taskId)) next.delete(taskId); else next.add(taskId);
@@ -369,6 +378,7 @@ export default function App() {
   }, []);
 
   const handleDismiss = useCallback((taskId: string) => {
+    logAction('Card dismissed');
     setDismissed(prev => {
       const updated = new Set(prev).add(taskId);
       setPersistedValue('dismissed', [...updated]);
@@ -377,6 +387,7 @@ export default function App() {
   }, []);
 
   const handlePastedTasks = useCallback((newTasks: Task[]) => {
+    logAction(`Quick Add: ${newTasks.length} tasks created`);
     setPastedTasks(prev => {
       const updated = [...prev, ...newTasks];
       setPersistedValue('pasted-tasks', updated);
@@ -385,6 +396,7 @@ export default function App() {
   }, []);
 
   const handleJiraCreated = useCallback((originalTaskId: string, jiraTask: Task) => {
+    logAction('Jira ticket created');
     // Remove original task from pastedTasks if present
     setPastedTasks(prev => {
       const updated = prev.filter(t => t.id !== originalTaskId);
@@ -475,9 +487,9 @@ export default function App() {
         onRefresh={fetchTasks}
         isRefreshing={isLoading}
         lastSynced={lastSynced}
-        onPaste={() => setPasteOpen(true)}
-        onShowDigest={() => setShowDigest(true)}
-        onShowReport={() => setReportOpen(true)}
+        onPaste={() => { logAction('Quick Add opened'); setPasteOpen(true); }}
+        onShowDigest={() => { logAction('Daily digest shown'); setShowDigest(true); }}
+        onShowReport={() => { logAction('Standup report opened'); setReportOpen(true); }}
         onShowBugReport={() => setBugReportOpen(true)}
         completedToday={completedToday}
       />
@@ -566,7 +578,12 @@ export default function App() {
         />
       )}
       {bugReportOpen && (
-        <BugReportModal onClose={() => setBugReportOpen(false)} />
+        <BugReportModal
+          onClose={() => setBugReportOpen(false)}
+          currentView={view}
+          lastSynced={lastSynced}
+          taskCount={tasks.length}
+        />
       )}
     </div>
   );

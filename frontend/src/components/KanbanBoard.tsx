@@ -3,6 +3,7 @@ import { DragDropContext, type DropResult } from '@hello-pangea/dnd';
 import type { Task, Status, Source } from '../types';
 import { KanbanColumn, COLUMNS } from './KanbanColumn';
 import { Settings } from 'lucide-react';
+import { logAction } from '../services/actionLog';
 
 interface Props {
   tasks: Task[];
@@ -83,7 +84,7 @@ export function KanbanBoard({ tasks, isLoading, onTaskMove, onOpenSettings, onDi
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => { logAction(`Backlog filter: ${tab.label}`); setActiveTab(tab.id); }}
               role="tab"
               aria-selected={isActive}
               aria-label={tab.id === 'all' ? `Show all tasks (${count})` : `Show ${count} tasks from ${tab.label}`}
