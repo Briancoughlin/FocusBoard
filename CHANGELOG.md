@@ -5,6 +5,30 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.2.0] - 2026-06-04
+
+### Added
+- **Auto-update system** — checks GitHub Releases daily, shows banner when update available, one-click update that pulls, rebuilds and restarts
+- **Automated GitHub Releases** — tagging `v*` automatically creates a release with changelog notes
+- **Performance monitoring** — logs API calls over 2 seconds, warns user if sync takes over 10 seconds
+- **Structured JSON logging** — all backend activity logged to `backend/logs/server-YYYY-MM-DD.log` with 7-day retention
+- **Pre-commit hooks** (husky) — lint and all 43 tests run before every commit
+- **ESLint** — code linting for frontend (TypeScript/React) and backend
+- **43 targeted tests** — Jira status mapping, encryption, urgency scoring, task filtering, week view filter
+- **Dependabot auto-merge** — patch and minor dependency updates auto-merge when CI passes
+- **CHANGELOG.md** — full version history
+- **CONTRIBUTING.md** — setup guide, how to add integrations, PR checklist, Unity-specific notes
+- **React error boundary** — catches JS errors, shows recovery UI instead of white screen
+- **Offline detection** — banner when offline, auto-syncs on reconnect
+- **Google token auto-refresh** — OAuth tokens silently renew without re-authentication
+- **Config health check** — server logs integration status on startup
+- **Version number** — displayed in header (v1.2.0)
+
+### Changed
+- CI pipeline now runs ESLint, tests, TypeScript check, build and secret scanning
+
+---
+
 ## [1.1.0] - 2026-06-04
 
 ### Added
