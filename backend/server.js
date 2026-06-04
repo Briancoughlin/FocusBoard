@@ -30,6 +30,7 @@ import themeRouter from './routes/theme.js';
 import slackNotificationRouter, { getPendingAndClear } from './routes/slack-notification.js';
 import reportRouter from './routes/report.js';
 import updateRouter from './routes/update.js';
+import bugReportRouter from './routes/bug-report.js';
 import { loadOrCreateToken } from './auth.js';
 import { encryptConfig, decryptConfig } from './crypto-utils.js';
 import { logger } from './logger.js';
@@ -271,6 +272,7 @@ app.use('/api/theme', themeRouter);
 app.use('/api/slack-notification', slackNotificationRouter);
 app.use('/api/report', reportRouter);
 app.use('/api/update', updateRouter);
+app.use('/api/bug-report', bugReportRouter);
 
 // --- Pending notification tasks ---
 app.get('/api/slack-notifications/pending', (req, res) => {

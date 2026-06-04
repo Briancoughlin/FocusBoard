@@ -1,5 +1,5 @@
 import React from 'react';
-import { RefreshCw, Settings, Zap, ClipboardPaste, Trophy, Newspaper, BarChart2 } from 'lucide-react';
+import { RefreshCw, Settings, Zap, ClipboardPaste, Trophy, Newspaper, BarChart2, Bug } from 'lucide-react';
 import { version } from '../../package.json';
 
 interface Props {
@@ -11,6 +11,7 @@ interface Props {
   onPaste: () => void;
   onShowDigest: () => void;
   onShowReport: () => void;
+  onShowBugReport: () => void;
   completedToday: number;
 }
 
@@ -25,7 +26,7 @@ function formatLastSynced(d: Date | null): string {
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-export function Header({ view, onViewChange, onRefresh, isRefreshing, lastSynced, onPaste, onShowDigest, onShowReport, completedToday }: Props) {
+export function Header({ view, onViewChange, onRefresh, isRefreshing, lastSynced, onPaste, onShowDigest, onShowReport, onShowBugReport, completedToday }: Props) {
   return (
     <header className="px-6 py-3 flex items-center justify-between shadow-sm sticky top-0 z-10" style={{ backgroundColor: 'var(--bg-header)', borderBottom: '1px solid var(--border)' }}>
       {/* Left: Brand */}
@@ -94,6 +95,14 @@ export function Header({ view, onViewChange, onRefresh, isRefreshing, lastSynced
           className="p-2 rounded-lg text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-all"
         >
           <BarChart2 size={16} aria-hidden="true" />
+        </button>
+        <button
+          onClick={onShowBugReport}
+          title="Report a bug"
+          aria-label="Report a bug"
+          className="p-2 rounded-lg text-gray-500 hover:text-orange-500 hover:bg-orange-50 transition-all"
+        >
+          <Bug size={16} aria-hidden="true" />
         </button>
         <button
           onClick={onPaste}

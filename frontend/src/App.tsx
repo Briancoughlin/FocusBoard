@@ -33,6 +33,7 @@ import { JiraDonePrompt } from './components/JiraDonePrompt';
 import { JiraCreatePrompt } from './components/JiraCreatePrompt';
 import { SlackChannelPrompt } from './components/SlackChannelPrompt';
 import { ReportModal } from './components/ReportModal';
+import { BugReportModal } from './components/BugReportModal';
 import { UpdateBanner, type UpdateInfo } from './components/UpdateBanner';
 
 /**
@@ -91,6 +92,7 @@ export default function App() {
   const [pinnedIds, setPinnedIds] = useState<Set<string>>(new Set());
   const [showDigest, setShowDigest] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [bugReportOpen, setBugReportOpen] = useState(false);
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   const [updateDismissed, setUpdateDismissed] = useState(false);
   const [completedToday, setCompletedToday] = useState<number>(0);
@@ -476,6 +478,7 @@ export default function App() {
         onPaste={() => setPasteOpen(true)}
         onShowDigest={() => setShowDigest(true)}
         onShowReport={() => setReportOpen(true)}
+        onShowBugReport={() => setBugReportOpen(true)}
         completedToday={completedToday}
       />
 
@@ -561,6 +564,9 @@ export default function App() {
           doneDates={doneDates}
           onClose={() => setReportOpen(false)}
         />
+      )}
+      {bugReportOpen && (
+        <BugReportModal onClose={() => setBugReportOpen(false)} />
       )}
     </div>
   );
