@@ -1,0 +1,41 @@
+version: 2
+updates:
+  # Frontend npm dependencies
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      react:
+        patterns: ["react*", "@types/react*"]
+      vite:
+        patterns: ["vite*", "@vitejs/*", "esbuild*"]
+      typescript:
+        patterns: ["typescript*", "@typescript-eslint/*"]
+      lucide:
+        patterns: ["lucide-react"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # Backend npm dependencies
+  - package-ecosystem: npm
+    directory: /backend
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      google:
+        patterns: ["googleapis*", "google-auth*"]
+      anthropic:
+        patterns: ["@anthropic-ai/*"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # GitHub Actions
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
