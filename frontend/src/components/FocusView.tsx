@@ -109,6 +109,7 @@ export function FocusView({ tasks, kanbanTasks, isLoading, onTaskMove, onDismiss
 
   // Base week tasks (unfiltered by day)
   const baseWeekTasks = kanbanTasks
+    .filter(t => t.status !== 'wontdo') // never show won't do in schedule
     .filter(t => {
       if (pinnedIds.has(t.id)) return true; // always show pinned
       if (t.source === 'paste') return true; // always show quick add items
