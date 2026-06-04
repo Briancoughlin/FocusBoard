@@ -1,5 +1,6 @@
 import React from 'react';
 import { RefreshCw, Settings, Zap, ClipboardPaste, Trophy, Newspaper, BarChart2 } from 'lucide-react';
+import { version } from '../../package.json';
 
 interface Props {
   view: 'board' | 'focus' | 'settings';
@@ -38,6 +39,7 @@ export function Header({ view, onViewChange, onRefresh, isRefreshing, lastSynced
         <span className="text-xs text-gray-400 font-normal ml-1 hidden sm:inline">
           ADHD Task Aggregator
         </span>
+        <span className="text-xs px-1.5 py-0.5 rounded font-mono" style={{ color: 'var(--text-secondary)', backgroundColor: 'var(--bg)' }}>v{version}</span>
       </div>
 
       {/* Center: Nav tabs */}
