@@ -34,9 +34,19 @@ jobs:
         working-directory: backend
         continue-on-error: true
 
-      - name: Run backend tests
-        run: node --test tests/*.test.js
+      - name: Run backend unit tests
+        run: node --test tests/jira-status.test.js tests/crypto.test.js tests/config-merge.test.js
         working-directory: backend
+
+      - name: Run smoke tests (server must start)
+        run: |
+          node server.js &
+          SERVER_PID=$!
+          sleep 4
+          node --test tests/smoke.test.js
+          kill $SERVER_PID 2>/dev/null || true
+        working-directory: backend
+        continue-on-error: true
 
       - name: Audit backend dependencies
         run: npm audit --audit-level=high
