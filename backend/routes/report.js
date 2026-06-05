@@ -49,6 +49,61 @@ function buildPlainTextReport(tasks, period) {
   return lines.join('\n');
 }
 
+// GET /api/report/done-tasks — reconstruct done tasks from done-dates + cache + Jira lookup
+router.get('/done-tasks', async (req, res) => {
+  const cfg = loadConfig();
+  const DATA_DIR = path.join(__dirname, '..', 'data');
+
+  // Load done-dates and task cache
+  let doneDates = {};
+  let cachedTasks = [];
+  try { doneDates = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'done-dates.json'), 'utf8')); } catch {}
+  try { cachedTasks = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'task-cache.json'), 'utf8')).tasks || []; } catch {}
+  try { const hist = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'completed-history.json'), 'utf8')); cachedTasks = [...cachedTasks, ...hist]; } catch {}
+
+  const doneIds = Object.keys(doneDates);
+  const found = [];
+  const missingJiraIds = [];
+
+  for (const id of doneIds) {
+    const cached = cachedTasks.find(t => t.id === id);
+    if (cached) {
+      found.push({ ...cached, completedOn: doneDates[id] });
+    } else if (id.startsWith('jira-')) {
+      missingJiraIds.push({ id, jiraId: id.replace('jira-', ''), completedOn: doneDates[id] });
+    } else {
+      // Paste/notes tasks — create stub
+      found.push({ id, title: 'Quick Add task', source: 'paste', status: 'done', completedOn: doneDates[id], sourceId: id, updatedAt: new Date().toISOString() });
+    }
+  }
+
+  // Fetch missing Jira tickets directly
+  if (missingJiraIds.length > 0 && cfg.jiraUrl && cfg.jiraToken) {
+    try {
+      const ids = missingJiraIds.map(m => m.jiraId).join(',');
+      const r = await fetch(`${cfg.jiraUrl}/rest/api/2/search?jql=id+in+(${ids})&fields=summary,status,priority,customfield_10006&maxResults=50`, {
+        headers: { 'Authorization': `Bearer ${cfg.jiraToken}`, 'Accept': 'application/json' },
+      });
+      const data = await r.json();
+      for (const issue of data.issues || []) {
+        const match = missingJiraIds.find(m => m.jiraId === issue.id);
+        if (match) {
+          found.push({
+            id: match.id, sourceId: issue.id, title: issue.fields.summary,
+            source: 'jira', status: 'done', completedOn: match.completedOn,
+            ticketKey: issue.key, url: `${cfg.jiraUrl}/browse/${issue.key}`,
+            updatedAt: new Date().toISOString(),
+          });
+        }
+      }
+    } catch (err) {
+      logger.warn('Report: Jira lookup for done tasks failed', { error: err.message });
+    }
+  }
+
+  res.json({ tasks: found, doneDates });
+});
+
 router.post('/', async (req, res) => {
   const { tasks, period } = req.body;
 

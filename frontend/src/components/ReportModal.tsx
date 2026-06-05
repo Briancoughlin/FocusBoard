@@ -25,12 +25,28 @@ function getSunday(d: Date): Date {
   return sunday;
 }
 
-export function ReportModal({ tasks, doneDates, onClose }: Props) {
+export function ReportModal({ tasks: propTasks, doneDates: propDoneDates, onClose }: Props) {
   const [period, setPeriod] = useState<'today' | 'week'>('today');
   const [report, setReport] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string>('');
+  const [allDoneTasks, setAllDoneTasks] = useState<Task[]>([]);
+  const [allDoneDates, setAllDoneDates] = useState<Record<string, string>>(propDoneDates);
+
+  // Fetch the full done-tasks list from backend on open (includes resolved Jira tickets)
+  useState(() => {
+    fetch('/api/report/done-tasks', { credentials: 'include' })
+      .then(r => r.json())
+      .then(data => {
+        setAllDoneTasks(data.tasks || []);
+        setAllDoneDates({ ...propDoneDates, ...data.doneDates });
+      })
+      .catch(() => {
+        setAllDoneTasks(propTasks);
+        setAllDoneDates(propDoneDates);
+      });
+  });
 
   const today = new Date().toDateString();
   const monday = getMonday(new Date());
@@ -43,9 +59,11 @@ export function ReportModal({ tasks, doneDates, onClose }: Props) {
   }
 
   function getFilteredTasks(): Task[] {
+    const tasks = allDoneTasks.length > 0 ? allDoneTasks : propTasks;
+    const doneDates = allDoneDates;
     return tasks.filter(t => {
       if (t.status !== 'done' && t.status !== 'wontdo') return false;
-      const doneDate = doneDates[t.id];
+      const doneDate = doneDates[t.id] || (t as any).completedOn;
       if (!doneDate) return false;
       if (period === 'today') return doneDate === today;
       return isThisWeek(doneDate);
