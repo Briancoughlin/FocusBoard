@@ -77,6 +77,16 @@ jobs:
         working-directory: frontend
         continue-on-error: true
 
+      - name: Accessibility audit (axe-core)
+        run: |
+          node server.js &
+          SERVER_PID=$!
+          sleep 4
+          npx @axe-core/cli http://localhost:3001 --exit
+          kill $SERVER_PID 2>/dev/null || true
+        working-directory: backend
+        continue-on-error: true
+
       - name: TypeScript type check
         run: npx tsc --noEmit
         working-directory: frontend
