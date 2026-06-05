@@ -22,6 +22,7 @@ const ALLOWED_KEYS = [
   'injected-tasks',
   'pinned-tasks',
   'completed-history',
+  'done-tasks',
 ];
 
 function ensureDataDir() {

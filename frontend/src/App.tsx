@@ -152,7 +152,8 @@ export default function App() {
       getPersistedValue<Task[]>('injected-tasks', []),
       getPersistedValue<string[]>('pinned-tasks', []),
       getPersistedValue<Task[]>('completed-history', []),
-    ]).then(([loadedOverrides, loadedPastedTasks, loadedDismissed, loadedCompletedToday, loadedDoneDates, loadedDigestDate, loadedDueDateOverrides, loadedInjectedTasks, loadedPinnedIds, loadedHistory]) => {
+      getPersistedValue<Task[]>('done-tasks', []),
+    ]).then(([loadedOverrides, loadedPastedTasks, loadedDismissed, loadedCompletedToday, loadedDoneDates, loadedDigestDate, loadedDueDateOverrides, loadedInjectedTasks, loadedPinnedIds, loadedHistory, loadedDoneTasks]) => {
       overridesRef.current = loadedOverrides;
       setOverrides(loadedOverrides);
       dueDateOverridesRef.current = loadedDueDateOverrides;
@@ -162,9 +163,12 @@ export default function App() {
       setPinnedIds(new Set(loadedPinnedIds));
       setDismissed(new Set(loadedDismissed));
       setDoneDates(loadedDoneDates);
-      // Keep only last 30 days of history
+      // Merge completed history and done-tasks, keep last 30 days
       const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toDateString();
-      setCompletedHistory(loadedHistory.filter(t => (t as any).completedOn >= thirtyDaysAgo));
+      const mergedHistory = [...loadedHistory, ...loadedDoneTasks.filter(t =>
+        !loadedHistory.find(h => h.id === t.id)
+      )].filter(t => (t as any).completedOn >= thirtyDaysAgo);
+      setCompletedHistory(mergedHistory);
 
       if (loadedCompletedToday && loadedCompletedToday.date === today) {
         setCompletedToday(loadedCompletedToday.count);
@@ -213,6 +217,18 @@ export default function App() {
       const syncDuration = Date.now() - syncStart;
       const newTasks = result.tasks || [];
       setRawTasks(newTasks);
+      // Seed completed history from doneDates for tasks we haven't stored yet
+      // This handles tasks done before the history log was introduced
+      setCompletedHistory(prev => {
+        const existingIds = new Set(prev.map(t => t.id));
+        const seeds = newTasks
+          .filter(t => doneDates[t.id] && !existingIds.has(t.id))
+          .map(t => ({ ...t, status: 'done' as const, completedOn: doneDates[t.id] }));
+        if (seeds.length === 0) return prev;
+        const updated = [...prev, ...seeds];
+        setPersistedValue('completed-history', updated);
+        return updated;
+      });
       logAction(`Sync completed — ${newTasks.length} tasks loaded`);
       // Surface slow syncs as a warning error so user knows something is sluggish
       const errs = result.errors || [];
@@ -329,15 +345,17 @@ export default function App() {
         setPersistedValue('done-dates', next);
         return next;
       });
-      // Add to completed history for weekly report
+      // Store full task details in done-tasks for weekly report
+      // (rawTasks won't contain resolved Jira tickets on next sync)
       setRawTasks(currentRaw => {
         const allTasks = [...currentRaw, ...pastedTasks, ...injectedTasks];
         const movedTask = allTasks.find(t => t.id === taskId);
         if (movedTask) {
+          const entry = { ...movedTask, status: 'done' as const, completedOn: new Date().toDateString() };
           setCompletedHistory(prev => {
-            const entry = { ...movedTask, status: 'done' as const, completedOn: new Date().toDateString() };
             const updated = [...prev.filter(t => t.id !== taskId), entry];
             setPersistedValue('completed-history', updated);
+            setPersistedValue('done-tasks', updated); // also save to done-tasks for report
             return updated;
           });
         }
@@ -653,14 +671,16 @@ export default function App() {
       {reportOpen && (
         <ReportModal
           tasks={[
-            // Current board tasks (today's done items)
+            // Current board tasks (today's done items still on board)
             ...tasks,
-            // Raw tasks not on board but in done-dates (earlier this week)
-            ...[...rawTasks, ...pastedTasks, ...injectedTasks, ...completedHistory].filter(t =>
-              doneDates[t.id] && !tasks.find(b => b.id === t.id)
-            )
+            // Completed history (full task details stored at completion time)
+            ...completedHistory.filter(t => !tasks.find(b => b.id === t.id)),
           ]}
-          doneDates={doneDates}
+          doneDates={{
+            ...doneDates,
+            // completedHistory entries use completedOn as their done date
+            ...Object.fromEntries(completedHistory.map(t => [t.id, (t as any).completedOn || doneDates[t.id]]))
+          }}
           onClose={() => setReportOpen(false)}
         />
       )}
