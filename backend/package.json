@@ -8,7 +8,7 @@
     "watch-notifications": "node notification-watcher.js",
     "install-service": "node install-service.js",
     "uninstall-service": "node uninstall-service.js",
-    "test": "node --test tests/jira-status.test.js tests/crypto.test.js tests/config-merge.test.js tests/cache.test.js",
+    "test": "node --test tests/jira-status.test.js tests/crypto.test.js tests/config-merge.test.js tests/cache.test.js tests/backup.test.js",
     "test:smoke": "node --test tests/smoke.test.js",
     "lint": "eslint .",
     "backup": "node backup.js",
