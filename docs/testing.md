@@ -7,14 +7,14 @@ All tests run automatically on every commit via pre-commit hooks (husky) and Git
 ## Running tests locally
 
 ```powershell
-# Backend unit tests (76 tests)
+# Backend unit tests (93 tests)
 cd backend
 node --test tests/*.test.js
 
 # Backend smoke tests only (server must be running)
 npm run test:smoke
 
-# Frontend unit tests (59 tests)
+# Frontend unit tests (77 tests)
 cd frontend
 npm test
 
@@ -310,6 +310,96 @@ Fix version quarter detection and task filtering from `App.tsx`.
 
 ---
 
+### `regression.test.ts` — 18 tests
+Guards against bugs that were previously fixed in the frontend. Each describe block is named after the original bug.
+
+**actionLog 24-hour timestamp (5 tests)**
+
+| Test | Covers |
+|---|---|
+| Timestamp is always `HH:MM:SS` format | GitHub Actions CI runners use 12-hour locale — must not affect output |
+| Midnight formats as `00:XX:XX` not `12:XX:XX AM` | Edge case: midnight |
+| Noon formats as `12:XX:XX` not `12:XX:XX PM` | Edge case: noon |
+| 1pm formats as `13:XX:XX` not `1:XX:XX PM` | 24-hour conversion |
+| Single-digit hours are zero-padded | `09:05:03` not `9:5:3` |
+
+**Trophy midnight reset (4 tests)**
+
+| Test | Covers |
+|---|---|
+| Counter resets when date changes | Interval check must detect day rollover |
+| Counter does not reset within the same day | No false resets during the day |
+| Counter resets across month boundary | May 31 → June 1 |
+| Counter resets across year boundary | Dec 31 → Jan 1 |
+
+**Done task daily filter (5 tests)**
+
+| Test | Covers |
+|---|---|
+| Task done today remains visible | Today's completions stay on board |
+| Task done yesterday is hidden | Previous day tasks must not persist |
+| Wontdo tasks are never filtered | Won't Do persists indefinitely |
+| Active tasks are never filtered | todo/inprogress always visible |
+| Mix of today and yesterday filters correctly | Combined scenario |
+
+**VPN error friendly banner (4 tests)**
+
+| Test | Covers |
+|---|---|
+| `vpnLikely` flag triggers friendly banner | Backend flag respected by frontend |
+| Raw ECONNREFUSED string triggers banner | Error string detection |
+| Non-Jira source does not trigger Jira VPN banner | Source-specific detection |
+| Friendly message does not contain raw error codes | No ECONNREFUSED in UI text |
+
+---
+
+### `regression.test.js` — 17 tests
+Guards against bugs that were previously fixed in the backend. If any of these fail a regression has occurred.
+
+**Config merge — *** placeholder handling (3 tests)**
+
+| Test | Covers |
+|---|---|
+| Existing secret preserved when frontend sends `***` | Frontend masks secrets it can't read — must not overwrite |
+| Existing secret preserved when frontend sends empty string | Blank field = no change |
+| New value correctly replaces existing when a real value is sent | Legitimate update path |
+
+**Jira VPN error — friendly message (4 tests)**
+
+| Test | Covers |
+|---|---|
+| ECONNREFUSED shows friendly VPN message | Raw error code must not reach the UI |
+| ENOTFOUND shows friendly VPN message | DNS failure = VPN not connected |
+| 401 Unauthorized is NOT classified as VPN error | Auth errors are a different problem |
+| Generic "fetch failed" classified as VPN error | Node's wrapper for all network failures |
+
+**Server crash handling — EADDRINUSE / ECONNRESET (4 tests)**
+
+| Test | Covers |
+|---|---|
+| EADDRINUSE triggers retry, not crash | Port in use on restart — must retry |
+| ECONNRESET is handled gracefully | Network change must not kill the server |
+| ECONNABORTED is handled gracefully | Aborted connection must not kill the server |
+| Unknown errors are logged but do not crash | No unhandled fatal for unknown codes |
+
+**Feature toggle filter — undefined safety (4 tests)**
+
+| Test | Covers |
+|---|---|
+| Empty features object does not crash | Missing key defaults to enabled |
+| `features.jira = false` excludes only jira | Single toggle precision |
+| `features.jira = null` does NOT disable jira | Only explicit `false` disables |
+| `features.jira = 0` does NOT disable jira | Type strictness |
+
+**Network error classification (2 tests)**
+
+| Test | Covers |
+|---|---|
+| ECONNRESET is non-fatal | VPN/WiFi change must not propagate as crash |
+| ETIMEDOUT on server socket is handled | Timeout must not kill the server |
+
+---
+
 ## CI pipeline — GitHub Actions
 
 Every push and pull request to `main` runs `.github/workflows/ci.yml` on Node.js 24 (Ubuntu).
@@ -350,6 +440,7 @@ Steps marked **Blocks merge** will fail the CI check and prevent the PR from bei
 | Backend unit | jira-vpn.test.js | 9 |
 | Backend unit | feature-toggles.test.js | 6 |
 | Backend unit | docker-mode.test.js | 14 |
+| Backend unit | regression.test.js | 17 |
 | Backend smoke | smoke.test.js | 11 |
 | Frontend unit | accessibility.test.ts | 12 |
 | Frontend unit | actionLog.test.ts | 6 |
@@ -358,4 +449,5 @@ Steps marked **Blocks merge** will fail the CI check and prevent the PR from bei
 | Frontend unit | week-filter.test.ts | 7 |
 | Frontend unit | vpn-banner.test.ts | 8 |
 | Frontend unit | fix-version.test.ts | 8 |
-| **Total** | | **136** |
+| Frontend unit | regression.test.ts | 18 |
+| **Total** | | **170** |
