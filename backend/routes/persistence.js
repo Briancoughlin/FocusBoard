@@ -21,6 +21,7 @@ const ALLOWED_KEYS = [
   'due-date-overrides',
   'injected-tasks',
   'pinned-tasks',
+  'completed-history',
 ];
 
 function ensureDataDir() {

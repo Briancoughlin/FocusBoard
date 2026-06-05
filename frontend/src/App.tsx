@@ -104,6 +104,7 @@ export default function App() {
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const [pastedTasks, setPastedTasks] = useState<Task[]>([]);
   const [doneDates, setDoneDates] = useState<Record<string, string>>({});
+  const [completedHistory, setCompletedHistory] = useState<Task[]>([]);
   const [persistenceLoaded, setPersistenceLoaded] = useState(false);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
@@ -150,7 +151,8 @@ export default function App() {
       getPersistedValue<Record<string, string>>('due-date-overrides', {}),
       getPersistedValue<Task[]>('injected-tasks', []),
       getPersistedValue<string[]>('pinned-tasks', []),
-    ]).then(([loadedOverrides, loadedPastedTasks, loadedDismissed, loadedCompletedToday, loadedDoneDates, loadedDigestDate, loadedDueDateOverrides, loadedInjectedTasks, loadedPinnedIds]) => {
+      getPersistedValue<Task[]>('completed-history', []),
+    ]).then(([loadedOverrides, loadedPastedTasks, loadedDismissed, loadedCompletedToday, loadedDoneDates, loadedDigestDate, loadedDueDateOverrides, loadedInjectedTasks, loadedPinnedIds, loadedHistory]) => {
       overridesRef.current = loadedOverrides;
       setOverrides(loadedOverrides);
       dueDateOverridesRef.current = loadedDueDateOverrides;
@@ -160,6 +162,9 @@ export default function App() {
       setPinnedIds(new Set(loadedPinnedIds));
       setDismissed(new Set(loadedDismissed));
       setDoneDates(loadedDoneDates);
+      // Keep only last 30 days of history
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toDateString();
+      setCompletedHistory(loadedHistory.filter(t => (t as any).completedOn >= thirtyDaysAgo));
 
       if (loadedCompletedToday && loadedCompletedToday.date === today) {
         setCompletedToday(loadedCompletedToday.count);
@@ -168,6 +173,30 @@ export default function App() {
       setShowDigest(loadedDigestDate !== today);
       setPersistenceLoaded(true);
     });
+  }, []);
+
+  // Midnight reset — check every minute if the date has changed and reset daily counters
+  useEffect(() => {
+    const checkMidnight = () => {
+      const now = new Date().toDateString();
+      setDoneDates(prev => {
+        // If completedToday was for a previous day, reset it
+        setCompletedToday(current => {
+          if (current > 0) {
+            // Check if any done-dates are from today — if not, reset
+            const todayDone = Object.values(prev).filter(d => d === now).length;
+            if (todayDone === 0) {
+              setPersistedValue('completed-today', { date: now, count: 0 });
+              return 0;
+            }
+          }
+          return current;
+        });
+        return prev;
+      });
+    };
+    const interval = setInterval(checkMidnight, 60000); // check every minute
+    return () => clearInterval(interval);
   }, []);
 
   const fetchTasks = useCallback(async () => {
@@ -299,6 +328,20 @@ export default function App() {
         const next = { ...prev, [taskId]: new Date().toDateString() };
         setPersistedValue('done-dates', next);
         return next;
+      });
+      // Add to completed history for weekly report
+      setRawTasks(currentRaw => {
+        const allTasks = [...currentRaw, ...pastedTasks, ...injectedTasks];
+        const movedTask = allTasks.find(t => t.id === taskId);
+        if (movedTask) {
+          setCompletedHistory(prev => {
+            const entry = { ...movedTask, status: 'done' as const, completedOn: new Date().toDateString() };
+            const updated = [...prev.filter(t => t.id !== taskId), entry];
+            setPersistedValue('completed-history', updated);
+            return updated;
+          });
+        }
+        return currentRaw;
       });
       setCompletedToday(prev => {
         const next = prev + 1;
@@ -609,7 +652,7 @@ export default function App() {
       )}
       {reportOpen && (
         <ReportModal
-          tasks={tasks}
+          tasks={[...tasks, ...completedHistory.filter(h => !tasks.find(t => t.id === h.id))]}
           doneDates={doneDates}
           onClose={() => setReportOpen(false)}
         />
