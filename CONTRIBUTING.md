@@ -80,16 +80,16 @@ FocusBoard registers four Windows Scheduled Tasks:
 ## Running tests
 
 ```powershell
-# Backend (76 tests)
+# Backend (109 tests)
 cd backend
 node --test tests/*.test.js
 
-# Frontend (59 tests)
+# Frontend (99 tests)
 cd frontend
 npm test
 ```
 
-All 135 tests must pass before submitting a PR. CI will run them automatically.
+All 208 tests must pass before submitting a PR. CI will run them automatically.
 
 Docker is a supported install method — see [docs/install.md](docs/install.md) for the `docker-compose up` quick start. If you add behaviour gated on `FOCUSBOARD_DOCKER` or `FOCUSBOARD_KEY`, add tests to `backend/tests/docker-mode.test.js`.
 

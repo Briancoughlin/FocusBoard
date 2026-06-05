@@ -17,9 +17,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Release workflow now builds and pushes focusboard-frontend and focusboard-backend images to GHCR
 - CI validates docker-compose.yml syntax and builds both images on every push
 
+- **Application error codes** — `backend/error-codes.js` with 35 named constants (e.g. `JIRA_VPN_REQUIRED`, `GOOGLE_AUTH_EXPIRED`); every `logger.error/warn` call now includes a `code` field at the top level of the log entry for easy filtering
+- **`docs/error-codes.md`** — reference document covering all 35 codes, Windows Scheduled Task exit codes, Node.js exit codes, and crash investigation PowerShell one-liners
+- **37 new tests** — `gmail-feedback.test.js` (input validation, sender extraction, noise patterns), `watchdog.test.js` (route shapes, PowerShell command safety), `week-navigation.test.ts` (offset logic, boundaries), `leaderboard.test.ts` (medals, streaks, ranking), `confidence-dots.test.ts` (level thresholds); total now 208
+
 ### Fixed
 - Server exits with a clear error message if FOCUSBOARD_DOCKER=true but FOCUSBOARD_KEY not set (previously would silently use unstable container hostname as key)
 - 76 backend tests (14 new docker-mode tests covering key derivation, auth bypass, startup validation)
+- Gmail feedback endpoint now validates `taskId` type/length and clamps `from`/`subject` to 500 chars and `confidence` to 0–1 before persisting noise patterns
+- Removed three unused variables: `E` import in `claude.js`, `BG_BLUE` in `startup.js`, `Section` component in `SettingsPage.tsx` — eliminates persistent lint warnings
 
 ---
 

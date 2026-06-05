@@ -7,14 +7,14 @@ All tests run automatically on every commit via pre-commit hooks (husky) and Git
 ## Running tests locally
 
 ```powershell
-# Backend unit tests (93 tests)
+# Backend unit tests (109 tests)
 cd backend
 node --test tests/*.test.js
 
 # Backend smoke tests only (server must be running)
 npm run test:smoke
 
-# Frontend unit tests (77 tests)
+# Frontend unit tests (99 tests)
 cd frontend
 npm test
 
@@ -400,6 +400,85 @@ Guards against bugs that were previously fixed in the backend. If any of these f
 
 ---
 
+### `gmail-feedback.test.js` — 10 tests
+Gmail feedback POST logic — input validation, sender extraction, noise pattern building, and sanitization.
+
+| Test | Covers |
+|---|---|
+| Missing taskId rejected | Required field validation |
+| taskId over 200 chars rejected | Length validation |
+| Valid request accepted | Happy path |
+| `Name <email@domain.com>` → `email@domain.com` | Sender email extraction |
+| Plain email with no angle brackets passes through | Email without display name |
+| Sender with 2+ feedback entries included in patterns | Minimum threshold for learning |
+| Sender with only 1 feedback entry excluded | Prevents premature learning |
+| falsePositiveRate clamped to max 0.95 | Rate ceiling |
+| `from` over 500 chars gets truncated | Input sanitization |
+| `confidence` outside 0–1 gets clamped | Boundary enforcement |
+
+---
+
+### `watchdog.test.js` — 6 tests
+Watchdog HTTP server response shapes and safety checks.
+
+| Test | Covers |
+|---|---|
+| GET /health returns `{ alive: true, watchdog: true }` | Health check shape |
+| POST /restart returns success shape | Restart response shape |
+| Unknown route returns 404 | Route handling |
+| PowerShell command contains Stop-ScheduledTask | Command safety guard |
+| PowerShell command contains Start-ScheduledTask | Command safety guard |
+| Watchdog port is 3002, not 3001 | No conflict with main server |
+
+---
+
+## Frontend unit tests — `frontend/src/tests/` (continued)
+
+### `week-navigation.test.ts` — 8 tests
+Week offset navigation logic from `WeekView.tsx`.
+
+| Test | Covers |
+|---|---|
+| `getWeekDays(0)` starts on Monday of current week | Current week baseline |
+| `getWeekDays(1)` returns next week | Forward navigation |
+| `getWeekDays(-1)` returns last week | Backward navigation |
+| First day is always Monday | Week start invariant |
+| Last day is always Sunday | Week end invariant |
+| All 7 days are consecutive | No gaps in week |
+| Works across month boundaries | Month-end edge case |
+| Works across year boundaries | Year-end edge case |
+
+---
+
+### `leaderboard.test.ts` — 8 tests
+Leaderboard scoring logic from `LeaderboardModal.tsx`.
+
+| Test | Covers |
+|---|---|
+| Rank 1 → 🥇 | Gold medal |
+| Rank 2 → 🥈 | Silver medal |
+| Rank 3 → 🥉 | Bronze medal |
+| Rank 4+ → no medal | Top 3 only |
+| 3 consecutive days → streak of 3 | Streak calculation |
+| Gap in days → streak resets | Streak breaks on gap |
+| No scores → streak of 0 | Empty state |
+| Days ranked by score descending | Sort order |
+
+---
+
+### `confidence-dots.test.ts` — 5 tests
+Confidence dot level thresholds from `InboxSidebar.tsx`.
+
+| Test | Covers |
+|---|---|
+| confidence ≥ 0.8 → level 3 (high) | High confidence threshold |
+| 0.55 ≤ confidence < 0.8 → level 2 (medium) | Medium confidence threshold |
+| confidence < 0.55 → level 1 (low) | Low confidence threshold |
+| confidence exactly 0.8 → level 3 | Boundary: high/medium |
+| confidence exactly 0.55 → level 2 | Boundary: medium/low |
+
+---
+
 ## CI pipeline — GitHub Actions
 
 Every push and pull request to `main` runs `.github/workflows/ci.yml` on Node.js 24 (Ubuntu).
@@ -441,6 +520,8 @@ Steps marked **Blocks merge** will fail the CI check and prevent the PR from bei
 | Backend unit | feature-toggles.test.js | 6 |
 | Backend unit | docker-mode.test.js | 14 |
 | Backend unit | regression.test.js | 17 |
+| Backend unit | gmail-feedback.test.js | 10 |
+| Backend unit | watchdog.test.js | 6 |
 | Backend smoke | smoke.test.js | 11 |
 | Frontend unit | accessibility.test.ts | 12 |
 | Frontend unit | actionLog.test.ts | 6 |
@@ -450,4 +531,7 @@ Steps marked **Blocks merge** will fail the CI check and prevent the PR from bei
 | Frontend unit | vpn-banner.test.ts | 8 |
 | Frontend unit | fix-version.test.ts | 8 |
 | Frontend unit | regression.test.ts | 18 |
-| **Total** | | **170** |
+| Frontend unit | week-navigation.test.ts | 8 |
+| Frontend unit | leaderboard.test.ts | 8 |
+| Frontend unit | confidence-dots.test.ts | 5 |
+| **Total** | | **208** |

@@ -18,15 +18,20 @@ FocusBoard is built to production standards despite being a personal tool. Here'
 - **Dependency scanning** — Dependabot runs weekly, auto-merging patch/minor updates when CI passes.
 
 ### 🧪 Testing
-- **135 automated tests** — 76 backend + 59 frontend across 16 suites:
+- **208 automated tests** — 109 backend + 99 frontend across 21 suites:
   - Jira status mapping (9 tests) — Unity-specific status names
   - AES-256-GCM encryption (5 tests) — config security
-  - Config merge logic (5 tests) — input validation and secret masking
-  - Task cache (4 tests) — read/write round-trip
-  - Urgency scoring (10 tests) — core ADHD prioritisation logic
-  - Task filtering (7 tests) — overrides, done dates, wontdo
+  - Config merge logic (7 tests) — input validation and secret masking
+  - Task cache (5 tests) — read/write round-trip
+  - Urgency scoring (7 tests) — core ADHD prioritisation logic
+  - Task filtering (5 tests) — overrides, done dates, wontdo
   - Week view filter (7 tests) — Focus view inclusion rules
-  - Action log buffer (8 tests) — circular buffer behaviour
+  - Action log buffer (6 tests) — circular buffer behaviour
+  - Gmail feedback (10 tests) — input validation, sender extraction, noise patterns
+  - Watchdog (6 tests) — route shapes, PowerShell command safety
+  - Week navigation (8 tests) — offset logic, boundaries
+  - Leaderboard (8 tests) — medals, streaks, ranking
+  - Confidence dots (5 tests) — level thresholds
 - **Code coverage** (measured on pure logic files, excluding React UI components):
   - `actionLog.ts` — 100% statements
   - `TaskCard.tsx` (logic only) — 23% statements (JSX rendering excluded by design)
@@ -127,13 +132,13 @@ Go to **Windows Settings → Privacy & Security → Notifications** and enable *
 
 Go to **Settings** (gear icon) and enter your credentials. See the Integration Setup section below.
 
----
+### Other install options
 
-## Installation
-
-Docker is now available as an alternative to the Windows native setup — no Node.js required. See [docs/install.md](docs/install.md) for all four installation options (Windows native, Docker, Windows .exe coming, Mac coming).
+Docker is also available — no Node.js required. See [docs/install.md](docs/install.md) for all four options (Windows native, Docker, Windows .exe coming, Mac coming).
 
 > **Note on Docker / Mac Support:** FocusBoard's core architecture runs perfectly in Docker and on Apple Silicon. However, "Option A" for Slack relies on a native Windows PowerShell script to intercept OS-level toast notifications. If you use Docker or a Mac, you must use "Option B" (Bot Token) for Slack integration.
+
+---
 
 ## After Installation
 
