@@ -9,6 +9,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.3.1] - 2026-06-05
+
+### Added
+- **Email Intelligence** — Gmail items now show Claude confidence dots (●●● / ●●○ / ●○○), hover to see raw email snippet, "Not an action" 👎 button dismisses and teaches the noise filter, learned patterns injected into Claude prompt on next sync
+- **Week navigation** — ‹ › arrows in the Focus week view to move between weeks; "This week" button to jump back; current week highlighted in blue
+- **Friendly startup** — human-readable terminal banner with integration status (✓ connected / ○ not configured / ○ disabled), actionable warnings, no raw JSON on startup
+- **Watchdog friendly output** — watchdog process uses same clean terminal style
+
+### Fixed
+- Settings page components (`Toggle`, `IntegrationSection`, `TestButton`) moved to module scope — eliminates remount-on-every-keypress bug that made Settings inaccessible
+
+---
+
 ## [1.3.0] - 2026-06-05
 
 ### Added

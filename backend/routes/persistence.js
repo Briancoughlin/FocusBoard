@@ -24,6 +24,8 @@ const ALLOWED_KEYS = [
   'completed-history',
   'done-tasks',
   'daily-scores',
+  'gmail-feedback',
+  'gmail-noise-patterns',
 ];
 
 function ensureDataDir() {

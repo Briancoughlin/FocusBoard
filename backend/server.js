@@ -35,6 +35,7 @@ import cacheRouter from './routes/cache.js';
 import { loadOrCreateToken } from './auth.js';
 import { encryptConfig, decryptConfig } from './crypto-utils.js';
 import { logger } from './logger.js';
+import { printBanner, printIntegrationStatus, printWarning, printReady, printRetrying, printCrash, printInfo } from './startup.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CONFIG_PATH = path.join(__dirname, 'config.json');
@@ -413,28 +414,38 @@ const server = app.listen(PORT, '127.0.0.1', () => {
     logger.info('Created empty config.json', {});
   }
 
-  // Config health check — warn about missing credentials so problems are visible at startup
+  // Config health check
   try {
     const cfg = loadConfig();
-
-    const jiraOk = !!(cfg.jiraUrl && cfg.jiraToken);
-    const googleOk = !!(cfg.googleClientId && cfg.googleAccessToken);
-    const githubOk = !!cfg.githubToken;
+    const jiraOk    = !!(cfg.jiraUrl && cfg.jiraToken);
+    const googleOk  = !!(cfg.googleClientId && cfg.googleAccessToken);
+    const githubOk  = !!cfg.githubToken;
     const anthropicOk = !!cfg.anthropicKey;
-    const slackOk = !!(cfg.slackToken || cfg.slackWorkspaceUrl);
+    const slackOk   = !!(cfg.slackToken || cfg.slackWorkspaceUrl);
+    const features  = cfg.features || {};
 
+    // Friendly terminal output
+    printBanner(PORT, process.version);
+    printIntegrationStatus({ jira: jiraOk, google: googleOk, github: githubOk, anthropic: anthropicOk, slack: slackOk, features });
+
+    // Actionable warnings for common misconfigs
     if (cfg.jiraUrl && !cfg.jiraToken) {
-      logger.warn('Jira URL is set but jiraToken is missing — Jira integration will fail', {});
+      printWarning('Jira URL is set but token is missing — open Settings to add your PAT');
+      logger.warn('Jira URL is set but jiraToken is missing', {});
     }
     if (cfg.googleClientId && !cfg.googleAccessToken) {
-      logger.warn('Google client ID is set but no access token — visit /auth/google to complete OAuth', {});
+      printWarning('Google not authorised — open Settings and click "Connect Google Account"');
+      logger.warn('Google client ID set but no access token', {});
     }
     if (!cfg.anthropicKey) {
-      logger.info('anthropicKey not set — AI features (Gmail action extraction, paste) will be unavailable', {});
+      printInfo('Claude AI not configured — Gmail action extraction and Quick Add AI will be unavailable');
+      logger.info('anthropicKey not set', {});
     }
 
+    printReady();
     logger.info('Config health', { jira: jiraOk, google: googleOk, github: githubOk, anthropic: anthropicOk, slack: slackOk });
   } catch (err) {
+    printWarning(`Could not read config: ${err.message}`);
     logger.warn('Could not read config for health check', { error: err.message });
   }
 });
@@ -444,30 +455,32 @@ const server = app.listen(PORT, '127.0.0.1', () => {
 // still be holding port 3001. We wait 3 seconds and retry once before giving up.
 server.on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
-    logger.error(`Port ${PORT} already in use — retrying in 3 seconds...`, { port: PORT });
+    printRetrying(PORT, 3);
+    logger.error(`Port ${PORT} already in use — retrying`, { port: PORT });
     setTimeout(() => {
       server.close();
-      app.listen(PORT, () => {
+      app.listen(PORT, '127.0.0.1', () => {
+        printReady();
         logger.info('FocusBoard backend running (retry)', { port: PORT });
       });
     }, 3000);
   } else if (err.code === 'ECONNRESET' || err.code === 'ECONNABORTED' || err.code === 'ETIMEDOUT') {
-    // Network change errors — log and continue, don't exit
     logger.warn('Network error on server socket — continuing', { code: err.code, error: err.message });
   } else {
+    printCrash(err);
     logger.error('Server error', { code: err.code, error: err.message });
-    // Don't exit — let the process keep running and recover
-    // The scheduled task restart handles truly fatal crashes
   }
 });
 
 // Catch unhandled promise rejections so they don't silently kill the process
 process.on('unhandledRejection', (reason) => {
   const err = reason instanceof Error ? reason : new Error(String(reason));
+  printCrash(err);
   logger.error('Unhandled promise rejection', { error: err.message, stack: err.stack });
 });
 
 // Catch uncaught exceptions — log and keep running if possible
 process.on('uncaughtException', (err) => {
+  printCrash(err);
   logger.error('Uncaught exception', { error: err.message, stack: err.stack });
 });

@@ -17,6 +17,8 @@ export interface Task {
   epicName?: string;
   fixVersion?: string;
   updatedAt: string;
+  confidence?: number;      // 0–1, from Claude — how action-worthy this email is
+  emailSnippet?: string;    // raw email preview for hover tooltip (Gmail only)
 }
 
 export interface Config {

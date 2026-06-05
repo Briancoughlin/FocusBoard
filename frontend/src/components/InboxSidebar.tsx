@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, Hash, ExternalLink, Plus, Inbox, Github, X } from 'lucide-react';
+import { Mail, Hash, ExternalLink, Plus, Inbox, Github, X, ThumbsDown } from 'lucide-react';
 import type { Task } from '../types';
 import { getPersistedValue, setPersistedValue } from '../services/persistence';
 
@@ -8,9 +8,31 @@ interface InboxItem {
   source: 'gmail' | 'slack' | 'github';
   title: string;
   preview?: string;
+  emailSnippet?: string;
   url?: string;
   receivedAt: string;
   read: boolean;
+  confidence?: number;       // 0–1 from Claude
+  sourceId?: string;         // original message ID for feedback
+  from?: string;             // sender for noise pattern learning
+  subject?: string;          // subject for noise pattern learning
+}
+
+/** Render ●●● / ●● / ● confidence dots for Gmail items */
+function ConfidenceDots({ confidence }: { confidence: number }) {
+  const level = confidence >= 0.8 ? 3 : confidence >= 0.55 ? 2 : 1;
+  const colour = level === 3 ? '#10b981' : level === 2 ? '#f59e0b' : '#9ca3af';
+  const label = level === 3 ? 'High confidence action' : level === 2 ? 'Medium confidence' : 'Low confidence';
+  return (
+    <span
+      className="text-xs font-bold tracking-tighter flex-shrink-0"
+      style={{ color: colour, fontSize: '9px', letterSpacing: '-1px' }}
+      title={label}
+      aria-label={label}
+    >
+      {'●'.repeat(level)}{'○'.repeat(3 - level)}
+    </span>
+  );
 }
 
 interface Props {
@@ -26,18 +48,24 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(diff / 86400)}d ago`;
 }
 
-function ItemRow({ item, onRead, onAddToBoard }: {
+function ItemRow({ item, onRead, onAddToBoard, onNotAction }: {
   item: InboxItem;
   onRead: (id: string) => void;
   onAddToBoard: (item: InboxItem) => void;
+  onNotAction: (item: InboxItem) => void;
 }) {
+  const [hovered, setHovered] = useState(false);
+  const showSnippet = hovered && item.source === 'gmail' && item.emailSnippet;
+
   return (
     <div
       onClick={() => { onRead(item.id); if (item.url) window.open(item.url, '_blank'); }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       role="article"
       aria-label={item.title}
       title={item.title}
-      className={`px-3 py-2.5 border-b cursor-pointer transition-colors relative ${item.read ? 'opacity-40' : ''} ${
+      className={`px-3 py-2.5 border-b cursor-pointer transition-all relative ${item.read ? 'opacity-40' : ''} ${
         item.source === 'slack' && !item.read ? 'bg-purple-50 border-purple-100 hover:bg-purple-100' :
         item.source === 'github' && !item.read && item.title.includes('❌') ? 'bg-red-50 border-red-100 hover:bg-red-100' :
         item.source === 'github' && !item.read && item.title.includes('✅') ? 'bg-green-50 border-green-100 hover:bg-green-100' :
@@ -45,12 +73,16 @@ function ItemRow({ item, onRead, onAddToBoard }: {
       }`}
       style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-card)' }}
     >
+      {/* Header row: source icon + unread dot | confidence | time | dismiss */}
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-1.5">
           {item.source === 'gmail' ? <Mail size={10} className="text-red-400" /> :
            item.source === 'slack' ? <Hash size={10} className="text-purple-400" /> :
            <Github size={10} className="text-gray-600" />}
           {!item.read && <span className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />}
+          {item.source === 'gmail' && typeof item.confidence === 'number' && (
+            <ConfidenceDots confidence={item.confidence} />
+          )}
         </div>
         <div className="flex items-center gap-1.5">
           <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{timeAgo(item.receivedAt)}</span>
@@ -58,19 +90,36 @@ function ItemRow({ item, onRead, onAddToBoard }: {
             onClick={e => { e.stopPropagation(); onRead(item.id); }}
             className="transition-colors hover:text-red-400"
             style={{ color: 'var(--text-secondary)' }}
-            title="Dismiss notification"
+            title="Dismiss"
             aria-label="Dismiss notification"
           >
             <X size={11} aria-hidden="true" />
           </button>
         </div>
       </div>
+
+      {/* Title + preview */}
       <div className="inbox-content">
-      <p className="text-xs font-semibold line-clamp-2 leading-snug mb-1" style={{ color: 'var(--text-primary)' }}>{item.title}</p>
-      {item.preview && (
-        <p className="text-xs line-clamp-1 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{item.preview}</p>
-      )}
+        <p className="text-xs font-semibold line-clamp-2 leading-snug mb-1" style={{ color: 'var(--text-primary)' }}>
+          {item.title}
+        </p>
+        {item.preview && !showSnippet && (
+          <p className="text-xs line-clamp-1 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+            {item.preview}
+          </p>
+        )}
+        {/* Hover email snippet — expands to show raw email preview */}
+        {showSnippet && (
+          <p
+            className="text-xs leading-relaxed mt-1 p-2 rounded-lg"
+            style={{ color: 'var(--text-secondary)', backgroundColor: 'var(--bg)', border: '1px solid var(--border)' }}
+          >
+            {item.emailSnippet}
+          </p>
+        )}
       </div>
+
+      {/* Actions */}
       <div className="flex items-center gap-2 mt-1.5">
         <button
           onClick={e => { e.stopPropagation(); onAddToBoard(item); onRead(item.id); }}
@@ -80,6 +129,17 @@ function ItemRow({ item, onRead, onAddToBoard }: {
         >
           <Plus size={10} aria-hidden="true" /> Add to board
         </button>
+        {item.source === 'gmail' && (
+          <button
+            onClick={e => { e.stopPropagation(); onNotAction(item); }}
+            className="flex items-center gap-1 text-xs transition-colors hover:text-red-500"
+            style={{ color: 'var(--text-secondary)' }}
+            aria-label="Not an action — dismiss and teach the filter"
+            title="Not an action — teaches the noise filter to skip similar emails"
+          >
+            <ThumbsDown size={10} aria-hidden="true" /> Not an action
+          </button>
+        )}
         {item.url && (
           <a
             href={item.url}
@@ -205,10 +265,35 @@ export function InboxSidebar({ tasks, onAddToBoard }: Props) {
     source: t.source as 'gmail' | 'slack' | 'github',
     title: t.title,
     preview: t.description,
+    emailSnippet: t.emailSnippet,
     url: t.url,
     receivedAt: t.updatedAt,
     read: readIds.has(t.id),
+    confidence: t.confidence,
+    sourceId: t.sourceId,
+    from: (t as unknown as Record<string, string>).from,
+    subject: (t as unknown as Record<string, string>).subject,
   });
+
+  const handleNotAction = async (item: InboxItem) => {
+    // Dismiss it immediately
+    markRead(item.id);
+    // Send feedback to backend to learn noise patterns
+    try {
+      await fetch('/api/gmail/feedback', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          taskId: item.id,
+          sourceId: item.sourceId,
+          from: item.from || '',
+          subject: item.title,
+          confidence: item.confidence ?? 0.8,
+        }),
+      });
+    } catch { /* non-fatal — feedback is best-effort */ }
+  };
 
   const githubItems = tasks
     .filter(t => t.source === 'github')
@@ -266,7 +351,7 @@ export function InboxSidebar({ tasks, onAddToBoard }: Props) {
           </div>
         ) : (
           githubItems.map(item => (
-            <ItemRow key={item.id} item={item} onRead={markRead} onAddToBoard={onAddToBoard} />
+            <ItemRow key={item.id} item={item} onRead={markRead} onAddToBoard={onAddToBoard} onNotAction={handleNotAction} />
           ))
         ))}
 
@@ -303,7 +388,7 @@ export function InboxSidebar({ tasks, onAddToBoard }: Props) {
           </div>
         ) : (
           slackItems.map(item => (
-            <ItemRow key={item.id} item={item} onRead={markRead} onAddToBoard={onAddToBoard} />
+            <ItemRow key={item.id} item={item} onRead={markRead} onAddToBoard={onAddToBoard} onNotAction={handleNotAction} />
           ))
         ))}
 
@@ -323,7 +408,7 @@ export function InboxSidebar({ tasks, onAddToBoard }: Props) {
           </div>
         ) : (
           inboxItems.map(item => (
-            <ItemRow key={item.id} item={item} onRead={markRead} onAddToBoard={onAddToBoard} />
+            <ItemRow key={item.id} item={item} onRead={markRead} onAddToBoard={onAddToBoard} onNotAction={handleNotAction} />
           ))
         ))}
 

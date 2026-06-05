@@ -27,10 +27,10 @@ interface Props {
   onTaskDone?: (taskId: string) => void;
 }
 
-function getWeekDays(): Date[] {
+function getWeekDays(offsetWeeks = 0): Date[] {
   const today = new Date();
   const monday = new Date(today);
-  monday.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+  monday.setDate(today.getDate() - ((today.getDay() + 6) % 7) + offsetWeeks * 7);
   return Array.from({ length: 7 }, (_, i) => {
     const d = new Date(monday);
     d.setDate(monday.getDate() + i);
@@ -71,9 +71,11 @@ const SOURCE_BORDER: Record<string, string> = {
 
 export function WeekView({ tasks, allTasks, selectedDay, onDaySelect, onTaskDone }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [weekOffset, setWeekOffset] = useState(0);
   const calendarTasks = tasks.filter(t => t.source === 'calendar');
-  const weekDays = getWeekDays();
+  const weekDays = getWeekDays(weekOffset);
   const today = new Date();
+  const isCurrentWeek = weekOffset === 0;
 
   // Only non-calendar, non-Slack tasks get a due-date badge — calendar events already
   // appear as their own entries, and Slack items are shown in the inbox sidebar.
@@ -82,23 +84,62 @@ export function WeekView({ tasks, allTasks, selectedDay, onDaySelect, onTaskDone
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between mb-2 px-1">
-        <h2 className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>
-          Week of {weekDays[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} –{' '}
-          {weekDays[6].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-        </h2>
+        {/* Week navigation */}
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setWeekOffset(w => w - 1)}
+            className="p-1 rounded-lg transition-colors hover:bg-gray-100"
+            style={{ color: 'var(--text-secondary)' }}
+            aria-label="Previous week"
+            title="Previous week"
+          >
+            ‹
+          </button>
+          <h2 className="text-sm font-semibold px-1" style={{ color: isCurrentWeek ? 'var(--accent)' : 'var(--text-secondary)' }}>
+            {weekDays[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} –{' '}
+            {weekDays[6].toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: weekDays[6].getFullYear() !== today.getFullYear() ? 'numeric' : undefined })}
+          </h2>
+          <button
+            onClick={() => setWeekOffset(w => w + 1)}
+            className="p-1 rounded-lg transition-colors hover:bg-gray-100"
+            style={{ color: 'var(--text-secondary)' }}
+            aria-label="Next week"
+            title="Next week"
+          >
+            ›
+          </button>
+        </div>
+
         <div className="flex items-center gap-2">
-          {selectedDay && (
+          {!isCurrentWeek && (
+            <button
+              onClick={() => { setWeekOffset(0); onDaySelect(null); }}
+              className="text-xs px-2 py-0.5 rounded-full font-medium transition-colors"
+              style={{ backgroundColor: 'var(--accent)', color: '#fff' }}
+              aria-label="Jump to current week"
+              title="Jump to current week"
+            >
+              This week
+            </button>
+          )}
+          {selectedDay && isCurrentWeek && (
             <button
               onClick={() => onDaySelect(null)}
               className="text-xs px-2 py-0.5 rounded-full font-medium transition-colors"
               style={{ backgroundColor: 'var(--accent)', color: '#fff' }}
-              aria-label="Reset to current week view"
-              title="Reset to current week view"
+              aria-label="Clear day filter"
+              title="Clear day filter"
             >
               Today
             </button>
           )}
-          <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{calendarTasks.length} events this week</span>
+          <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+            {calendarTasks.filter(t => {
+              if (!t.dueDate) return false;
+              const d = new Date(t.dueDate);
+              return d >= weekDays[0] && d <= new Date(weekDays[6].getTime() + 86399999);
+            }).length} events
+          </span>
         </div>
       </div>
 

@@ -19,6 +19,29 @@ import { extractActionItems } from './claude.js';
 import { decryptConfig, encryptConfig } from '../crypto-utils.js';
 import { logger } from '../logger.js';
 
+const DATA_DIR = path.join(path.dirname(new URL(import.meta.url).pathname).replace(/^\/([A-Z]:)/, '$1'), '..', 'data');
+
+function loadFeedback() {
+  try {
+    const p = path.join(DATA_DIR, 'gmail-feedback.json');
+    return fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, 'utf8')) : {};
+  } catch { return {}; }
+}
+
+function loadNoisePatterns() {
+  try {
+    const p = path.join(DATA_DIR, 'gmail-noise-patterns.json');
+    return fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, 'utf8')) : [];
+  } catch { return []; }
+}
+
+function saveNoisePatterns(patterns) {
+  try {
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    fs.writeFileSync(path.join(DATA_DIR, 'gmail-noise-patterns.json'), JSON.stringify(patterns, null, 2));
+  } catch { /* non-fatal */ }
+}
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CONFIG_PATH = path.join(__dirname, '..', 'config.json');
 
@@ -159,8 +182,11 @@ router.get('/', async (req, res) => {
     const slackDigestCount = messages.filter(m => m.isSlackDigest).length;
     logger.info('Gmail Slack digests detected', { count: slackDigestCount });
 
+    // Load learned noise patterns to inform Claude
+    const noisePatterns = loadNoisePatterns();
+
     // Use Claude to extract action items
-    const actionItems = await extractActionItems(messages, 'gmail');
+    const actionItems = await extractActionItems(messages, 'gmail', noisePatterns);
     logger.info('Gmail Claude extraction result', { actionItems: actionItems.length });
 
     // Build a Set of Gmail message IDs that are Slack digests so we can re-classify
@@ -170,8 +196,14 @@ router.get('/', async (req, res) => {
       messages.filter(m => m.isSlackDigest).map(m => m.id)
     );
 
+    // Build a map of messageId → raw snippet for hover preview
+    const snippetMap = Object.fromEntries(messages.map(m => [m.id, m.snippet || '']));
+
     const tasks = actionItems.map((item) => {
       const isSlack = slackMessageIds.has(item.sourceId) || item.isSlackDigest;
+      const confidence = typeof item.confidence === 'number'
+        ? Math.max(0, Math.min(1, item.confidence))
+        : 0.8; // default for backward compat
       return {
         id: `${isSlack ? 'slack' : 'gmail'}-${item.sourceId}`,
         sourceId: item.sourceId,
@@ -179,13 +211,12 @@ router.get('/', async (req, res) => {
         description: item.description,
         source: isSlack ? 'slack' : 'gmail',
         status: 'todo',
-        // Slack mentions are treated as high priority — they represent direct asks.
         priority: isSlack ? 'high' : (item.priority || 'medium'),
         dueDate: item.dueDate || undefined,
         url: `https://mail.google.com/mail/u/0/#inbox/${item.sourceId}`,
-        // Give Slack-sourced tasks a future updatedAt so sort-by-updated places them
-        // above regular Gmail items without needing a separate sort key.
         updatedAt: isSlack ? new Date(Date.now() + 86400000).toISOString() : new Date().toISOString(),
+        confidence,
+        emailSnippet: isSlack ? undefined : (snippetMap[item.sourceId] || '').slice(0, 300),
       };
     });
 
@@ -194,6 +225,58 @@ router.get('/', async (req, res) => {
   } catch (err) {
     logger.error('Gmail error', { error: err.message });
     res.json({ tasks: [], error: err.message });
+  }
+});
+
+/**
+ * POST /api/gmail/feedback
+ * Records "not an action" feedback for a Gmail item.
+ * Body: { taskId, sourceId, from, subject, confidence }
+ * Rebuilds noise patterns from accumulated feedback.
+ */
+router.post('/feedback', (req, res) => {
+  try {
+    const { taskId, sourceId, from = '', subject = '', confidence = 0.8 } = req.body;
+    if (!taskId) return res.status(400).json({ error: 'taskId required' });
+
+    // Persist the feedback entry
+    const feedbackPath = path.join(DATA_DIR, 'gmail-feedback.json');
+    const feedback = loadFeedback();
+    feedback[taskId] = { sourceId, from, subject, confidence, timestamp: new Date().toISOString(), verdict: 'not_action' };
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    fs.writeFileSync(feedbackPath, JSON.stringify(feedback, null, 2));
+
+    // Rebuild noise patterns: group by sender and subject keywords
+    const entries = Object.values(feedback).filter(e => e.verdict === 'not_action');
+    const senderCounts = {};
+    const subjectCounts = {};
+    for (const e of entries) {
+      const sender = (e.from || '').toLowerCase().replace(/.*<|>/g, '').trim();
+      if (sender) senderCounts[sender] = (senderCounts[sender] || 0) + 1;
+      // Extract meaningful subject words (3+ chars, ignore common noise)
+      const stopWords = new Set(['re:', 'fw:', 'fwd:', 'the', 'and', 'for', 'you', 'your', 'with', 'this', 'that']);
+      const words = (e.subject || '').toLowerCase().split(/\s+/).filter(w => w.length >= 3 && !stopWords.has(w));
+      for (const word of words.slice(0, 3)) {
+        subjectCounts[word] = (subjectCounts[word] || 0) + 1;
+      }
+    }
+
+    const totalFeedback = entries.length || 1;
+    const patterns = [
+      ...Object.entries(senderCounts)
+        .filter(([, c]) => c >= 2) // at least 2 "not action" hits before we learn
+        .map(([pattern, count]) => ({ type: 'sender', pattern, count, falsePositiveRate: Math.min(0.95, count / totalFeedback) })),
+      ...Object.entries(subjectCounts)
+        .filter(([, c]) => c >= 3)
+        .map(([pattern, count]) => ({ type: 'subject', pattern, count, falsePositiveRate: Math.min(0.95, count / totalFeedback) })),
+    ].sort((a, b) => b.falsePositiveRate - a.falsePositiveRate).slice(0, 20); // top 20 patterns
+
+    saveNoisePatterns(patterns);
+    logger.info('Gmail feedback recorded', { taskId, patterns: patterns.length });
+    res.json({ success: true, patternsLearned: patterns.length });
+  } catch (err) {
+    logger.error('Gmail feedback error', { error: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 

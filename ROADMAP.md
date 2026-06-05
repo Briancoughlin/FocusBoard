@@ -4,34 +4,30 @@ This document outlines the planned development direction for FocusBoard. It's a 
 
 ---
 
-## Current: v1.2.x — Production Stable
-
-The core tool is working and production-ready. Jira, Gmail, Google Calendar, Slack (via Windows notifications), and GitHub are all connected. The focus is on stability and polish.
-
----
-
-## Next: v1.3 — Personalisation
+## Current: v1.3 — Personalisation ✅ Shipped
 
 **Theme:** Make it yours
 
-### Source Toggles
-Enable/disable integrations from a simple settings screen. Don't use Slack? Turn it off. Don't have GitHub? Hide it. Only see what you've chosen to connect.
+### ✅ Source Toggles
+Enable/disable integrations from Settings → Integrations. Each source has a toggle in its header. Disabled sources are skipped entirely during sync — faster and quieter. Credentials are always preserved.
 
-### Email Intelligence
-- **Hover preview** — see the email snippet before deciding if it needs to be a card
-- **Confidence scoring** — Claude rates how action-worthy each email is (●●● High, ●● Medium, ● Low)
+### ✅ Email Intelligence
+- **Hover preview** — see the raw email snippet before deciding if it needs to be a card
+- **Confidence scoring** — Claude rates how action-worthy each email is (●●● High, ●●○ Medium, ●○○ Low)
 - **"Not an action" button** — explicit feedback that teaches Claude your patterns over time
-- **Personal noise filter** — learned from your "Not an action" clicks, reduces noise automatically
+- **Personal noise filter** — learned from "Not an action" clicks, injected into Claude's prompt to reduce noise automatically
 
-### VPN Detection
-Friendly "Looks like you're not on VPN — Jira needs Netbird to connect" instead of a raw error banner.
+### ✅ VPN Detection
+Friendly amber 🔒 banner when Jira is unreachable: "Jira is unreachable — are you on VPN or Netbird?" with a one-click sync retry.
 
-### Friendly Startup
-Human-readable startup messages instead of Node.js stack traces. For non-developers who just want it to work.
+### ✅ Friendly Startup
+Human-readable terminal output: ⚡ banner, integration status (✓ / ○ not configured / ○ disabled), actionable warnings, no JSON stack traces.
 
 ---
 
-## v2.0 — Extensible
+## Next: v2.0 — Extensible
+
+## v2.0 — Extensible (next)
 
 **Theme:** Build on it
 

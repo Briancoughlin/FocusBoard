@@ -9,6 +9,7 @@
 
 import http from 'http';
 import { execSync } from 'child_process';
+import { printBanner, printReady, printWarning } from './startup.js';
 
 const PORT = 3002;
 
@@ -35,9 +36,9 @@ const server = http.createServer((req, res) => {
         execSync('powershell -NonInteractive -Command "Stop-ScheduledTask -TaskName FocusBoard -ErrorAction SilentlyContinue; Start-Sleep -Seconds 2; Start-ScheduledTask -TaskName FocusBoard"', {
           timeout: 15000,
         });
-        console.log('[Watchdog] FocusBoard restarted successfully');
+        process.stdout.write('  \x1b[32m✓\x1b[0m  FocusBoard restarted successfully\n');
       } catch (err) {
-        console.error('[Watchdog] Restart failed:', err.message);
+        printWarning(`Restart failed: ${err.message}`);
       }
     }, 500);
     return;
@@ -75,11 +76,15 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, '127.0.0.1', () => {
-  console.log(`[Watchdog] Running on port ${PORT}`);
+  printBanner(PORT, process.version);
+  process.stdout.write('  \x1b[2m  Watchdog — monitors FocusBoard and restarts on demand\x1b[0m\n\n');
+  printReady();
 });
 
 server.on('error', (err) => {
-  if (err.code !== 'EADDRINUSE') {
-    console.error('[Watchdog] Error:', err.message);
+  if (err.code === 'EADDRINUSE') {
+    process.stdout.write(`  \x1b[33m⚠\x1b[0m  Port ${PORT} already in use — another watchdog may be running\n`);
+  } else {
+    printWarning(`Watchdog error: ${err.message}`);
   }
 });
