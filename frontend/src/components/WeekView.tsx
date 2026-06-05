@@ -237,9 +237,11 @@ export function WeekView({ tasks, allTasks, selectedDay, onDaySelect, onTaskDone
                               cursor: 'pointer',
                             }}
                           >
+                            <div className="calendar-content">
                             <p className="font-medium line-clamp-2 leading-tight" style={{ color: 'var(--text-primary)' }}>
                               {item.title.replace('[All Day] ', '')}
                             </p>
+                            </div>
                             {item.dueDate && !isCalendar && (
                               <p className="text-xs mt-0.5" style={{ color: borderColor, opacity: 0.8 }}>
                                 {item.source}

@@ -55,7 +55,7 @@ export function DailyDigest({ tasks, onDismiss }: Props) {
         </div>
 
         {/* Stats */}
-        <div className="p-5 space-y-3">
+        <div className="p-5 space-y-3 digest-content">
           {overdue.length > 0 && (
             <div className="flex items-center gap-3 p-3 bg-red-50 border border-red-200 rounded-xl">
               <div className="bg-red-100 p-2 rounded-lg">

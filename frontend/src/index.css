@@ -15,13 +15,19 @@
   --border: #e5e7eb;
 }
 
-/* Privacy mode — blurs sensitive card content for demos */
-.privacy-mode .task-content {
+/* Privacy mode — blurs all sensitive content for demos and screenshots */
+.privacy-mode .task-content,
+.privacy-mode .inbox-content,
+.privacy-mode .calendar-content,
+.privacy-mode .digest-content {
   filter: blur(4px);
   user-select: none;
   transition: filter 0.2s ease;
 }
-.privacy-mode .task-content:hover {
+.privacy-mode .task-content:hover,
+.privacy-mode .inbox-content:hover,
+.privacy-mode .calendar-content:hover,
+.privacy-mode .digest-content:hover {
   filter: blur(2px);
 }
 

@@ -65,10 +65,12 @@ function ItemRow({ item, onRead, onAddToBoard }: {
           </button>
         </div>
       </div>
+      <div className="inbox-content">
       <p className="text-xs font-semibold line-clamp-2 leading-snug mb-1" style={{ color: 'var(--text-primary)' }}>{item.title}</p>
       {item.preview && (
         <p className="text-xs line-clamp-1 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{item.preview}</p>
       )}
+      </div>
       <div className="flex items-center gap-2 mt-1.5">
         <button
           onClick={e => { e.stopPropagation(); onAddToBoard(item); onRead(item.id); }}
