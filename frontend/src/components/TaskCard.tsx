@@ -171,6 +171,8 @@ export function TaskCard({ task, index, onDismiss, onPin, pinned, onWontDo }: Pr
               </div>
             </div>
 
+            {/* Blurable content block for privacy mode */}
+            <div className="task-content">
             {/* Ticket key + fix version */}
             {task.ticketKey && (
               <div className="flex items-center gap-2 mb-0.5">
@@ -225,6 +227,7 @@ export function TaskCard({ task, index, onDismiss, onPin, pinned, onWontDo }: Pr
                 </span>
               )}
             </div>
+            </div> {/* end task-content */}
           </div>
         </div>
       )}

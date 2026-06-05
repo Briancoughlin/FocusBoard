@@ -15,6 +15,16 @@
   --border: #e5e7eb;
 }
 
+/* Privacy mode — blurs sensitive card content for demos */
+.privacy-mode .task-content {
+  filter: blur(4px);
+  user-select: none;
+  transition: filter 0.2s ease;
+}
+.privacy-mode .task-content:hover {
+  filter: blur(2px);
+}
+
 @layer base {
   body {
     background-color: var(--bg);

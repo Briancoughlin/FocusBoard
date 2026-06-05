@@ -96,6 +96,7 @@ export default function App() {
   const [pinnedIds, setPinnedIds] = useState<Set<string>>(new Set());
   const [showDigest, setShowDigest] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [privacyMode, setPrivacyMode] = useState(false);
   const [bugReportOpen, setBugReportOpen] = useState(false);
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   const [updateDismissed, setUpdateDismissed] = useState(false);
@@ -492,7 +493,7 @@ export default function App() {
   }
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden" style={{ backgroundColor: 'var(--bg)' }}>
+    <div className={`h-screen flex flex-col overflow-hidden ${privacyMode ? 'privacy-mode' : ''}`} style={{ backgroundColor: 'var(--bg)' }}>
       {updateInfo && !updateDismissed && (
         <UpdateBanner update={updateInfo} onDismiss={() => setUpdateDismissed(true)} />
       )}
@@ -523,6 +524,8 @@ export default function App() {
         onShowDigest={() => { logAction('Daily digest shown'); setShowDigest(true); }}
         onShowReport={() => { logAction('Standup report opened'); setReportOpen(true); }}
         onShowBugReport={() => setBugReportOpen(true)}
+        privacyMode={privacyMode}
+        onTogglePrivacy={() => setPrivacyMode(p => !p)}
         completedToday={completedToday}
       />
 

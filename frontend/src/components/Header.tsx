@@ -1,5 +1,5 @@
 import React from 'react';
-import { RefreshCw, Settings, Zap, ClipboardPaste, Trophy, Newspaper, BarChart2, Bug } from 'lucide-react';
+import { RefreshCw, Settings, Zap, ClipboardPaste, Trophy, Newspaper, BarChart2, Bug, EyeOff, Eye } from 'lucide-react';
 import { version } from '../../package.json';
 
 interface Props {
@@ -13,6 +13,8 @@ interface Props {
   onShowDigest: () => void;
   onShowReport: () => void;
   onShowBugReport: () => void;
+  privacyMode: boolean;
+  onTogglePrivacy: () => void;
   completedToday: number;
 }
 
@@ -27,7 +29,7 @@ function formatLastSynced(d: Date | null): string {
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-export function Header({ view, onViewChange, onRefresh, isRefreshing, isSyncing, lastSynced, onPaste, onShowDigest, onShowReport, onShowBugReport, completedToday }: Props) {
+export function Header({ view, onViewChange, onRefresh, isRefreshing, isSyncing, lastSynced, onPaste, onShowDigest, onShowReport, onShowBugReport, privacyMode, onTogglePrivacy, completedToday }: Props) {
   return (
     <header className="px-6 py-3 flex items-center justify-between shadow-sm sticky top-0 z-10" style={{ backgroundColor: 'var(--bg-header)', borderBottom: '1px solid var(--border)' }}>
       {/* Left: Brand */}
@@ -96,6 +98,14 @@ export function Header({ view, onViewChange, onRefresh, isRefreshing, isSyncing,
           className="p-2 rounded-lg text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-all"
         >
           <BarChart2 size={16} aria-hidden="true" />
+        </button>
+        <button
+          onClick={onTogglePrivacy}
+          title={privacyMode ? 'Disable privacy mode' : 'Enable privacy mode — blurs card content for demos'}
+          aria-label={privacyMode ? 'Disable privacy mode' : 'Enable privacy mode'}
+          className={`p-2 rounded-lg transition-all ${privacyMode ? 'text-purple-600 bg-purple-50' : 'text-gray-500 hover:text-purple-600 hover:bg-purple-50'}`}
+        >
+          {privacyMode ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
         </button>
         <button
           onClick={onShowBugReport}
