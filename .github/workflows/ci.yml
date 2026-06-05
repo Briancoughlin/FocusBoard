@@ -18,7 +18,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
           cache-dependency-path: |
             backend/package-lock.json
@@ -37,6 +37,14 @@ jobs:
       - name: Run backend unit tests
         run: npm test
         working-directory: backend
+
+      - name: Confirm no secrets in config
+        run: |
+          if [ -f backend/config.json ]; then
+            echo "WARNING: config.json found in repo - should be gitignored!"
+            exit 1
+          fi
+          echo "config.json not present - good."
 
       - name: Run smoke tests (server must start)
         run: |
@@ -94,14 +102,6 @@ jobs:
       - name: Build frontend
         run: npm run build
         working-directory: frontend
-
-      - name: Confirm no secrets in config
-        run: |
-          if [ -f backend/config.json ]; then
-            echo "WARNING: config.json found in repo - should be gitignored!"
-            exit 1
-          fi
-          echo "config.json not present - good."
 
       - name: Check for hardcoded secrets
         run: |
