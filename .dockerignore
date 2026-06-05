@@ -1,0 +1,11 @@
+**/node_modules
+**/dist
+backend/logs
+backend/data
+backend/backups
+backend/config.json
+.env
+.git
+.gitignore
+*.md
+docs/

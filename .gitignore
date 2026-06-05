@@ -9,3 +9,4 @@ backend/data/
 backend/logs/
 backend/.auth-token
 backend/backups/
+focusboard-data/

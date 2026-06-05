@@ -2,7 +2,11 @@ import crypto from 'crypto';
 import os from 'os';
 
 function deriveKey() {
-  const raw = os.hostname() + os.userInfo().username + 'focusboard-v1';
+  // Docker / container installs set FOCUSBOARD_KEY in their .env file.
+  // Native installs fall back to machine-bound hostname+username (existing behaviour).
+  const raw = process.env.FOCUSBOARD_KEY
+    ? process.env.FOCUSBOARD_KEY + 'focusboard-v1'
+    : os.hostname() + os.userInfo().username + 'focusboard-v1';
   return crypto.createHash('sha256').update(raw).digest();
 }
 

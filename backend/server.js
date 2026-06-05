@@ -73,7 +73,11 @@ app.use('/api', (req, res, next) => {
 });
 
 // Serve built frontend static files — set auth cookie so visiting the app grants access
-const frontendDist = path.join(__dirname, '..', 'frontend', 'dist');
+// Docker copies the built frontend to public-dist/ alongside server.js.
+// Native installs find it at ../frontend/dist relative to this file.
+const frontendDist = fs.existsSync(path.join(__dirname, 'public-dist'))
+  ? path.join(__dirname, 'public-dist')
+  : path.join(__dirname, '..', 'frontend', 'dist');
 const cookieOpts = { httpOnly: true, sameSite: 'lax' };
 
 app.get('/', (req, res) => {

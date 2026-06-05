@@ -1,0 +1,26 @@
+services:
+  focusboard:
+    image: ghcr.io/briancoughlin/focusboard:latest
+    # To build locally instead of pulling: uncomment the next line and comment out image:
+    # build: .
+    container_name: focusboard
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      # Required: a stable secret string used to encrypt your config.
+      # Generate one with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+      # Keep this safe — changing it means re-entering all your credentials.
+      - FOCUSBOARD_KEY=${FOCUSBOARD_KEY}
+    volumes:
+      # Persistent data — all your tasks, settings, and backups live here.
+      # These folders are created automatically on first run.
+      - ./focusboard-data/data:/app/backend/data
+      - ./focusboard-data/logs:/app/backend/logs
+      - ./focusboard-data/backups:/app/backend/backups
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3001/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
