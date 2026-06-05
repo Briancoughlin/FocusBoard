@@ -18,7 +18,7 @@ FocusBoard is built to production standards despite being a personal tool. Here'
 - **Dependency scanning** — Dependabot runs weekly, auto-merging patch/minor updates when CI passes.
 
 ### 🧪 Testing
-- **55 automated tests** across 7 test suites:
+- **135 automated tests** — 76 backend + 59 frontend across 16 suites:
   - Jira status mapping (9 tests) — Unity-specific status names
   - AES-256-GCM encryption (5 tests) — config security
   - Config merge logic (5 tests) — input validation and secret masking
@@ -128,6 +128,10 @@ Go to **Windows Settings → Privacy & Security → Notifications** and enable *
 Go to **Settings** (gear icon) and enter your credentials. See the Integration Setup section below.
 
 ---
+
+## Installation
+
+Docker is now available as an alternative to the Windows native setup — no Node.js required. See [INSTALL.md](INSTALL.md) for all four installation options (Windows native, Docker, Windows .exe coming, Mac coming).
 
 ## After Installation
 

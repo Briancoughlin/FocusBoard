@@ -37,7 +37,15 @@ Open http://localhost:5173 for the dev server (with hot reload).
 
 ```
 focusboard/
+  setup.ps1                 One-command installer for Windows native installs
+  build.ps1                 Rebuilds frontend after code changes
+  Dockerfile                Single-container fallback (frontend + backend together)
+  docker-compose.yml        Two-service setup: nginx (frontend) + Node.js (backend)
+  .env.example              Template for FOCUSBOARD_KEY and other Docker env vars
+  .dockerignore             Build context exclusions
+  INSTALL.md                All 4 installation options (Windows native, Docker, exe coming, Mac coming)
   backend/                  Node.js/Express API (port 3001)
+    Dockerfile              Node.js-only container image
     routes/                 One file per integration (jira, gmail, github, etc.)
     tests/                  Backend unit tests (Node built-in test runner)
     backups/                Nightly gzipped data bundles (gitignored)
@@ -47,6 +55,8 @@ focusboard/
     backup.js               Creates a nightly gzipped backup of backend/data/
     restore.js              Restores a backup bundle produced by backup.js
   frontend/                 React + Vite + TypeScript
+    Dockerfile              nginx + built React image
+    nginx.conf              SPA routing, /api/ + /auth/ proxy to backend, security headers
     src/
       components/           UI components
       services/             API clients (api.ts, persistence.ts, theme.ts)
@@ -70,16 +80,18 @@ FocusBoard registers four Windows Scheduled Tasks:
 ## Running tests
 
 ```powershell
-# Backend (19 tests)
+# Backend (76 tests)
 cd backend
 node --test tests/*.test.js
 
-# Frontend (24 tests)
+# Frontend (59 tests)
 cd frontend
 npm test
 ```
 
-All 43 tests must pass before submitting a PR. CI will run them automatically.
+All 135 tests must pass before submitting a PR. CI will run them automatically.
+
+Docker is a supported install method — see [INSTALL.md](INSTALL.md) for the `docker-compose up` quick start. If you add behaviour gated on `FOCUSBOARD_DOCKER` or `FOCUSBOARD_KEY`, add tests to `backend/tests/docker-mode.test.js`.
 
 ---
 

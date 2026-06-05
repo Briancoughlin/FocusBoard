@@ -7,6 +7,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+- Docker support — multi-container setup with nginx (frontend) + Node.js (backend)
+- backend/Dockerfile, frontend/Dockerfile, docker-compose.yml, .env.example, .dockerignore
+- INSTALL.md — unified installation guide covering all 4 options (Windows native, Docker, Windows .exe coming, Mac coming)
+- FOCUSBOARD_KEY env var — stable encryption key for containers (overrides machine-bound key)
+- FOCUSBOARD_DOCKER=true — tells backend it's behind nginx with unexposed port; skips localhost auth check
+- nginx security headers: CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy
+- Release workflow now builds and pushes focusboard-frontend and focusboard-backend images to GHCR
+- CI validates docker-compose.yml syntax and builds both images on every push
+
+### Fixed
+- Server exits with a clear error message if FOCUSBOARD_DOCKER=true but FOCUSBOARD_KEY not set (previously would silently use unstable container hostname as key)
+- 76 backend tests (14 new docker-mode tests covering key derivation, auth bypass, startup validation)
+
 ---
 
 ## [1.3.1] - 2026-06-05

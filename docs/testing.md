@@ -7,7 +7,7 @@ All tests run automatically on every commit via pre-commit hooks (husky) and Git
 ## Running tests locally
 
 ```powershell
-# Backend unit tests (60 tests)
+# Backend unit tests (76 tests)
 cd backend
 node --test tests/*.test.js
 
@@ -143,6 +143,40 @@ Source filtering in `/api/sync` based on `features` config object.
 
 ---
 
+### `docker-mode.test.js` — 14 tests
+Docker-specific key derivation, auth bypass, and startup validation.
+
+**Key derivation (5 tests)**
+
+| Test | Covers |
+|---|---|
+| FOCUSBOARD_KEY used when set | Container key takes priority |
+| Same key always produces same output | Deterministic derivation |
+| Different keys produce different output | Key isolation |
+| Falls back to machine binding when not set | Native mode unchanged |
+| Machine key differs from Docker key | No accidental cross-mode collision |
+
+**Auth bypass (4 tests)**
+
+| Test | Covers |
+|---|---|
+| Bypasses localhost check when FOCUSBOARD_DOCKER=true | nginx is the gatekeeper |
+| Does not bypass when env var is unset | Default is secure |
+| Does not bypass when env var is "false" | Explicit opt-in only |
+| Case-sensitive — only "true" works, not "True" or "1" | Strict string match |
+
+**Startup validation (5 tests)**
+
+| Test | Covers |
+|---|---|
+| Valid when both FOCUSBOARD_DOCKER and FOCUSBOARD_KEY are set | Happy path |
+| Invalid when FOCUSBOARD_DOCKER=true but FOCUSBOARD_KEY missing | Exits with clear error |
+| Invalid when FOCUSBOARD_KEY is empty string | Empty string treated as missing |
+| Valid in native mode without key | Machine binding used |
+| Valid in native mode with optional key | Key present, machine mode |
+
+---
+
 ## Backend smoke tests — `backend/tests/smoke.test.js`
 
 Run with `npm run test:smoke`. Requires the server to be running on port 3001 (and optionally the watchdog on port 3002). Tests skip gracefully if the server is not running.
@@ -158,6 +192,8 @@ Run with `npm run test:smoke`. Requires the server to be running on port 3001 (a
 | Watchdog health | `GET http://localhost:3002/health` | `alive: true`, `watchdog: true` (skips if watchdog not running) |
 | Done-tasks report | `GET /api/report/done-tasks` | `{ tasks: Array, doneDates: Object }` |
 | Task cache | `GET /api/cache` | `{ tasks: Array }` |
+| Docker mode — API accessible without cookies | `GET /api/sync` with FOCUSBOARD_DOCKER=true | Auth bypass active in Docker mode |
+| Docker mode — FOCUSBOARD_KEY presence verified | Startup check | Server does not start if key is missing in Docker mode |
 
 ---
 
@@ -293,6 +329,10 @@ Every push and pull request to `main` runs `.github/workflows/ci.yml` on Node.js
 | TypeScript type check | `npx tsc --noEmit` | **Blocks merge** |
 | Frontend build | `npm run build` | **Blocks merge** |
 | Hardcoded secret scan | regex grep on `*.ts`, `*.tsx`, `*.js` | **Blocks merge** |
+| Validate docker-compose.yml | `docker compose config` | Warn (non-blocking) |
+| Build backend Docker image | `docker build ./backend` | Warn (non-blocking) |
+| Build frontend Docker image | `docker build ./frontend` | Warn (non-blocking) |
+| Smoke tests in Docker mode | `FOCUSBOARD_DOCKER=true npm run test:smoke` | Warn (non-blocking) |
 
 Steps marked **Blocks merge** will fail the CI check and prevent the PR from being merged. Steps marked Warn use `continue-on-error: true` — they log a warning but don't fail the build.
 
@@ -309,7 +349,8 @@ Steps marked **Blocks merge** will fail the CI check and prevent the PR from bei
 | Backend unit | backup.test.js | 14 |
 | Backend unit | jira-vpn.test.js | 9 |
 | Backend unit | feature-toggles.test.js | 6 |
-| Backend smoke | smoke.test.js | 9 |
+| Backend unit | docker-mode.test.js | 14 |
+| Backend smoke | smoke.test.js | 11 |
 | Frontend unit | accessibility.test.ts | 12 |
 | Frontend unit | actionLog.test.ts | 6 |
 | Frontend unit | filters.test.ts | 5 |
@@ -317,4 +358,4 @@ Steps marked **Blocks merge** will fail the CI check and prevent the PR from bei
 | Frontend unit | week-filter.test.ts | 7 |
 | Frontend unit | vpn-banner.test.ts | 8 |
 | Frontend unit | fix-version.test.ts | 8 |
-| **Total** | | **122** |
+| **Total** | | **136** |

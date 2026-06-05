@@ -29,10 +29,8 @@ Human-readable terminal output: ⚡ banner, integration status (✓ / ○ not co
 
 **Theme:** Share it properly
 
-### Docker (fastest path)
-A `docker-compose.yml` and `Dockerfile` that lets anyone run FocusBoard with zero Node.js setup. Published to GitHub Container Registry. One command to run, one command to update.
-
-Best for: technical colleagues, anyone already using Docker.
+### ✅ Docker
+Multi-container setup: nginx serves the React frontend and proxies /api/ to the Node.js backend. Backend port is not exposed to the host. Released to GHCR on every version tag.
 
 ### Standalone Executables
 Single `.exe` (Windows) and binary (Mac) — no Node.js, no terminals, no git. Download, double-click, done.
