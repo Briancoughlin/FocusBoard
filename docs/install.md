@@ -2,6 +2,28 @@
 
 Four ways to run FocusBoard. Pick the one that fits your setup.
 
+## Platform support summary
+
+| Platform | Supported now | How |
+|---|---|---|
+| **Windows** | ✅ Full support | Native (Option 1) or Docker (Option 2) |
+| **Mac** | ⚠️ Docker only | Option 2 — with limitations (see below) |
+| **Linux** | ⚠️ Docker only | Option 2 |
+
+### Mac limitations (Docker)
+
+Mac users can run FocusBoard today via Docker, but with these limitations:
+
+| Feature | Mac + Docker | Reason |
+|---|---|---|
+| Jira, Gmail, Calendar, GitHub, Claude AI | ✅ | API-based, works everywhere |
+| **Slack toast notifications** | ❌ | Uses Windows-only desktop APIs — macOS does not allow third-party apps to read other apps' notifications (Apple sandbox model) |
+| **Watchdog auto-restart** | ❌ | Uses PowerShell — `restart: unless-stopped` in Docker replaces this |
+
+**Slack on Mac:** Without the Slack bot token, there is no Slack integration on Mac. The Windows notification capture is not possible on macOS. Once a Slack bot token is configured in Settings, API-based Slack fetching works on all platforms including Mac.
+
+A native Mac app (`.dmg`) is planned for v1.4 but the Slack limitation remains until bot token access is available.
+
 ---
 
 ## Option 1 — Windows (native) ✅
@@ -129,8 +151,15 @@ Browser → http://localhost:3001
 ### Notes
 - Your credentials and data live in `./focusboard-data/` on your machine — back this up
 - `FOCUSBOARD_KEY` encrypts your stored API tokens — never change it once set
-- Windows Slack toast notifications don't work in Docker — use the Slack API bot token instead
 - `restart: unless-stopped` on both containers replaces the Windows watchdog
+
+### Slack limitations in Docker
+Slack toast notification capture **does not work** in Docker on any platform:
+- **Windows + Docker:** The Windows notification watcher runs natively but cannot communicate with the Docker backend's in-process queue
+- **Mac + Docker:** macOS does not expose other apps' notifications to third-party processes — Apple's sandbox model prevents this entirely
+- **Linux + Docker:** No desktop notification system available
+
+**The only Slack solution in Docker is a bot token.** Add it in Settings → Integrations → Slack → Bot Token. This works on all platforms and gives you DMs and mentions via the Slack API.
 
 ---
 
@@ -148,32 +177,35 @@ What to expect:
 
 ---
 
-## Option 4 — Mac 🔜 Coming in v1.4
+## Option 4 — Mac native 🔜 Coming in v1.4
 
 **Best for:** Mac users who want a native experience without Docker.
 
 > **Status:** In development alongside the Windows .exe. Will be available as a `.dmg` download with v1.4.
+>
+> **Mac users today:** Use Option 2 (Docker) — see [Mac limitations](#mac-limitations-docker) above.
 
 What to expect:
 - Universal binary (Apple Silicon + Intel)
 - Launches as a background service via launchd
 - Menu bar icon
-- Note: Slack Windows notification capture is Windows-only — use the Slack API token on Mac
+- All integrations work — **except** Slack toast notifications (macOS does not allow third-party apps to read other apps' notifications — a Slack bot token is required for Slack on Mac)
 
 ---
 
 ## Choosing an option
 
-| | Windows (native) | Docker | Windows .exe | Mac |
+| | Windows (native) | Docker | Windows .exe | Mac native |
 |---|---|---|---|---|
 | **Requires Node.js** | Auto-installed | ❌ No | ❌ No | ❌ No |
 | **Requires Git** | Yes | ❌ No | ❌ No | ❌ No |
-| **Auto-starts at login** | ✅ | Depends on Docker | ✅ | ✅ |
-| **Slack toast notifications** | ✅ | ❌ | ✅ | ❌ |
-| **Watchdog auto-restart** | ✅ | Via Docker | ✅ | ✅ |
-| **Works on Mac** | ❌ | ✅ | ❌ | ✅ |
+| **Auto-starts at login** | ✅ | Depends on Docker | ✅ | ✅ (launchd) |
+| **Slack toast notifications** | ✅ | ❌ Not possible | ✅ | ❌ macOS limitation |
+| **Slack via bot token** | ✅ | ✅ | ✅ | ✅ |
+| **Watchdog auto-restart** | ✅ | Via Docker restart | ✅ | ✅ |
+| **Works on Mac** | ❌ | ✅ (with limitations) | ❌ | ✅ |
 | **Works on Linux** | ❌ | ✅ | ❌ | ❌ |
-| **Available now** | ✅ | ✅ | Soon | Soon |
+| **Available now** | ✅ | ✅ | 🔜 v1.4 | 🔜 v1.4 |
 
 ---
 
