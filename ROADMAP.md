@@ -25,11 +25,36 @@ Human-readable terminal output: ⚡ banner, integration status (✓ / ○ not co
 
 ---
 
-## Next: v2.0 — Extensible
+## Next: v1.4 — Distribution
 
-## v2.0 — Extensible (next)
+**Theme:** Share it properly
+
+### Docker (fastest path)
+A `docker-compose.yml` and `Dockerfile` that lets anyone run FocusBoard with zero Node.js setup. Published to GitHub Container Registry. One command to run, one command to update.
+
+Best for: technical colleagues, anyone already using Docker.
+
+### Standalone Executables
+Single `.exe` (Windows) and binary (Mac) — no Node.js, no terminals, no git. Download, double-click, done.
+
+Built with `@yao-pkg/pkg` and distributed via GitHub Releases. GitHub Actions builds both platforms automatically on every version tag.
+
+Best for: non-technical users, the broader ADHD community.
+
+### Mac Support
+Full support for Apple Silicon (arm64) and Intel (x64) Macs. Docker handles this natively. Exe approach needs a Gatekeeper workaround (documented in release notes).
+
+### Self-updating
+- Docker: `docker pull` gets the latest image automatically
+- Exe: download and replace binary from GitHub Release
+
+---
+
+## v2.0 — Extensible
 
 **Theme:** Build on it
+
+*Note: the Discourse / Unity Discussions plugin is blocked until after the platform migration is complete.*
 
 ### Plugin Architecture
 A formal plugin interface so integrations can be added without touching core code.
@@ -56,30 +81,7 @@ Named layouts instead of a fixed structure:
 ### Discourse / Unity Discussions
 First third-party plugin. Surfaces community posts needing staff response, mentions, flagged content. Particularly valuable for Community PMs.
 
----
-
-## v2.1 — Distribution
-
-**Theme:** Share it properly
-
-### Docker (fastest path)
-A `docker-compose.yml` and `Dockerfile` that lets anyone run FocusBoard with zero Node.js setup. Published to GitHub Container Registry. One command to run, one command to update.
-
-Best for: technical colleagues, Unity developers, anyone already using Docker.
-
-### Standalone Executables
-Single `.exe` (Windows) and binary (Mac) — no Node.js, no terminals, no git. Download, double-click, done.
-
-Built with `@yao-pkg/pkg` and distributed via GitHub Releases. GitHub Actions builds both platforms automatically on every version tag.
-
-Best for: non-technical users, the broader ADHD community.
-
-### Mac Support
-Full support for Apple Silicon (arm64) and Intel (x64) Macs. Docker handles this natively. Exe approach needs a Gatekeeper workaround (documented in release notes).
-
-### Self-updating
-- Docker: `docker pull` gets the latest image automatically
-- Exe: download and replace binary from GitHub Release
+**Blocked on:** Unity platform migration completing first.
 
 ---
 
@@ -106,8 +108,7 @@ These are ideas worth exploring once the core is stable. Not committed, not prio
 - **Handoff notes** — generate a handoff document when going on leave
 
 ### Accessibility
-- **Colourblind-safe urgency indicators** — add icon/pattern secondary signals alongside colour strips so overdue/today/soon is clear without relying on red/orange/yellow distinction
-- **Keyboard-only navigation** — full drag-and-drop equivalent via keyboard
+- **Keyboard-only drag-and-drop** — full kanban navigation without a pointing device
 - **High contrast mode** — beyond the Windows theme integration
 - **Screen reader testing** — verified with NVDA and Windows Narrator
 
