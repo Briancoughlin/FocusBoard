@@ -66,16 +66,24 @@ First third-party plugin. Surfaces community posts needing staff response, menti
 
 **Theme:** Share it properly
 
+### Docker (fastest path)
+A `docker-compose.yml` and `Dockerfile` that lets anyone run FocusBoard with zero Node.js setup. Published to GitHub Container Registry. One command to run, one command to update.
+
+Best for: technical colleagues, Unity developers, anyone already using Docker.
+
 ### Standalone Executables
 Single `.exe` (Windows) and binary (Mac) — no Node.js, no terminals, no git. Download, double-click, done.
 
 Built with `@yao-pkg/pkg` and distributed via GitHub Releases. GitHub Actions builds both platforms automatically on every version tag.
 
-### Mac Support
-Full support for Apple Silicon (arm64) and Intel (x64) Macs. Gatekeeper workaround documented in release notes.
+Best for: non-technical users, the broader ADHD community.
 
-### Self-updating Executables
-Download and replace the binary automatically when a new version is released. No manual intervention required.
+### Mac Support
+Full support for Apple Silicon (arm64) and Intel (x64) Macs. Docker handles this natively. Exe approach needs a Gatekeeper workaround (documented in release notes).
+
+### Self-updating
+- Docker: `docker pull` gets the latest image automatically
+- Exe: download and replace binary from GitHub Release
 
 ---
 

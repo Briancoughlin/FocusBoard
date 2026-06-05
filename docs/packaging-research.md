@@ -151,6 +151,100 @@ Full notarization ($99/year Apple Developer account) is overkill for an internal
 
 ---
 
+## Alternative: Docker
+
+Docker deserves serious consideration alongside the exe approach — it may actually be faster and safer for initial distribution.
+
+### Why Docker might be the right first move
+
+**Pros:**
+- **No Node.js required** — Docker handles the runtime, user just needs Docker Desktop
+- **Identical on Windows and Mac** — one `docker-compose.yml` works everywhere
+- **No port conflict crashes** — container restarts cleanly, isolated from host network changes
+- **No scheduled task complexity** — Docker Desktop auto-starts containers at login
+- **Easy updates** — `docker pull` gets the latest image, no rebuild needed
+- **Already familiar to technical users** — Unity developers likely have Docker installed
+
+**Cons:**
+- Docker Desktop has a licence cost for commercial use (free for personal/small business)
+- Adds ~4GB overhead for Docker Desktop if not already installed
+- Windows notifications (Slack watcher) harder to access from inside a container
+
+### What a Docker setup would look like
+
+`docker-compose.yml`:
+```yaml
+version: '3.8'
+services:
+  focusboard:
+    build: .
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./backend/config.json:/app/backend/config.json
+      - ./backend/data:/app/backend/data
+      - ./backend/logs:/app/backend/logs
+    restart: unless-stopped
+```
+
+`Dockerfile`:
+```dockerfile
+FROM node:20-alpine
+WORKDIR /app
+COPY backend/package*.json ./backend/
+RUN cd backend && npm ci --only=production
+COPY frontend/dist ./frontend/dist
+COPY backend ./backend
+EXPOSE 3001
+CMD ["node", "backend/server.js"]
+```
+
+User setup:
+```bash
+git clone https://github.com/Briancoughlin/FocusBoard
+cd focusboard
+npm run build --prefix frontend
+docker-compose up -d
+```
+
+Open http://localhost:3001. Done.
+
+### Publish to GitHub Container Registry (free)
+
+```yaml
+- name: Build and push Docker image
+  uses: docker/build-push-action@v5
+  with:
+    push: true
+    tags: ghcr.io/briancoughlin/focusboard:latest
+```
+
+Users then just run:
+```bash
+docker run -p 3001:3001 -v $(pwd)/data:/app/backend/data ghcr.io/briancoughlin/focusboard:latest
+```
+
+No git clone needed at all.
+
+### Docker vs exe — which first?
+
+| | Docker | exe (pkg) |
+|---|---|---|
+| Setup complexity | Medium | Low |
+| Works on Mac | ✅ Native | ⚠️ Needs signing workaround |
+| Works on Windows | ✅ | ✅ |
+| Network resilience | ✅ Better isolation | ⚠️ Crashes on network change |
+| Slack notifications | ❌ Hard from container | ✅ Native |
+| Non-technical users | ⚠️ Needs Docker Desktop | ✅ Double-click |
+| Licence cost | ⚠️ Docker Desktop commercial | ✅ Free |
+| Updates | ✅ docker pull | ⚠️ Complex self-replace |
+
+**Recommendation:**
+- **Docker first** — faster to ship, more reliable, great for technical Unity colleagues
+- **exe later** — once Docker proves the concept, wrap it for the broader ADHD community
+
+---
+
 ## Key Gotchas
 
 1. **ESM bundling is mandatory** — esbuild step before pkg, always
