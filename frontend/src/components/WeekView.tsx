@@ -14,7 +14,7 @@
  * that day. The badge turns red when any of those tasks is high priority or overdue.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Clock, CheckCircle } from 'lucide-react';
 import { Droppable } from '@hello-pangea/dnd';
 import type { Task } from '../types';
@@ -70,6 +70,7 @@ const SOURCE_BORDER: Record<string, string> = {
 };
 
 export function WeekView({ tasks, allTasks, selectedDay, onDaySelect, onTaskDone }: Props) {
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const calendarTasks = tasks.filter(t => t.source === 'calendar');
   const weekDays = getWeekDays();
   const today = new Date();
@@ -225,9 +226,12 @@ export function WeekView({ tasks, allTasks, selectedDay, onDaySelect, onTaskDone
                         const borderColor = SOURCE_BORDER[item.source] || 'var(--border)';
                         // Calendar events show a time badge; scheduled tasks show their source label.
                         const isCalendar = item.source === 'calendar';
+                        const isExpanded = expandedId === item.id;
                         const cardContent = () => (
                           <div
-                            className="p-1.5 rounded-lg text-xs transition-all group relative"
+                            className="p-1.5 rounded-lg text-xs transition-all relative"
+                            onMouseEnter={() => setExpandedId(item.id)}
+                            onMouseLeave={() => setExpandedId(null)}
                             style={{
                               backgroundColor: 'var(--bg-card)',
                               borderLeft: `3px solid ${borderColor}`,
@@ -238,7 +242,20 @@ export function WeekView({ tasks, allTasks, selectedDay, onDaySelect, onTaskDone
                             }}
                           >
                             <div className="calendar-content">
-                            <p className="font-medium line-clamp-2 leading-tight" style={{ color: 'var(--text-primary)' }}>
+                            <p
+                              className="font-medium leading-tight"
+                              style={{
+                                color: 'var(--text-primary)',
+                                ...(isExpanded
+                                  ? {}
+                                  : {
+                                      display: '-webkit-box',
+                                      WebkitBoxOrient: 'vertical',
+                                      WebkitLineClamp: 2,
+                                      overflow: 'hidden',
+                                    }),
+                              }}
+                            >
                               {item.title.replace('[All Day] ', '')}
                             </p>
                             </div>
@@ -257,7 +274,8 @@ export function WeekView({ tasks, allTasks, selectedDay, onDaySelect, onTaskDone
                             {!isCalendar && onTaskDone && (
                               <button
                                 onClick={e => { e.stopPropagation(); onTaskDone(item.id); }}
-                                className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="absolute top-1 right-1 transition-opacity"
+                                style={{ opacity: isExpanded ? 1 : 0 }}
                                 title="Mark as done"
                                 aria-label="Mark as done"
                               >

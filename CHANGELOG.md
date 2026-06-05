@@ -5,6 +5,39 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [Unreleased]
+
+---
+
+## [1.3.0] - 2026-06-05
+
+### Added
+- **Watchdog process** (`backend/watchdog.js`) — separate lightweight process on port 3002 that can restart FocusBoard on demand; registered as the `FocusBoardWatchdog` scheduled task
+- **Offline recovery page** (`frontend/public/offline.html`) — shown by the service worker when the main server is unreachable; includes a one-click restart button that calls the watchdog
+- **Nightly backups** (`backend/backup.js`, `backend/restore.js`) — all app data saved nightly as a gzipped JSON bundle to `backend/backups/`; registered as the `FocusBoardBackup` scheduled task; old bundles auto-pruned
+- **Watcher heartbeat indicator** — notification watcher pings `/api/health/watcher/ping` every 10 seconds; sidebar shows 🟢 (alive) or 🔴 (stopped) so notification outages are immediately visible
+- **API Cutover date** — Settings → Integrations tab with a date picker to limit how far back each API fetches
+- **Completed history log** — tasks moved to Done are written to `backend/data/completed-history.json` for use in the weekly report
+- **Privacy mode** — 👁 eye icon in the header blurs all on-screen content for demos and screen sharing; click again to reveal
+- **`/api/report/done-tasks` endpoint** — reconstructs weekly done-task history from Jira API and the completed-history log
+- **Feature toggles** — Settings → Integrations tab; each source has a toggle in its header; disabled sources are skipped entirely during sync
+- **Settings sub-tabs** — Settings page split into Integrations (credentials + toggles) and App (appearance, maintenance)
+- **Productivity leaderboard** — click the 🏆 trophy to see daily high scores, personal best ⭐, current streak 🔥, and all-time total
+- **New high score fireworks** — confetti burst + "New High Score!" banner when you beat your personal best
+- **Fix version filter** — dropdown in the header nav auto-selects the current quarter; Quick Add tasks are stamped with the selected fix version
+- **Calendar item expand on hover** — week view task titles expand to full text on hover; collapse when you move away
+- **Friendly VPN warning** — when Jira is unreachable due to a network error, a clear amber banner explains the likely cause and offers a one-click sync retry
+- **Clear cache & reload button** — Settings → App → Maintenance; unregisters the service worker and clears all cached assets in one click
+- **119 automated tests** — 34 back-end + 85 front-end across 15 suites; new suites for VPN detection, feature toggle filtering, fix version logic
+
+### Fixed
+- **Weekly report** — now uses `/api/report/done-tasks` so history survives server restarts and daily resets
+- **Trophy midnight reset** — counter checks every minute and resets correctly when the date changes
+- **Network crash** — server now binds to `127.0.0.1` only, preventing crashes when WiFi or VPN interfaces change
+- **Settings page remounting** — `Toggle`, `IntegrationSection`, and `TestButton` moved to module scope so React no longer recreates them on every render
+
+---
+
 ## [1.2.1] - 2026-06-04
 
 ### Added

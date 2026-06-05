@@ -133,22 +133,30 @@ Go to **Settings** (gear icon) and enter your credentials. See the Integration S
 
 FocusBoard starts automatically every time you log into Windows. It runs at **http://localhost:3001**.
 
-Two background services run:
-- **FocusBoard** — the main server
+Four background services run:
+- **FocusBoard** — the main server (port 3001)
 - **FocusBoardNotifications** — captures Slack Windows notifications
+- **FocusBoardBackup** — nightly gzipped backup of all app data
+- **FocusBoardWatchdog** — watchdog process (port 3002) that can restart FocusBoard on demand
 
 ```powershell
 # Stop
 Stop-ScheduledTask -TaskName "FocusBoard"
 Stop-ScheduledTask -TaskName "FocusBoardNotifications"
+Stop-ScheduledTask -TaskName "FocusBoardBackup"
+Stop-ScheduledTask -TaskName "FocusBoardWatchdog"
 
 # Start
 Start-ScheduledTask -TaskName "FocusBoard"
 Start-ScheduledTask -TaskName "FocusBoardNotifications"
+Start-ScheduledTask -TaskName "FocusBoardBackup"
+Start-ScheduledTask -TaskName "FocusBoardWatchdog"
 
 # Uninstall
 Unregister-ScheduledTask -TaskName "FocusBoard" -Confirm:$false
 Unregister-ScheduledTask -TaskName "FocusBoardNotifications" -Confirm:$false
+Unregister-ScheduledTask -TaskName "FocusBoardBackup" -Confirm:$false
+Unregister-ScheduledTask -TaskName "FocusBoardWatchdog" -Confirm:$false
 ```
 
 ### Updating after code changes
@@ -156,7 +164,9 @@ Unregister-ScheduledTask -TaskName "FocusBoardNotifications" -Confirm:$false
 cd C:\path\to\focusboard
 .\build.ps1
 Stop-ScheduledTask -TaskName "FocusBoard"
+Stop-ScheduledTask -TaskName "FocusBoardWatchdog"
 Start-ScheduledTask -TaskName "FocusBoard"
+Start-ScheduledTask -TaskName "FocusBoardWatchdog"
 ```
 
 ---
@@ -305,6 +315,18 @@ Drag any card onto a calendar day in Focus view to schedule it. Cards with due d
 ### Done Column
 Only shows tasks completed today — resets each morning. Trophy counter tracks daily completions.
 
+### Privacy Mode
+Click the 👁 eye icon in the header to instantly blur all content on screen. Useful for demos, screen recordings, or any situation where you need to share your screen without exposing task details. Click again to reveal.
+
+### Watcher Heartbeat Indicator
+The notification watcher pings the server every 10 seconds. A 🟢 green dot in the sidebar confirms the watcher is alive; 🔴 red means it has stopped responding. This makes it immediately obvious if notifications have silently stopped working.
+
+### API Cutover Date
+Settings → API Cutover section includes a date picker to record when your team switches to a new API. Used as context in reports and digest summaries.
+
+### Nightly Backups
+All app data is automatically backed up each night as a gzipped JSON bundle in `backend/backups/`. Backups can be restored via `backend/restore.js`. Old backups are automatically pruned to save disk space.
+
 ### Theming
 Automatically follows your Windows accent colour and dark/light mode. Manual override available in Settings → Appearance.
 
@@ -382,6 +404,8 @@ All data stays on your machine. Nothing sent to external servers beyond the APIs
 | Due date overrides | `backend/data/due-date-overrides.json` |
 | Done dates | `backend/data/done-dates.json` |
 | Completed today | `backend/data/completed-today.json` |
+| Completed history log | `backend/data/completed-history.json` |
+| Nightly backups | `backend/backups/` (gzipped JSON bundles, auto-rotated) |
 | Inbox read state | `backend/data/inbox-read.json` |
 | Slack notifications | `backend/data/slack-notifications.json` |
 | Focus view split | `backend/data/split-percent.json` |

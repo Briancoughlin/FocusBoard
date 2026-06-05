@@ -16,6 +16,10 @@ interface Props {
   privacyMode: boolean;
   onTogglePrivacy: () => void;
   completedToday: number;
+  onShowLeaderboard: () => void;
+  fixVersions: string[];
+  selectedFixVersion: string;
+  onFixVersionChange: (v: string) => void;
 }
 
 function formatLastSynced(d: Date | null): string {
@@ -29,7 +33,7 @@ function formatLastSynced(d: Date | null): string {
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-export function Header({ view, onViewChange, onRefresh, isRefreshing, isSyncing, lastSynced, onPaste, onShowDigest, onShowReport, onShowBugReport, privacyMode, onTogglePrivacy, completedToday }: Props) {
+export function Header({ view, onViewChange, onRefresh, isRefreshing, isSyncing, lastSynced, onPaste, onShowDigest, onShowReport, onShowBugReport, privacyMode, onTogglePrivacy, completedToday, onShowLeaderboard, fixVersions, selectedFixVersion, onFixVersionChange }: Props) {
   return (
     <header className="px-6 py-3 flex items-center justify-between shadow-sm sticky top-0 z-10" style={{ backgroundColor: 'var(--bg-header)', borderBottom: '1px solid var(--border)' }}>
       {/* Left: Brand */}
@@ -46,40 +50,62 @@ export function Header({ view, onViewChange, onRefresh, isRefreshing, isSyncing,
         <span className="text-xs px-1.5 py-0.5 rounded font-mono" style={{ color: 'var(--text-secondary)', backgroundColor: 'var(--bg)' }}>v{version}</span>
       </div>
 
-      {/* Center: Nav tabs */}
-      <nav className="flex items-center gap-1 bg-gray-100 rounded-lg p-1" aria-label="Main navigation">
-        {(['board', 'focus', 'settings'] as const).map(v => (
-          <button
-            key={v}
-            onClick={() => onViewChange(v)}
-            aria-current={view === v ? 'page' : undefined}
-            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all capitalize ${
-              view === v
-                ? 'text-white shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-            style={view === v ? { backgroundColor: 'var(--accent)' } : {}}
+      {/* Center: Nav tabs + fix version filter */}
+      <div className="flex items-center gap-2">
+        <nav className="flex items-center gap-1 bg-gray-100 rounded-lg p-1" aria-label="Main navigation">
+          {(['board', 'focus', 'settings'] as const).map(v => (
+            <button
+              key={v}
+              onClick={() => onViewChange(v)}
+              aria-current={view === v ? 'page' : undefined}
+              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all capitalize ${
+                view === v
+                  ? 'text-white shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+              style={view === v ? { backgroundColor: 'var(--accent)' } : {}}
+            >
+              {v === 'board' ? 'Backlog' : v === 'focus' ? 'Focus' : 'Settings'}
+            </button>
+          ))}
+        </nav>
+        {fixVersions.length > 0 && (
+          <select
+            value={selectedFixVersion}
+            onChange={e => onFixVersionChange(e.target.value)}
+            aria-label="Filter by fix version"
+            title="Filter tasks by fix version / quarter"
+            className="text-xs border rounded-lg px-2 py-1.5 font-medium transition-all focus:outline-none focus:ring-2"
+            style={{
+              borderColor: selectedFixVersion === 'all' ? 'var(--border)' : 'var(--accent)',
+              color: selectedFixVersion === 'all' ? 'var(--text-secondary)' : 'var(--accent)',
+              backgroundColor: selectedFixVersion === 'all' ? 'var(--bg)' : 'var(--accent-light)',
+            }}
           >
-            {v === 'board' ? 'Backlog' : v === 'focus' ? 'Focus' : 'Settings'}
-          </button>
-        ))}
-      </nav>
+            <option value="all">All versions</option>
+            {fixVersions.map(v => (
+              <option key={v} value={v}>{v}</option>
+            ))}
+          </select>
+        )}
+      </div>
 
       {/* Right: sync info + actions */}
       <div className="flex items-center gap-3">
-        {completedToday > 0 && (
-          <div
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 rounded-lg"
-            title={`${completedToday} tasks completed today`}
-            aria-label={`${completedToday} tasks completed today`}
-            role="status"
-            aria-live="polite"
-          >
-            <Trophy size={14} className="text-emerald-500" aria-hidden="true" />
-            <span className="text-sm font-semibold text-emerald-600">{completedToday}</span>
-            <span className="text-xs text-emerald-500 hidden sm:inline">done today</span>
-          </div>
-        )}
+        <button
+          onClick={onShowLeaderboard}
+          title="View productivity leaderboard"
+          aria-label={completedToday > 0 ? `${completedToday} tasks completed today — view leaderboard` : 'View productivity leaderboard'}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all hover:bg-emerald-100 ${completedToday > 0 ? 'bg-emerald-50' : 'bg-transparent hover:bg-emerald-50'}`}
+        >
+          <Trophy size={14} className="text-emerald-500" aria-hidden="true" />
+          {completedToday > 0 && (
+            <>
+              <span className="text-sm font-semibold text-emerald-600">{completedToday}</span>
+              <span className="text-xs text-emerald-500 hidden sm:inline">done today</span>
+            </>
+          )}
+        </button>
         <span className="text-xs text-gray-400 hidden sm:inline">
           {isSyncing ? 'Syncing...' : formatLastSynced(lastSynced)}
         </span>

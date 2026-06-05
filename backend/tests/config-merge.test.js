@@ -13,6 +13,8 @@ const ALLOWED_FIELDS = [
   'githubToken', 'githubBaseUrl',
 ];
 
+const ALLOWED_FEATURE_KEYS = ['jira', 'gmail', 'calendar', 'slack', 'github', 'aiDigest', 'weeklyReport', 'notifications'];
+
 /**
  * Merge logic extracted from the POST /api/config handler in server.js
  */
@@ -33,6 +35,14 @@ function mergeConfig(existing, incoming) {
     incoming.slackChannelMap !== null
   ) {
     merged.slackChannelMap = incoming.slackChannelMap;
+  }
+
+  if (incoming.features !== undefined && typeof incoming.features === 'object' && incoming.features !== null) {
+    const cleaned = {};
+    for (const key of ALLOWED_FEATURE_KEYS) {
+      if (typeof incoming.features[key] === 'boolean') cleaned[key] = incoming.features[key];
+    }
+    merged.features = { ...(existing.features || {}), ...cleaned };
   }
 
   return merged;
@@ -71,4 +81,19 @@ test('slackChannelMap object saves correctly', () => {
   const incoming = { slackChannelMap: { general: 'C12345', dev: 'C67890' } };
   const result = mergeConfig(existing, incoming);
   assert.deepEqual(result.slackChannelMap, { general: 'C12345', dev: 'C67890' });
+});
+
+test('features object is preserved through config merge', () => {
+  const existing = {};
+  const incoming = { features: { jira: false, gmail: true } };
+  const result = mergeConfig(existing, incoming);
+  assert.deepEqual(result.features, { jira: false, gmail: true });
+});
+
+test('features object with invalid (non-boolean) values are ignored', () => {
+  const existing = {};
+  const incoming = { features: { jira: 'yes', gmail: 1, calendar: false } };
+  const result = mergeConfig(existing, incoming);
+  // Only calendar is a boolean — jira and gmail should be dropped
+  assert.deepEqual(result.features, { calendar: false });
 });

@@ -79,6 +79,29 @@ describe('Smoke tests — server must be running on port 3001', () => {
     assert.ok(typeof result.body.githubConfigured === 'boolean', 'Should have githubConfigured boolean');
   });
 
+  it('GET /api/config returns a features object with boolean values for known keys', async () => {
+    let result;
+    try {
+      result = await get('/api/config');
+    } catch (err) {
+      if (err.name === 'AbortError' || err.code === 'ECONNREFUSED') {
+        console.warn('⚠️  Server not running — skipping smoke tests');
+        return;
+      }
+      throw err;
+    }
+
+    assert.equal(result.ok, true, `Config should return 200, got ${result.status}`);
+    const features = result.body.features;
+    assert.ok(features !== null && typeof features === 'object' && !Array.isArray(features), 'Should have features object');
+    const knownKeys = ['jira', 'gmail', 'calendar', 'slack', 'github', 'aiDigest', 'weeklyReport', 'notifications'];
+    for (const key of knownKeys) {
+      if (key in features) {
+        assert.equal(typeof features[key], 'boolean', `features.${key} should be boolean`);
+      }
+    }
+  });
+
   it('GET /api/update/check returns update shape', async () => {
     let result;
     try {
@@ -109,6 +132,43 @@ describe('Smoke tests — server must be running on port 3001', () => {
     }
     assert.equal(result.ok, true, `Watcher health should return 200, got ${result.status}`);
     assert.ok(typeof result.body.alive === 'boolean', 'Should have alive boolean');
+  });
+
+  it('GET http://localhost:3002/health — watchdog is running', async () => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), TIMEOUT);
+    let result;
+    try {
+      const res = await fetch('http://localhost:3002/health', { signal: controller.signal });
+      result = { ok: res.ok, status: res.status, body: await res.json() };
+    } catch (err) {
+      if (err.name === 'AbortError' || err.code === 'ECONNREFUSED') {
+        console.warn('⚠️  Watchdog not running on port 3002 — skipping watchdog smoke test');
+        return;
+      }
+      throw err;
+    } finally {
+      clearTimeout(timer);
+    }
+    assert.equal(result.ok, true, `Watchdog health should return 200, got ${result.status}`);
+    assert.equal(result.body.alive, true, 'Watchdog should report alive: true');
+    assert.equal(result.body.watchdog, true, 'Watchdog should report watchdog: true');
+  });
+
+  it('GET /api/report/done-tasks returns { tasks: Array, doneDates: Object }', async () => {
+    let result;
+    try {
+      result = await get('/api/report/done-tasks');
+    } catch (err) {
+      if (err.name === 'AbortError' || err.code === 'ECONNREFUSED') {
+        console.warn('⚠️  Server not running — skipping smoke tests');
+        return;
+      }
+      throw err;
+    }
+    assert.equal(result.ok, true, `Done-tasks report should return 200, got ${result.status}`);
+    assert.ok(Array.isArray(result.body.tasks), 'Response should have tasks array');
+    assert.ok(result.body.doneDates !== null && typeof result.body.doneDates === 'object' && !Array.isArray(result.body.doneDates), 'Response should have doneDates object');
   });
 
   it('GET /api/cache returns { tasks: [] } shape when empty or populated', async () => {

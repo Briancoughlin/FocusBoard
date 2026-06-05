@@ -23,6 +23,7 @@ const ALLOWED_KEYS = [
   'pinned-tasks',
   'completed-history',
   'done-tasks',
+  'daily-scores',
 ];
 
 function ensureDataDir() {

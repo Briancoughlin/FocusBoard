@@ -35,6 +35,8 @@ import { JiraCreatePrompt } from './components/JiraCreatePrompt';
 import { SlackChannelPrompt } from './components/SlackChannelPrompt';
 import { ReportModal } from './components/ReportModal';
 import { BugReportModal } from './components/BugReportModal';
+import { LeaderboardModal } from './components/LeaderboardModal';
+import { Fireworks } from './components/Fireworks';
 import { UpdateBanner, type UpdateInfo } from './components/UpdateBanner';
 
 /**
@@ -101,6 +103,11 @@ export default function App() {
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   const [updateDismissed, setUpdateDismissed] = useState(false);
   const [completedToday, setCompletedToday] = useState<number>(0);
+  const [dailyScores, setDailyScores] = useState<Record<string, number>>({});
+  const [leaderboardOpen, setLeaderboardOpen] = useState(false);
+  const [newHighScore, setNewHighScore] = useState<number | null>(null);
+  const [selectedFixVersion, setSelectedFixVersion] = useState<string>('all');
+  const effectiveFixVersionRef = useRef<string>('all');
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const [pastedTasks, setPastedTasks] = useState<Task[]>([]);
   const [doneDates, setDoneDates] = useState<Record<string, string>>({});
@@ -146,6 +153,7 @@ export default function App() {
       getPersistedValue<Task[]>('pasted-tasks', []),
       getPersistedValue<string[]>('dismissed', []),
       getPersistedValue<{ date: string; count: number } | null>('completed-today', null),
+      getPersistedValue<Record<string, number>>('daily-scores', {}),
       getPersistedValue<Record<string, string>>('done-dates', {}),
       getPersistedValue<string | null>('digest-date', null),
       getPersistedValue<Record<string, string>>('due-date-overrides', {}),
@@ -153,7 +161,7 @@ export default function App() {
       getPersistedValue<string[]>('pinned-tasks', []),
       getPersistedValue<Task[]>('completed-history', []),
       getPersistedValue<Task[]>('done-tasks', []),
-    ]).then(([loadedOverrides, loadedPastedTasks, loadedDismissed, loadedCompletedToday, loadedDoneDates, loadedDigestDate, loadedDueDateOverrides, loadedInjectedTasks, loadedPinnedIds, loadedHistory, loadedDoneTasks]) => {
+    ]).then(([loadedOverrides, loadedPastedTasks, loadedDismissed, loadedCompletedToday, loadedDailyScores, loadedDoneDates, loadedDigestDate, loadedDueDateOverrides, loadedInjectedTasks, loadedPinnedIds, loadedHistory, loadedDoneTasks]) => {
       overridesRef.current = loadedOverrides;
       setOverrides(loadedOverrides);
       dueDateOverridesRef.current = loadedDueDateOverrides;
@@ -170,6 +178,7 @@ export default function App() {
       )].filter(t => (t as any).completedOn >= thirtyDaysAgo);
       setCompletedHistory(mergedHistory);
 
+      setDailyScores(loadedDailyScores);
       if (loadedCompletedToday && loadedCompletedToday.date === today) {
         setCompletedToday(loadedCompletedToday.count);
       }
@@ -363,7 +372,19 @@ export default function App() {
       });
       setCompletedToday(prev => {
         const next = prev + 1;
-        setPersistedValue('completed-today', { date: new Date().toDateString(), count: next });
+        const todayKey = new Date().toDateString();
+        setPersistedValue('completed-today', { date: todayKey, count: next });
+        setDailyScores(scores => {
+          const previousBest = Math.max(0, ...Object.entries(scores)
+            .filter(([d]) => d !== todayKey)
+            .map(([, c]) => c));
+          if (next > previousBest && previousBest > 0) {
+            setNewHighScore(next);
+          }
+          const updated = { ...scores, [todayKey]: next };
+          setPersistedValue('daily-scores', updated);
+          return updated;
+        });
         return next;
       });
     }
@@ -481,8 +502,13 @@ export default function App() {
 
   const handlePastedTasks = useCallback((newTasks: Task[]) => {
     logAction(`Quick Add: ${newTasks.length} tasks created`);
+    // Stamp with current fix version filter so quick-add tasks land in the right quarter
+    const fv = effectiveFixVersionRef.current;
+    const stamped = fv === 'all'
+      ? newTasks
+      : newTasks.map(t => ({ ...t, fixVersion: fv }));
     setPastedTasks(prev => {
-      const updated = [...prev, ...newTasks];
+      const updated = [...prev, ...stamped];
       setPersistedValue('pasted-tasks', updated);
       return updated;
     });
@@ -532,12 +558,49 @@ export default function App() {
   //      so the "completed today" counter is accurate and cards don't vanish mid-session)
   //   5. wontdo tasks pass the done filter because they are displayed in the Done column
   //      but should never expire like regular done tasks
-  const tasks = applyDueDateOverrides(
-      applyOverrides([...rawTasks, ...pastedTasks, ...injectedTasks], overrides),
-      dueDateOverrides
-    )
+  // Derive available fix versions from all Jira tasks and auto-select current quarter
+  const allFixVersions = [...new Set(
+    [...rawTasks, ...pastedTasks, ...injectedTasks]
+      .filter(t => t.fixVersion)
+      .map(t => t.fixVersion!)
+  )].sort();
+
+  // Auto-detect current quarter — try to match fix version strings containing the current
+  // year+quarter (e.g. "25.3", "2025.3", "Q3 2025", "R25.3"). Falls back to 'all'.
+  const currentQuarterKey = (() => {
+    const now = new Date();
+    const yr2 = String(now.getFullYear()).slice(2);   // "26"
+    const yr4 = String(now.getFullYear());             // "2026"
+    const q = Math.ceil((now.getMonth() + 1) / 3);    // 1-4
+    const patterns = [
+      new RegExp(`^${yr2}\\.${q}\\b`),                // "26.2"
+      new RegExp(`^${yr4}\\.${q}\\b`),                // "2026.2"
+      new RegExp(`Q${q}\\s*${yr4}`, 'i'),             // "Q2 2026"
+      new RegExp(`Q${q}\\s*${yr2}`, 'i'),             // "Q2 26"
+      new RegExp(`R${yr2}\\.${q}\\b`, 'i'),           // "R26.2"
+    ];
+    return allFixVersions.find(v => patterns.some(p => p.test(v))) ?? 'all';
+  })();
+
+  // On first load (selectedFixVersion still 'all') snap to current quarter if detected
+  const effectiveFixVersion = selectedFixVersion === 'all' && currentQuarterKey !== 'all'
+    ? currentQuarterKey
+    : selectedFixVersion;
+  effectiveFixVersionRef.current = effectiveFixVersion;
+
+  const allTasksRaw = applyDueDateOverrides(
+    applyOverrides([...rawTasks, ...pastedTasks, ...injectedTasks], overrides),
+    dueDateOverrides
+  )
     .filter(t => !dismissed.has(t.id))
     .filter(t => t.status === 'wontdo' || t.status !== 'done' || doneDates[t.id] === today);
+
+  const tasks = effectiveFixVersion === 'all'
+    ? allTasksRaw
+    : allTasksRaw.filter(t =>
+        t.source !== 'jira' ||                        // keep non-Jira tasks always
+        t.fixVersion === effectiveFixVersion
+      );
 
   // Calendar events and Slack messages are shown in their own UI sections (WeekView
   // and InboxSidebar) — exclude them from the kanban columns to avoid duplication.
@@ -588,6 +651,10 @@ export default function App() {
         privacyMode={privacyMode}
         onTogglePrivacy={() => setPrivacyMode(p => !p)}
         completedToday={completedToday}
+        onShowLeaderboard={() => setLeaderboardOpen(true)}
+        fixVersions={allFixVersions}
+        selectedFixVersion={effectiveFixVersion}
+        onFixVersionChange={v => setSelectedFixVersion(v)}
       />
 
       <main className={`flex-1 min-h-0 px-6 pt-5 pb-6 ${view === 'settings' ? 'overflow-y-auto' : 'overflow-hidden'}`} style={{ backgroundColor: 'var(--bg)' }}>
@@ -598,6 +665,7 @@ export default function App() {
             isSyncing={isSyncing}
             onTaskMove={handleTaskMove}
             onOpenSettings={() => setView('settings')}
+            onRefresh={fetchTasks}
             onDismiss={handleDismiss}
             onPin={handlePin}
             pinnedIds={pinnedIds}
@@ -690,6 +758,18 @@ export default function App() {
           currentView={view}
           lastSynced={lastSynced}
           taskCount={tasks.length}
+        />
+      )}
+      {leaderboardOpen && (
+        <LeaderboardModal
+          scores={dailyScores}
+          onClose={() => setLeaderboardOpen(false)}
+        />
+      )}
+      {newHighScore !== null && (
+        <Fireworks
+          score={newHighScore}
+          onDone={() => setNewHighScore(null)}
         />
       )}
     </div>

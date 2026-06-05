@@ -197,6 +197,16 @@ app.get('/api/config', (req, res) => {
     githubBaseUrl: cfg.githubBaseUrl || '',
     githubConfigured: !!cfg.githubToken,
     apiCutoffDate: cfg.apiCutoffDate || '',
+    features: {
+      jira:           cfg.features?.jira           ?? true,
+      gmail:          cfg.features?.gmail          ?? true,
+      calendar:       cfg.features?.calendar       ?? true,
+      slack:          cfg.features?.slack          ?? true,
+      github:         cfg.features?.github         ?? true,
+      aiDigest:       cfg.features?.aiDigest       ?? true,
+      weeklyReport:   cfg.features?.weeklyReport   ?? true,
+      notifications:  cfg.features?.notifications  ?? true,
+    },
   });
 });
 
@@ -233,6 +243,16 @@ app.post('/api/config', (req, res) => {
   // with '***' because channel IDs are not sensitive credentials.
   if (incoming.slackChannelMap !== undefined && typeof incoming.slackChannelMap === 'object' && incoming.slackChannelMap !== null) {
     merged.slackChannelMap = incoming.slackChannelMap;
+  }
+
+  // Feature toggles — object of { sourceKey: boolean }
+  if (incoming.features !== undefined && typeof incoming.features === 'object' && incoming.features !== null) {
+    const allowed = ['jira', 'gmail', 'calendar', 'slack', 'github', 'aiDigest', 'weeklyReport', 'notifications'];
+    const cleaned = {};
+    for (const key of allowed) {
+      if (typeof incoming.features[key] === 'boolean') cleaned[key] = incoming.features[key];
+    }
+    merged.features = { ...(existing.features || {}), ...cleaned };
   }
 
   saveConfig(merged);
@@ -318,15 +338,21 @@ app.get('/api/sync', async (req, res) => {
   const results = { tasks: [], errors: [] };
   const syncDone = logger.time('Sync complete');
 
+  const cfg = loadConfig();
+  const features = cfg.features || {};
+
   logger.info('Sync started', {});
 
-  const sources = [
-    { name: 'jira', url: 'http://localhost:3001/api/jira' },
-    { name: 'gmail', url: 'http://localhost:3001/api/gmail' },
+  const allSources = [
+    { name: 'jira',     url: 'http://localhost:3001/api/jira' },
+    { name: 'gmail',    url: 'http://localhost:3001/api/gmail' },
     { name: 'calendar', url: 'http://localhost:3001/api/calendar' },
-    { name: 'slack', url: 'http://localhost:3001/api/slack' },
-    { name: 'github', url: 'http://localhost:3001/api/github' },
+    { name: 'slack',    url: 'http://localhost:3001/api/slack' },
+    { name: 'github',   url: 'http://localhost:3001/api/github' },
   ];
+
+  // Only include sources that haven't been explicitly disabled
+  const sources = allSources.filter(s => features[s.name] !== false);
 
   const sourceCounts = {};
 
@@ -352,8 +378,10 @@ app.get('/api/sync', async (req, res) => {
   // Drain any tasks that arrived via the Windows Slack notification listener
   // (a separate process that captures toast notifications) and fold them in here.
   // getPendingAndClear() is destructive — tasks are consumed and won't be returned again.
-  const notifTasks = getPendingAndClear();
-  if (notifTasks.length > 0) results.tasks.push(...notifTasks);
+  if (features.notifications !== false && features.slack !== false) {
+    const notifTasks = getPendingAndClear();
+    if (notifTasks.length > 0) results.tasks.push(...notifTasks);
+  }
 
   syncDone({
     ...sourceCounts,

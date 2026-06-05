@@ -164,7 +164,27 @@ router.get('/', async (req, res) => {
     res.json({ tasks });
   } catch (err) {
     logger.error('Jira error', { error: err.message, cause: String(err.cause || '') });
-    res.json({ tasks: [], error: err.message, cause: String(err.cause || '') });
+
+    // Detect network-level failures that are almost always a VPN/connectivity issue:
+    //   ECONNREFUSED  — server port is closed (VPN not connected, wrong URL)
+    //   ENOTFOUND     — hostname doesn't resolve (VPN not connected)
+    //   ETIMEDOUT     — connection timed out (VPN connected but Jira unreachable)
+    //   ECONNRESET    — connection dropped mid-request
+    //   fetch failed  — Node's generic fetch wrapper message for all of the above
+    const msg = err.message || '';
+    const cause = String(err.cause || '');
+    const networkCodes = ['ECONNREFUSED', 'ENOTFOUND', 'ETIMEDOUT', 'ECONNRESET', 'EHOSTUNREACH'];
+    const vpnLikely = networkCodes.some(c => msg.includes(c) || cause.includes(c))
+      || (msg.toLowerCase().includes('fetch failed') && !msg.includes('401') && !msg.includes('403'));
+
+    res.json({
+      tasks: [],
+      error: vpnLikely
+        ? `Jira unreachable — are you on VPN or Netbird?`
+        : err.message,
+      cause: cause,
+      vpnLikely,
+    });
   }
 });
 

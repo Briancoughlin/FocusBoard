@@ -15,6 +15,19 @@
   --border: #e5e7eb;
 }
 
+/* Calendar item title — clamp to 2 lines, expand to full text on hover */
+.calendar-item-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  transition: none;
+}
+.group:hover .calendar-item-title {
+  -webkit-line-clamp: unset;
+  overflow: visible;
+}
+
 /* Privacy mode — blurs all sensitive content for demos and screenshots */
 .privacy-mode .task-content,
 .privacy-mode .inbox-content,

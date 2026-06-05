@@ -11,6 +11,7 @@ interface Props {
   isSyncing?: boolean;
   onTaskMove: (taskId: string, newStatus: Status) => void;
   onOpenSettings: () => void;
+  onRefresh: () => void;
   onDismiss: (taskId: string) => void;
   onPin: (taskId: string) => void;
   pinnedIds: Set<string>;
@@ -31,7 +32,7 @@ const TABS: { id: FilterTab; label: string; color: string; activeColor: string; 
 ];
 
 
-export function KanbanBoard({ tasks, isLoading, isSyncing, onTaskMove, onOpenSettings, onDismiss, onPin, pinnedIds, onWontDo, errors }: Props) {
+export function KanbanBoard({ tasks, isLoading, isSyncing, onTaskMove, onOpenSettings, onRefresh, onDismiss, onPin, pinnedIds, onWontDo, errors }: Props) {
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
 
   const handleDragEnd = useCallback(
@@ -48,8 +49,21 @@ export function KanbanBoard({ tasks, isLoading, isSyncing, onTaskMove, onOpenSet
     .filter(e => UNCONFIGURED_ERRORS.some(msg => e.error.toLowerCase().includes(msg)))
     .map(e => e.source);
 
+  // VPN warning: Jira error that looks like a network/connectivity failure
+  const vpnError = errors.find(
+    e => e.source === 'jira' && (
+      (e as { vpnLikely?: boolean }).vpnLikely ||
+      e.error.toLowerCase().includes('unreachable') ||
+      e.error.toLowerCase().includes('vpn') ||
+      e.error.toLowerCase().includes('econnrefused') ||
+      e.error.toLowerCase().includes('enotfound') ||
+      e.error.toLowerCase().includes('etimedout')
+    )
+  );
+
   const realErrors = errors.filter(
     e => !UNCONFIGURED_ERRORS.some(msg => e.error.toLowerCase().includes(msg))
+      && e !== vpnError
   );
 
   const filteredTasks = activeTab === 'all' ? tasks
@@ -68,6 +82,26 @@ export function KanbanBoard({ tasks, isLoading, isSyncing, onTaskMove, onOpenSet
             <Settings size={14} />
             Configure in Settings
           </button>
+        </div>
+      )}
+      {vpnError && (
+        <div className="mb-3 px-4 py-3 rounded-lg border flex items-start gap-3 text-sm"
+          style={{ backgroundColor: 'rgba(245,158,11,0.08)', borderColor: 'rgba(245,158,11,0.4)', color: 'var(--text-primary)' }}>
+          <span className="text-xl flex-shrink-0 leading-none">🔒</span>
+          <div>
+            <p className="font-semibold" style={{ color: '#b45309' }}>Jira is unreachable</p>
+            <p className="mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+              This usually means you're not on VPN or Netbird. Connect and click{' '}
+              <button
+                onClick={onRefresh}
+                className="underline font-medium hover:no-underline"
+                style={{ color: '#b45309' }}
+              >
+                sync
+              </button>{' '}
+              to retry.
+            </p>
+          </div>
         </div>
       )}
       {realErrors.map(e => (

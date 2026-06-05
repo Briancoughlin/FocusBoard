@@ -52,6 +52,14 @@ CI pass/fail notifications use ✅ and ❌ emoji alongside colour-coded backgrou
 
 ---
 
+## Privacy Mode
+
+The 👁 eye icon in the header blurs all on-screen content instantly. This is useful for demos, screen recordings, or any situation where you need to share your screen without exposing task titles, message previews, or credential status.
+
+Clicking the icon again removes the blur. The blur is applied via CSS and does not affect assistive technologies — screen readers can still read content while the visual blur is active. This behaviour is intentional: Privacy Mode is a visual-only feature for sighted observers, not a security or access-control mechanism.
+
+---
+
 ## Keyboard Navigation
 
 - All buttons and interactive elements are keyboard focusable

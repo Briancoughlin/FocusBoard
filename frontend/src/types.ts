@@ -38,6 +38,16 @@ export interface Config {
   githubBaseUrl?: string;
   githubConfigured?: boolean;
   apiCutoffDate?: string;
+  features?: {
+    jira?: boolean;
+    gmail?: boolean;
+    calendar?: boolean;
+    slack?: boolean;
+    github?: boolean;
+    aiDigest?: boolean;
+    weeklyReport?: boolean;
+    notifications?: boolean;
+  };
   // Status flags returned by the API
   jiraConfigured?: boolean;
   googleConfigured?: boolean;

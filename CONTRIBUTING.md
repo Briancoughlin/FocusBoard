@@ -37,18 +37,33 @@ Open http://localhost:5173 for the dev server (with hot reload).
 
 ```
 focusboard/
-  backend/          Node.js/Express API (port 3001)
-    routes/         One file per integration (jira, gmail, github, etc.)
-    tests/          Backend unit tests (Node built-in test runner)
-    logger.js       Structured JSON logging
-    crypto-utils.js AES-256-GCM config encryption
-  frontend/         React + Vite + TypeScript
+  backend/                  Node.js/Express API (port 3001)
+    routes/                 One file per integration (jira, gmail, github, etc.)
+    tests/                  Backend unit tests (Node built-in test runner)
+    backups/                Nightly gzipped data bundles (gitignored)
+    logger.js               Structured JSON logging
+    crypto-utils.js         AES-256-GCM config encryption
+    watchdog.js             Watchdog HTTP server (port 3002) — restarts FocusBoard on demand
+    backup.js               Creates a nightly gzipped backup of backend/data/
+    restore.js              Restores a backup bundle produced by backup.js
+  frontend/                 React + Vite + TypeScript
     src/
-      components/   UI components
-      services/     API clients (api.ts, persistence.ts, theme.ts)
-      tests/        Frontend unit tests (Vitest)
-      types.ts      Shared TypeScript types
+      components/           UI components
+      services/             API clients (api.ts, persistence.ts, theme.ts)
+      tests/                Frontend unit tests (Vitest)
+      types.ts              Shared TypeScript types
+    public/
+      offline.html          Shown by the service worker when the server is unreachable
 ```
+
+FocusBoard registers four Windows Scheduled Tasks:
+
+| Task name | What it runs | When |
+|---|---|---|
+| `FocusBoard` | `backend/server.js` (port 3001) | At Windows login |
+| `FocusBoardNotifications` | `backend/notification-watcher.js` | At Windows login |
+| `FocusBoardBackup` | `backend/backup.js` | Nightly |
+| `FocusBoardWatchdog` | `backend/watchdog.js` (port 3002) | At Windows login |
 
 ---
 
