@@ -11,7 +11,7 @@ Runs locally on your machine — your data never leaves your computer.
 FocusBoard is built to production standards despite being a personal tool. Here's what's under the hood:
 
 ### 🔒 Security
-- **AES-256-GCM encrypted config** — all API tokens and credentials are encrypted at rest, tied to your machine. Useless if copied elsewhere.
+- **AES-256-GCM encrypted config** — all API tokens and credentials are encrypted at rest, tied to your machine. Useless if copied elsewhere. **Docker Deployments:** When running via Docker, host data must be mapped via volumes, and the AES machine-key derivation is bypassed via a stable `.env` secret to prevent container restart lockouts.
 - **Session cookie auth** — the local API requires a session cookie. Remote requests (e.g. port forwarding) are blocked.
 - **No secrets in code** — gitignored config, masked tokens in the UI, secret scanning in CI.
 - **Input validation** — all API endpoints validate types, lengths and allowlists before processing.
@@ -132,6 +132,8 @@ Go to **Settings** (gear icon) and enter your credentials. See the Integration S
 ## Installation
 
 Docker is now available as an alternative to the Windows native setup — no Node.js required. See [docs/install.md](docs/install.md) for all four installation options (Windows native, Docker, Windows .exe coming, Mac coming).
+
+> **Note on Docker / Mac Support:** FocusBoard's core architecture runs perfectly in Docker and on Apple Silicon. However, "Option A" for Slack relies on a native Windows PowerShell script to intercept OS-level toast notifications. If you use Docker or a Mac, you must use "Option B" (Bot Token) for Slack integration.
 
 ## After Installation
 
@@ -415,7 +417,7 @@ All data stays on your machine. Nothing sent to external servers beyond the APIs
 | Focus view split | `backend/data/split-percent.json` |
 | Theme preferences | `backend/data/theme-*.json` |
 
-- Config is AES-256-GCM encrypted — useless if copied to another machine
+- Config is AES-256-GCM encrypted — useless if copied to another machine. Docker deployments bypass machine-binding via a stable `FOCUSBOARD_KEY` in `.env`
 - Tokens masked in Settings UI
 - Session cookie required for all API access
 - No telemetry, no cloud storage
