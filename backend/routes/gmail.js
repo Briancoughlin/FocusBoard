@@ -238,12 +238,18 @@ router.get('/', async (req, res) => {
 router.post('/feedback', (req, res) => {
   try {
     const { taskId, sourceId, from = '', subject = '', confidence = 0.8 } = req.body;
-    if (!taskId) return res.status(400).json({ error: 'taskId required' });
+    if (!taskId || typeof taskId !== 'string' || taskId.length > 200) {
+      return res.status(400).json({ error: 'taskId required and must be a string under 200 chars' });
+    }
+    // Clamp inputs to safe lengths before persisting in noise patterns
+    const safeFrom    = String(from).slice(0, 500);
+    const safeSubject = String(subject).slice(0, 500);
+    const safeConf    = typeof confidence === 'number' ? Math.max(0, Math.min(1, confidence)) : 0.8;
 
     // Persist the feedback entry
     const feedbackPath = path.join(DATA_DIR, 'gmail-feedback.json');
     const feedback = loadFeedback();
-    feedback[taskId] = { sourceId, from, subject, confidence, timestamp: new Date().toISOString(), verdict: 'not_action' };
+    feedback[taskId] = { sourceId, from: safeFrom, subject: safeSubject, confidence: safeConf, timestamp: new Date().toISOString(), verdict: 'not_action' };
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
     fs.writeFileSync(feedbackPath, JSON.stringify(feedback, null, 2));
 

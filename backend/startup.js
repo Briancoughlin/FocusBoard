@@ -14,7 +14,6 @@ const BLUE   = '\x1b[34m';
 const CYAN   = '\x1b[36m';
 const RED    = '\x1b[31m';
 const WHITE  = '\x1b[37m';
-const BG_BLUE = '\x1b[44m';
 
 function line(text = '') {
   process.stdout.write(text + '\n');
