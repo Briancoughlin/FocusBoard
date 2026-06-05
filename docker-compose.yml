@@ -1,26 +1,44 @@
 services:
-  focusboard:
-    image: ghcr.io/briancoughlin/focusboard:latest
-    # To build locally instead of pulling: uncomment the next line and comment out image:
-    # build: .
-    container_name: focusboard
+
+  # ── Frontend: nginx serves the React app and proxies /api/ to the backend ──
+  frontend:
+    build: ./frontend
+    # To pull a pre-built image from GHCR instead of building locally:
+    # image: ghcr.io/briancoughlin/focusboard-frontend:latest
+    container_name: focusboard-frontend
     restart: unless-stopped
     ports:
-      - "3001:3001"
+      - "3001:80"        # open http://localhost:3001 in your browser
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  # ── Backend: Node.js API — NOT exposed to the host, only reachable from nginx
+  backend:
+    build: ./backend
+    # To pull a pre-built image from GHCR instead of building locally:
+    # image: ghcr.io/briancoughlin/focusboard-backend:latest
+    container_name: focusboard-backend
+    restart: unless-stopped
+    # No 'ports' here — the backend is intentionally private.
+    # nginx is the only entry point; direct access to port 3001 from outside is blocked.
     environment:
-      # Required: a stable secret string used to encrypt your config.
-      # Generate one with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-      # Keep this safe — changing it means re-entering all your credentials.
+      # Required: stable secret for encrypting your stored API tokens.
+      # Generate one: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+      # Never change this once set — it would invalidate your stored credentials.
       - FOCUSBOARD_KEY=${FOCUSBOARD_KEY}
+      # Tells the backend it's running behind nginx inside Docker.
+      # Disables the localhost-only auth check since the backend port is unexposed.
+      - FOCUSBOARD_DOCKER=true
     volumes:
-      # Persistent data — all your tasks, settings, and backups live here.
-      # These folders are created automatically on first run.
-      - ./focusboard-data/data:/app/backend/data
-      - ./focusboard-data/logs:/app/backend/logs
-      - ./focusboard-data/backups:/app/backend/backups
+      # All persistent data lives here on your host machine.
+      # Back this directory up to preserve your settings and task data.
+      - ./focusboard-data/data:/app/data
+      - ./focusboard-data/logs:/app/logs
+      - ./focusboard-data/backups:/app/backups
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:3001/"]
-      interval: 30s
+      test: ["CMD", "wget", "-qO-", "http://localhost:3001/api/config"]
+      interval: 15s
       timeout: 5s
-      retries: 3
-      start_period: 10s
+      retries: 5
+      start_period: 15s

@@ -52,10 +52,19 @@ app.use(cookieParser());
 
 // --- Auth middleware for all /api/* routes ---
 // FocusBoard is a single-user local app. The auth model is intentionally simple:
-// any request from localhost is trusted (the machine owner is always the user).
-// Remote requests — e.g. if someone port-forwards the server — require the
-// session cookie that was set when the browser first visited the frontend.
+//
+//   Docker mode (FOCUSBOARD_DOCKER=true):
+//     The backend port is NOT published to the host — only the nginx container
+//     can reach it. All requests are therefore internal and trusted without a cookie.
+//
+//   Native mode:
+//     Requests from 127.0.0.1 are auto-trusted (the machine owner is the user).
+//     Remote requests require the session cookie set when the browser first visited.
 app.use('/api', (req, res, next) => {
+  if (process.env.FOCUSBOARD_DOCKER === 'true') {
+    return next(); // backend is unexposed; nginx is the only entry point
+  }
+
   const isLocalhost = req.socket.remoteAddress === '::1' ||
     req.socket.remoteAddress === '127.0.0.1' ||
     req.socket.remoteAddress === '::ffff:127.0.0.1';

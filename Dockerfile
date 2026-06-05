@@ -1,3 +1,8 @@
+# Single-container build — Express backend serves the built React frontend.
+# Simpler than the two-container setup but the recommended approach is docker-compose
+# with separate frontend (nginx) and backend (Node) containers.
+# See docker-compose.yml for the production multi-container configuration.
+
 # ── Stage 1: Build frontend ──────────────────────────────────────────────────
 FROM node:24-alpine AS frontend-builder
 

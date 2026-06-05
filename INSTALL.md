@@ -55,44 +55,52 @@ cd C:\path\to\FocusBoard
 
 **Best for:** Anyone already using Docker. Works on Windows, Mac, and Linux. Zero Node.js setup required.
 
+Runs as two containers wired together:
+- **frontend** — nginx serves the React app and proxies `/api/` calls to the backend
+- **backend** — Node.js API, only reachable from the nginx container (not exposed to the host)
+
 ### Requirements
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (Windows/Mac) or Docker Engine (Linux)
 
 ### Steps
 
 ```bash
-# 1. Download the compose file
+# 1. Download the compose file and env template
 curl -O https://raw.githubusercontent.com/Briancoughlin/FocusBoard/main/docker-compose.yml
 curl -O https://raw.githubusercontent.com/Briancoughlin/FocusBoard/main/.env.example
 
-# 2. Create your .env file with a secure key
+# 2. Create your .env with a secure encryption key
 cp .env.example .env
 
-# Generate a random key (run this and paste the output into .env)
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-# — or on Mac/Linux:
+# Generate a random key and paste it into .env:
 openssl rand -hex 32
+# Windows (PowerShell):
+# -join ((1..32) | % { '{0:x2}' -f (Get-Random -Max 256) })
 
-# Edit .env and replace the placeholder with your generated key
+# Edit .env — replace the placeholder with your generated key
 ```
 
-Your `.env` file should look like:
+Your `.env` should look like:
 ```
 FOCUSBOARD_KEY=a1b2c3d4e5f6...your64hexcharshere...
 ```
 
 ```bash
-# 3. Start FocusBoard
-docker compose up -d
+# 3. Build and start both containers
+docker compose up -d --build
 
 # 4. Open in your browser
 open http://localhost:3001
 ```
 
-### Managing the container
+### Managing the containers
 ```bash
-# View logs
+# View logs (both containers)
 docker compose logs -f
+
+# View logs for one container
+docker compose logs -f backend
+docker compose logs -f frontend
 
 # Stop
 docker compose down
@@ -101,15 +109,28 @@ docker compose down
 docker compose pull
 docker compose up -d
 
-# View data (tasks, config, backups)
+# View your data
 ls ./focusboard-data/
 ```
 
+### Architecture
+```
+Browser → http://localhost:3001
+            ↓
+        [nginx container]
+        serves React SPA
+            ↓ /api/* proxy
+        [Node.js container]  ← NOT accessible from outside Docker
+        handles API calls
+            ↓
+        ./focusboard-data/   ← your data on the host
+```
+
 ### Notes
-- Your credentials and data are stored in `./focusboard-data/` next to your compose file
-- The `FOCUSBOARD_KEY` encrypts your stored API tokens — keep it safe and don't change it
-- Windows toast notifications (Slack capture) are not available in Docker — use the Slack API token instead
-- The watchdog restart feature is not available in Docker — Docker's `restart: unless-stopped` handles crashes instead
+- Your credentials and data live in `./focusboard-data/` on your machine — back this up
+- `FOCUSBOARD_KEY` encrypts your stored API tokens — never change it once set
+- Windows Slack toast notifications don't work in Docker — use the Slack API bot token instead
+- `restart: unless-stopped` on both containers replaces the Windows watchdog
 
 ---
 
