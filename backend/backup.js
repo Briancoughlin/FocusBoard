@@ -16,6 +16,7 @@ import zlib from 'zlib';
 import { fileURLToPath } from 'url';
 import { promisify } from 'util';
 import { logger } from './logger.js';
+import { E } from './error-codes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const gzip = promisify(zlib.gzip);
@@ -142,6 +143,6 @@ async function runBackup() {
 }
 
 runBackup().catch(err => {
-  logger.error('Backup: backup failed', { error: err.message, stack: err.stack });
+  logger.error('Backup: backup failed', { code: E.BACKUP_FAILED, error: err.message, stack: err.stack });
   process.exit(1);
 });

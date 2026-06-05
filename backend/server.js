@@ -35,6 +35,7 @@ import cacheRouter from './routes/cache.js';
 import { loadOrCreateToken } from './auth.js';
 import { encryptConfig, decryptConfig } from './crypto-utils.js';
 import { logger } from './logger.js';
+import { E } from './error-codes.js';
 import { printBanner, printIntegrationStatus, printWarning, printReady, printRetrying, printCrash, printInfo } from './startup.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -461,15 +462,15 @@ const server = app.listen(PORT, '127.0.0.1', () => {
     // Actionable warnings for common misconfigs
     if (cfg.jiraUrl && !cfg.jiraToken) {
       printWarning('Jira URL is set but token is missing — open Settings to add your PAT');
-      logger.warn('Jira URL is set but jiraToken is missing', {});
+      logger.warn('Jira URL is set but jiraToken is missing', { code: E.JIRA_CONFIG_MISSING });
     }
     if (cfg.googleClientId && !cfg.googleAccessToken) {
       printWarning('Google not authorised — open Settings and click "Connect Google Account"');
-      logger.warn('Google client ID set but no access token', {});
+      logger.warn('Google client ID set but no access token', { code: E.GOOGLE_AUTH_FAILED });
     }
     if (!cfg.anthropicKey) {
       printInfo('Claude AI not configured — Gmail action extraction and Quick Add AI will be unavailable');
-      logger.info('anthropicKey not set', {});
+      logger.info('anthropicKey not set', { code: E.ANTHROPIC_KEY_MISSING });
     }
 
     printReady();
@@ -486,7 +487,7 @@ const server = app.listen(PORT, '127.0.0.1', () => {
 server.on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
     printRetrying(PORT, 3);
-    logger.error(`Port ${PORT} already in use — retrying`, { port: PORT });
+    logger.error(`Port ${PORT} already in use — retrying`, { code: E.SERVER_PORT_IN_USE, port: PORT });
     setTimeout(() => {
       server.close();
       app.listen(PORT, '127.0.0.1', () => {
@@ -495,7 +496,7 @@ server.on('error', (err) => {
       });
     }, 3000);
   } else if (err.code === 'ECONNRESET' || err.code === 'ECONNABORTED' || err.code === 'ETIMEDOUT') {
-    logger.warn('Network error on server socket — continuing', { code: err.code, error: err.message });
+    logger.warn('Network error on server socket — continuing', { code: E.SERVER_NETWORK_ERROR, errCode: err.code, error: err.message });
   } else {
     printCrash(err);
     logger.error('Server error', { code: err.code, error: err.message });
@@ -506,11 +507,11 @@ server.on('error', (err) => {
 process.on('unhandledRejection', (reason) => {
   const err = reason instanceof Error ? reason : new Error(String(reason));
   printCrash(err);
-  logger.error('Unhandled promise rejection', { error: err.message, stack: err.stack });
+  logger.error('Unhandled promise rejection', { code: E.SERVER_UNHANDLED, error: err.message, stack: err.stack });
 });
 
 // Catch uncaught exceptions — log and keep running if possible
 process.on('uncaughtException', (err) => {
   printCrash(err);
-  logger.error('Uncaught exception', { error: err.message, stack: err.stack });
+  logger.error('Uncaught exception', { code: E.SERVER_UNCAUGHT, error: err.message, stack: err.stack });
 });

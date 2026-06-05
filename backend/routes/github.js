@@ -17,6 +17,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { decryptConfig } from '../crypto-utils.js';
 import { logger } from '../logger.js';
+import { E } from '../error-codes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CONFIG_PATH = path.join(__dirname, '..', 'config.json');
@@ -236,7 +237,7 @@ router.get('/', async (req, res) => {
     syncDone({ tasks: tasks.length });
     res.json({ tasks });
   } catch (err) {
-    logger.error('GitHub error', { error: err.message });
+    logger.error('GitHub error', { code: E.GITHUB_API_ERROR, error: err.message });
     res.json({ tasks: [], error: err.message });
   }
 });

@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { decryptConfig, encryptConfig } from '../crypto-utils.js';
 import { logger } from '../logger.js';
+import { E } from '../error-codes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CONFIG_PATH = path.join(__dirname, '..', 'config.json');
@@ -115,7 +116,7 @@ router.get('/', async (req, res) => {
     logger.info('Calendar events fetched', { count: tasks.length });
     res.json({ tasks });
   } catch (err) {
-    logger.error('Calendar error', { error: err.message });
+    logger.error('Calendar error', { code: E.GOOGLE_API_ERROR, error: err.message });
     res.json({ tasks: [], error: err.message });
   }
 });

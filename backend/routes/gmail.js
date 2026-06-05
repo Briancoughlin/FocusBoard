@@ -18,6 +18,7 @@ import { fileURLToPath } from 'url';
 import { extractActionItems } from './claude.js';
 import { decryptConfig, encryptConfig } from '../crypto-utils.js';
 import { logger } from '../logger.js';
+import { E } from '../error-codes.js';
 
 const DATA_DIR = path.join(path.dirname(new URL(import.meta.url).pathname).replace(/^\/([A-Z]:)/, '$1'), '..', 'data');
 
@@ -223,7 +224,7 @@ router.get('/', async (req, res) => {
     syncDone({ messages: messageIds.length, slackDigests: slackDigestCount, actionItems: tasks.length });
     res.json({ tasks });
   } catch (err) {
-    logger.error('Gmail error', { error: err.message });
+    logger.error('Gmail error', { code: E.GMAIL_EXTRACT_FAILED, error: err.message });
     res.json({ tasks: [], error: err.message });
   }
 });
@@ -275,7 +276,7 @@ router.post('/feedback', (req, res) => {
     logger.info('Gmail feedback recorded', { taskId, patterns: patterns.length });
     res.json({ success: true, patternsLearned: patterns.length });
   } catch (err) {
-    logger.error('Gmail feedback error', { error: err.message });
+    logger.error('Gmail feedback error', { code: E.GMAIL_FEEDBACK_FAILED, error: err.message });
     res.status(500).json({ error: err.message });
   }
 });

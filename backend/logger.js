@@ -77,10 +77,18 @@ function writeToFile(line) {
  *
  * @param {'debug'|'info'|'warn'|'error'} level
  * @param {string} msg
- * @param {object} [data]
+ * @param {object} [data] - arbitrary extra fields; if `code` is present it is
+ *   hoisted to the top level of the log entry for easy filtering
  */
 export function log(level, msg, data = {}) {
-  const entry = { ts: new Date().toISOString(), level, msg, data };
+  const { code, ...rest } = data;
+  const entry = {
+    ts: new Date().toISOString(),
+    level,
+    ...(code ? { code } : {}),
+    msg,
+    data: rest,
+  };
   const line = JSON.stringify(entry);
 
   // Console output

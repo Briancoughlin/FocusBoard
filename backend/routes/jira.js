@@ -13,6 +13,7 @@
  */
 
 import { Router } from 'express';
+import { E } from '../error-codes.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -82,6 +83,7 @@ const router = Router();
 router.get('/', async (req, res) => {
   const cfg = loadConfig();
   if (!cfg.jiraUrl || !cfg.jiraEmail || !cfg.jiraToken) {
+    logger.warn('Jira not configured', { code: E.JIRA_CONFIG_MISSING });
     return res.json({ tasks: [], error: 'Jira not configured' });
   }
 
@@ -139,7 +141,7 @@ router.get('/', async (req, res) => {
         (epicData.issues || []).forEach(e => { epicNames[e.key] = e.fields.summary; });
         logger.info('Jira epics resolved', { count: Object.keys(epicNames).length });
       } catch (e) {
-        logger.error('Failed to fetch epic names', { error: e.message });
+        logger.error('Failed to fetch epic names', { code: E.JIRA_EPIC_FETCH_FAILED, error: e.message });
       }
     }
 
@@ -163,8 +165,6 @@ router.get('/', async (req, res) => {
     syncDone({ tickets: tasks.length, pages: pageNum, epics: Object.keys(epicNames).length });
     res.json({ tasks });
   } catch (err) {
-    logger.error('Jira error', { error: err.message, cause: String(err.cause || '') });
-
     // Detect network-level failures that are almost always a VPN/connectivity issue:
     //   ECONNREFUSED  — server port is closed (VPN not connected, wrong URL)
     //   ENOTFOUND     — hostname doesn't resolve (VPN not connected)
@@ -177,12 +177,16 @@ router.get('/', async (req, res) => {
     const vpnLikely = networkCodes.some(c => msg.includes(c) || cause.includes(c))
       || (msg.toLowerCase().includes('fetch failed') && !msg.includes('401') && !msg.includes('403'));
 
+    const isAuth = msg.includes('401') || msg.includes('403');
+    const code = vpnLikely ? E.JIRA_VPN_REQUIRED : isAuth ? E.JIRA_AUTH_FAILED : E.JIRA_SERVER_ERROR;
+
+    logger.error('Jira error', { code, error: err.message, cause, vpnLikely });
     res.json({
       tasks: [],
       error: vpnLikely
         ? `Jira unreachable — are you on VPN or Netbird?`
         : err.message,
-      cause: cause,
+      cause,
       vpnLikely,
     });
   }
