@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FocusBoard — Server Offline</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f9fafb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 24px;
+    }
+    .card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      padding: 40px;
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+    }
+    .icon { font-size: 48px; margin-bottom: 16px; }
+    h1 { font-size: 22px; font-weight: 700; color: #111827; margin-bottom: 8px; }
+    p { font-size: 15px; color: #6b7280; line-height: 1.6; margin-bottom: 24px; }
+    .steps {
+      background: #f9fafb;
+      border-radius: 10px;
+      padding: 16px 20px;
+      text-align: left;
+      margin-bottom: 24px;
+      font-size: 14px;
+      color: #374151;
+      line-height: 2;
+    }
+    .steps code {
+      background: #e5e7eb;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-family: monospace;
+    }
+    .btn {
+      display: inline-block;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      text-decoration: none;
+      transition: opacity 0.2s;
+      margin: 4px;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-primary { background: #2563eb; color: white; }
+    .btn-secondary { background: #f3f4f6; color: #374151; }
+    .checking { color: #6b7280; font-size: 14px; margin-top: 16px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">⚡</div>
+    <h1>FocusBoard server is offline</h1>
+    <p>The local server isn't responding. This usually happens after a network change or Windows sleep.</p>
+
+    <div class="steps">
+      <strong>Quick fix — open PowerShell and run:</strong><br>
+      <code>Stop-ScheduledTask -TaskName "FocusBoard"</code><br>
+      <code>Start-ScheduledTask -TaskName "FocusBoard"</code>
+    </div>
+
+    <button class="btn btn-primary" onclick="tryReconnect()">Try reconnecting</button>
+    <a class="btn btn-secondary" href="/">Reload page</a>
+
+    <p class="checking" id="status"></p>
+  </div>
+
+  <script>
+    let attempts = 0;
+
+    function tryReconnect() {
+      const status = document.getElementById('status');
+      status.textContent = 'Checking...';
+      attempts++;
+
+      fetch('http://localhost:3001/', { mode: 'no-cors' })
+        .then(() => {
+          status.textContent = '✅ Server is back! Reloading...';
+          setTimeout(() => window.location.href = 'http://localhost:3001/', 1000);
+        })
+        .catch(() => {
+          status.textContent = `Still offline (attempt ${attempts}). Try the PowerShell commands above.`;
+        });
+    }
+
+    // Auto-check every 10 seconds
+    setInterval(() => {
+      fetch('http://localhost:3001/', { mode: 'no-cors' })
+        .then(() => {
+          document.getElementById('status').textContent = '✅ Server is back! Reloading...';
+          setTimeout(() => window.location.href = 'http://localhost:3001/', 1000);
+        })
+        .catch(() => {});
+    }, 10000);
+  </script>
+</body>
+</html>
