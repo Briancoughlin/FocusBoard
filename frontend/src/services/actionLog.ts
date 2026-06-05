@@ -16,7 +16,14 @@ const MAX_ENTRIES = 50;
 const log: ActionEntry[] = [];
 
 export function logAction(action: string): void {
-  const ts = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  // Force 24-hour format regardless of locale so timestamps are consistent
+  // across different OS/timezone environments (e.g. GitHub Actions runners)
+  const now = new Date();
+  const ts = [
+    String(now.getHours()).padStart(2, '0'),
+    String(now.getMinutes()).padStart(2, '0'),
+    String(now.getSeconds()).padStart(2, '0'),
+  ].join(':');
   log.push({ ts, action });
   if (log.length > MAX_ENTRIES) log.shift();
 }
