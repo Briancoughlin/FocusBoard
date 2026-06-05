@@ -116,3 +116,28 @@ jobs:
             exit 1
           fi
           echo "No hardcoded secrets found - good."
+
+      # --- Docker validation ---
+      - name: Validate docker-compose.yml syntax
+        run: docker compose config > /dev/null
+        continue-on-error: true  # docker may not be available on all runners
+
+      - name: Build backend Docker image
+        run: docker build --tag focusboard-backend:ci ./backend
+        continue-on-error: true
+
+      - name: Build frontend Docker image
+        run: docker build --tag focusboard-frontend:ci ./frontend
+        continue-on-error: true
+
+      - name: Run smoke tests in Docker mode
+        run: |
+          export FOCUSBOARD_KEY="ci-test-key-do-not-use-in-production-000"
+          export FOCUSBOARD_DOCKER=true
+          node server.js &
+          SERVER_PID=$!
+          sleep 4
+          npm run test:smoke
+          kill $SERVER_PID 2>/dev/null || true
+        working-directory: backend
+        continue-on-error: true

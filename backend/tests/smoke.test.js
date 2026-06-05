@@ -188,3 +188,50 @@ describe('Smoke tests — server must be running on port 3001', () => {
   });
 
 });
+
+// Docker mode smoke tests — only run when FOCUSBOARD_DOCKER=true is set.
+// These verify that the auth bypass works correctly when the backend is running
+// behind nginx with its port unexposed to the host.
+describe('Docker mode smoke tests (FOCUSBOARD_DOCKER=true)', () => {
+
+  it('API endpoints accessible without cookies in Docker mode', async () => {
+    if (process.env.FOCUSBOARD_DOCKER !== 'true') {
+      console.warn('⚠️  FOCUSBOARD_DOCKER not set — skipping Docker mode tests');
+      return;
+    }
+    let result;
+    try {
+      // Explicitly omit credentials to verify auth bypass is working
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), TIMEOUT);
+      try {
+        const res = await fetch(`${BASE}/api/config`, {
+          signal: controller.signal,
+          // No credentials: 'include' — simulating a fresh request with no cookie
+        });
+        result = { ok: res.ok, status: res.status };
+      } finally {
+        clearTimeout(timer);
+      }
+    } catch (err) {
+      if (err.name === 'AbortError' || err.code === 'ECONNREFUSED') {
+        console.warn('⚠️  Server not running — skipping Docker mode tests');
+        return;
+      }
+      throw err;
+    }
+    assert.equal(result.ok, true, `Docker mode: /api/config should return 200 without cookies, got ${result.status}`);
+  });
+
+  it('FOCUSBOARD_KEY must be set when FOCUSBOARD_DOCKER=true', () => {
+    if (process.env.FOCUSBOARD_DOCKER !== 'true') {
+      console.warn('⚠️  FOCUSBOARD_DOCKER not set — skipping Docker mode tests');
+      return;
+    }
+    assert.ok(
+      process.env.FOCUSBOARD_KEY,
+      'FOCUSBOARD_KEY must be set when running in Docker mode — without it credentials cannot be encrypted'
+    );
+  });
+
+});

@@ -43,6 +43,23 @@ const CONFIG_PATH = path.join(__dirname, 'config.json');
 const app = express();
 const PORT = 3001;
 
+// Docker mode safety check — fail fast rather than silently falling back to a
+// hostname-derived key that could change on container restart.
+if (process.env.FOCUSBOARD_DOCKER === 'true') {
+  if (!process.env.FOCUSBOARD_KEY) {
+    process.stderr.write(
+      '\n  ✗  FATAL: FOCUSBOARD_DOCKER=true but FOCUSBOARD_KEY is not set.\n' +
+      '     Your config cannot be encrypted without a stable key.\n' +
+      '     Add FOCUSBOARD_KEY to your .env file and restart.\n' +
+      '     Generate one with: openssl rand -hex 32\n\n'
+    );
+    process.exit(1);
+  }
+  process.stdout.write(
+    '  \x1b[2mℹ  Running in Docker mode — backend is only reachable from nginx\x1b[0m\n'
+  );
+}
+
 // Load or generate auth token at startup
 const AUTH_TOKEN = loadOrCreateToken();
 
