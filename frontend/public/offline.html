@@ -74,39 +74,69 @@
       <code>Start-ScheduledTask -TaskName "FocusBoard"</code>
     </div>
 
-    <button class="btn btn-primary" onclick="tryReconnect()">Try reconnecting</button>
-    <a class="btn btn-secondary" href="/">Reload page</a>
+    <button class="btn btn-primary" onclick="restartServer()" id="restartBtn">🔄 Restart FocusBoard</button>
+    <button class="btn btn-secondary" onclick="tryReconnect()">Check connection</button>
 
     <p class="checking" id="status"></p>
   </div>
 
   <script>
     let attempts = 0;
+    let restarting = false;
+
+    function restartServer() {
+      const status = document.getElementById('status');
+      const btn = document.getElementById('restartBtn');
+      btn.disabled = true;
+      btn.textContent = 'Restarting...';
+      status.textContent = 'Sending restart command...';
+
+      fetch('http://localhost:3002/restart', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+          if (data.success) {
+            status.textContent = '⏳ Restarting... checking in 5 seconds';
+            restarting = true;
+            setTimeout(checkAndRedirect, 5000);
+          } else {
+            status.textContent = 'Restart failed — try the PowerShell commands above';
+            btn.disabled = false;
+            btn.textContent = '🔄 Restart FocusBoard';
+          }
+        })
+        .catch(() => {
+          // Watchdog not running — fall back to manual instructions
+          status.textContent = 'Watchdog not available — please use the PowerShell commands above';
+          btn.disabled = false;
+          btn.textContent = '🔄 Restart FocusBoard';
+        });
+    }
 
     function tryReconnect() {
       const status = document.getElementById('status');
       status.textContent = 'Checking...';
       attempts++;
-
-      fetch('http://localhost:3001/', { mode: 'no-cors' })
-        .then(() => {
-          status.textContent = '✅ Server is back! Reloading...';
-          setTimeout(() => window.location.href = 'http://localhost:3001/', 1000);
-        })
-        .catch(() => {
-          status.textContent = `Still offline (attempt ${attempts}). Try the PowerShell commands above.`;
-        });
+      checkAndRedirect();
     }
 
-    // Auto-check every 10 seconds
-    setInterval(() => {
+    function checkAndRedirect() {
       fetch('http://localhost:3001/', { mode: 'no-cors' })
         .then(() => {
           document.getElementById('status').textContent = '✅ Server is back! Reloading...';
           setTimeout(() => window.location.href = 'http://localhost:3001/', 1000);
         })
-        .catch(() => {});
-    }, 10000);
+        .catch(() => {
+          if (restarting) {
+            document.getElementById('status').textContent = 'Still starting up... checking again in 5s';
+            setTimeout(checkAndRedirect, 5000);
+          } else {
+            document.getElementById('status').textContent = `Still offline (attempt ${attempts})`;
+          }
+        });
+    }
+
+    // Auto-check every 10 seconds
+    setInterval(checkAndRedirect, 10000);
   </script>
 </body>
 </html>

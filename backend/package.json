@@ -11,6 +11,7 @@
     "test": "node --test tests/jira-status.test.js tests/crypto.test.js tests/config-merge.test.js tests/cache.test.js tests/backup.test.js",
     "test:smoke": "node --test tests/smoke.test.js",
     "lint": "eslint .",
+    "watchdog": "node watchdog.js",
     "backup": "node backup.js",
     "restore": "node restore.js"
   },
