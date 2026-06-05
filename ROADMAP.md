@@ -102,6 +102,7 @@ These are ideas worth exploring once the core is stable. Not committed, not prio
 - **Handoff notes** — generate a handoff document when going on leave
 
 ### Accessibility
+- **Colourblind-safe urgency indicators** — add icon/pattern secondary signals alongside colour strips so overdue/today/soon is clear without relying on red/orange/yellow distinction
 - **Keyboard-only navigation** — full drag-and-drop equivalent via keyboard
 - **High contrast mode** — beyond the Windows theme integration
 - **Screen reader testing** — verified with NVDA and Windows Narrator

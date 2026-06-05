@@ -91,11 +91,22 @@ export function TaskCard({ task, index, onDismiss, onPin, pinned, onWontDo }: Pr
           `}
           style={{ ...provided.draggableProps.style, backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)', opacity: isWontDo ? 0.6 : 1 }}
         >
-          {/* Urgency colour strip */}
+          {/* Urgency strip — colour + icon pattern for colourblind accessibility */}
           <div
-            className={`h-1 w-full ${bar}`}
+            className={`h-1.5 w-full flex items-center ${bar}`}
             title={urgency === 'overdue' ? 'Overdue' : urgency === 'today' ? 'Due today' : urgency === 'soon' ? 'Due soon' : undefined}
-          />
+            aria-hidden="true"
+          >
+            {urgency === 'overdue' && (
+              <span className="text-white text-xs leading-none px-1 font-bold tracking-widest opacity-60">▲▲▲</span>
+            )}
+            {urgency === 'today' && (
+              <span className="text-white text-xs leading-none px-1 font-bold tracking-widest opacity-60">◆◆◆</span>
+            )}
+            {urgency === 'soon' && (
+              <span className="text-yellow-800 text-xs leading-none px-1 font-bold tracking-widest opacity-40">···</span>
+            )}
+          </div>
 
           <div className="p-3">
             {/* Top row: source badge + urgency badge + dismiss */}
