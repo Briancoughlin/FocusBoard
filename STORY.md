@@ -1,6 +1,6 @@
 # FocusBoard: A Story About Building the Tool You Actually Need
 
-*How a PM with ADHD and an AI assistant spent a few days solving a problem that enterprise tooling never could.*
+*How a PM with ADHD and an AI assistant spent three days solving a problem that enterprise tooling never could.*
 
 ---
 
@@ -208,7 +208,9 @@ Everything runs on the machine. No external services receive data except the API
 
 Here's what's actually remarkable about this project:
 
-A non-technical person with ADHD, using AI as their developer, built a production-ready application with encrypted security, automated tests, CI/CD pipeline, multiple live API integrations, and auto-updates. In three days. Without writing a single line of code themselves.
+A non-technical person with ADHD, using AI as their developer, built a production-ready application with encrypted security, automated tests, CI/CD pipeline, multiple live API integrations, and auto-updates. **In three days.** Without writing a single line of code themselves.
+
+A small team of developers would typically scope this as a 2-3 month project. Three days of evenings and weekends, in chat, produced something that would pass a professional code review.
 
 That's not "AI replacing developers." That's AI enabling people who couldn't previously build things to build things.
 
@@ -232,4 +234,4 @@ See [ROADMAP.md](ROADMAP.md) for the full picture. In brief:
 
 ---
 
-*Built in June 2026. All code runs locally. No data leaves the machine.*
+*Built in three days in June 2026. All code runs locally. No data leaves the machine.*
