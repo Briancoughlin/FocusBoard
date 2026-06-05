@@ -131,7 +131,7 @@ Go to **Settings** (gear icon) and enter your credentials. See the Integration S
 
 ## Installation
 
-Docker is now available as an alternative to the Windows native setup — no Node.js required. See [INSTALL.md](INSTALL.md) for all four installation options (Windows native, Docker, Windows .exe coming, Mac coming).
+Docker is now available as an alternative to the Windows native setup — no Node.js required. See [docs/install.md](docs/install.md) for all four installation options (Windows native, Docker, Windows .exe coming, Mac coming).
 
 ## After Installation
 

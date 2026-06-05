@@ -43,7 +43,7 @@ focusboard/
   docker-compose.yml        Two-service setup: nginx (frontend) + Node.js (backend)
   .env.example              Template for FOCUSBOARD_KEY and other Docker env vars
   .dockerignore             Build context exclusions
-  INSTALL.md                All 4 installation options (Windows native, Docker, exe coming, Mac coming)
+  docs/install.md           All 4 installation options (Windows native, Docker, exe coming, Mac coming)
   backend/                  Node.js/Express API (port 3001)
     Dockerfile              Node.js-only container image
     routes/                 One file per integration (jira, gmail, github, etc.)
@@ -91,7 +91,7 @@ npm test
 
 All 135 tests must pass before submitting a PR. CI will run them automatically.
 
-Docker is a supported install method — see [INSTALL.md](INSTALL.md) for the `docker-compose up` quick start. If you add behaviour gated on `FOCUSBOARD_DOCKER` or `FOCUSBOARD_KEY`, add tests to `backend/tests/docker-mode.test.js`.
+Docker is a supported install method — see [docs/install.md](docs/install.md) for the `docker-compose up` quick start. If you add behaviour gated on `FOCUSBOARD_DOCKER` or `FOCUSBOARD_KEY`, add tests to `backend/tests/docker-mode.test.js`.
 
 ---
 

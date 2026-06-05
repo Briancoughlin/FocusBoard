@@ -226,7 +226,7 @@ The code was Claude's. The product was Brian's.
 
 ## What's Next
 
-See [ROADMAP.md](ROADMAP.md) for the full picture. In brief:
+See [roadmap.md](roadmap.md) for the full picture. In brief:
 
 - **v1.3**: Source toggles, email intelligence, layout presets
 - **v2.0**: Plugin architecture, Discourse/community integration
