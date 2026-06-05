@@ -63,6 +63,18 @@ Every push to `main` runs:
 - **In-app update banner** — checks for new versions daily, shows "What's new" link
 - **One-click update** — pulls latest code, rebuilds frontend, restarts server automatically
 
+### ♿ Accessibility
+- **Screen reader compatible** — all buttons, dialogs, tabs and status regions have descriptive ARIA labels, roles and live regions
+- **Colourblind-safe urgency indicators** — every colour signal has a secondary pattern and text label:
+  - Overdue: red strip + `▲▲▲` triangles + "Overdue" badge
+  - Due today: orange strip + `◆◆◆` diamonds + "Due today" badge
+  - Due soon: yellow strip + `···` dots
+- **Source badges** — always include text labels, colour is decorative
+- **Keyboard navigation** — all interactive elements are focusable; sidebar sections support Enter/Space
+- **Known limitation** — drag-and-drop requires a pointing device; keyboard drag is on the roadmap
+
+See [docs/accessibility.md](docs/accessibility.md) for full details and WCAG conformance status.
+
 ### 🧹 Code Quality
 - **ESLint** configured for TypeScript/React (frontend) and Node.js (backend)
 - **Pre-commit hooks** (husky) — lint + tests must pass before any commit is allowed
