@@ -85,12 +85,22 @@ router.get('/', async (req, res) => {
     const auth = getOAuth2Client(cfg);
     const gmail = google.gmail({ version: 'v1', auth });
 
-    // Fetch today's inbox messages only
+    // Build the Gmail search query — use apiCutoffDate when set, else default to 1 day
+    let gmailQuery = 'newer_than:1d';
+    if (cfg.apiCutoffDate) {
+      const cutoff = new Date(cfg.apiCutoffDate);
+      const msPerDay = 86400000;
+      const daysSince = Math.max(1, Math.ceil((Date.now() - cutoff.getTime()) / msPerDay));
+      gmailQuery = `newer_than:${daysSince}d`;
+      logger.info('Gmail using cutoff date filter', { apiCutoffDate: cfg.apiCutoffDate, daysSince });
+    }
+
+    // Fetch inbox messages starting from the configured cutoff date
     const listRes = await gmail.users.messages.list({
       userId: 'me',
       labelIds: ['INBOX'],
       maxResults: 50,
-      q: 'newer_than:1d',
+      q: gmailQuery,
     });
 
     const messageIds = (listRes.data.messages || []).map(m => m.id);

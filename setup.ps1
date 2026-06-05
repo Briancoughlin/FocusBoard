@@ -135,7 +135,46 @@ Register-ScheduledTask `
 
 Write-Host "Notification watcher auto-start registered." -ForegroundColor Green
 
-# --- Step 7: Start FocusBoard now ---
+# --- Step 7: Register nightly backup scheduled task ---
+Write-Host ""
+Write-Host "Setting up nightly backup task..." -ForegroundColor Yellow
+
+$backupTaskName = "FocusBoardBackup"
+$existingBackupTask = Get-ScheduledTask -TaskName $backupTaskName -ErrorAction SilentlyContinue
+
+if ($existingBackupTask) {
+    Write-Host "Removing existing backup task..." -ForegroundColor Yellow
+    Unregister-ScheduledTask -TaskName $backupTaskName -Confirm:$false
+}
+
+$backupAction = New-ScheduledTaskAction `
+    -Execute $nodePath `
+    -Argument "backup.js" `
+    -WorkingDirectory "$FocusboardDir\backend"
+
+$backupTrigger = New-ScheduledTaskTrigger -Daily -At "00:00"
+
+$backupSettings = New-ScheduledTaskSettingsSet `
+    -ExecutionTimeLimit (New-TimeSpan -Minutes 5) `
+    -Hidden
+
+$backupPrincipal = New-ScheduledTaskPrincipal `
+    -UserId $env:USERNAME `
+    -LogonType ServiceAccount `
+    -RunLevel Highest
+
+Register-ScheduledTask `
+    -TaskName $backupTaskName `
+    -Action $backupAction `
+    -Trigger $backupTrigger `
+    -Settings $backupSettings `
+    -Principal $backupPrincipal `
+    -Description "FocusBoard nightly backup — runs daily at midnight" `
+    -Force | Out-Null
+
+Write-Host "Nightly backup task registered (runs daily at midnight)." -ForegroundColor Green
+
+# --- Step 9: Start FocusBoard now ---
 Write-Host ""
 Write-Host "Starting FocusBoard..." -ForegroundColor Yellow
 Start-ScheduledTask -TaskName $taskName

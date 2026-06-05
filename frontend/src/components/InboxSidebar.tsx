@@ -147,14 +147,41 @@ function SectionHeader({ icon, title, count, onMarkAll, collapsed, onToggle }: {
   );
 }
 
+type WatcherStatus = 'unknown' | 'healthy' | 'stale';
+
+async function fetchWatcherHealth(): Promise<WatcherStatus> {
+  try {
+    const res = await fetch('/api/health/watcher', { credentials: 'include' });
+    if (!res.ok) return 'unknown';
+    const data = await res.json();
+    if (!data.alive || data.secondsAgo === null) return 'unknown';
+    return data.secondsAgo > 60 ? 'stale' : 'healthy';
+  } catch {
+    return 'unknown';
+  }
+}
+
 export function InboxSidebar({ tasks, onAddToBoard }: Props) {
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const [githubCollapsed, setGithubCollapsed] = useState(false);
   const [slackCollapsed, setSlackCollapsed] = useState(false);
   const [inboxCollapsed, setInboxCollapsed] = useState(false);
+  const [watcherStatus, setWatcherStatus] = useState<WatcherStatus>('unknown');
 
   useEffect(() => {
     getPersistedValue<string[]>('inbox-read', []).then(ids => setReadIds(new Set(ids)));
+  }, []);
+
+  // Poll watcher health on mount and every 30 seconds
+  useEffect(() => {
+    let cancelled = false;
+    const check = async () => {
+      const status = await fetchWatcherHealth();
+      if (!cancelled) setWatcherStatus(status);
+    };
+    check();
+    const interval = setInterval(check, 30000);
+    return () => { cancelled = true; clearInterval(interval); };
   }, []);
 
   const markRead = (id: string) => {
@@ -245,7 +272,25 @@ export function InboxSidebar({ tasks, onAddToBoard }: Props) {
 
         {/* Slack section */}
         <SectionHeader
-          icon={<Hash size={12} className="text-purple-500" />}
+          icon={
+            <span className="flex items-center gap-1">
+              <Hash size={12} className="text-purple-500" />
+              {watcherStatus === 'stale' && (
+                <span
+                  title="Slack notification watcher may be offline"
+                  aria-label="Slack notification watcher may be offline"
+                  style={{ fontSize: 8, lineHeight: 1 }}
+                >🔴</span>
+              )}
+              {watcherStatus === 'healthy' && (
+                <span
+                  title="Slack notification watcher is running"
+                  aria-label="Slack notification watcher is running"
+                  style={{ fontSize: 8, lineHeight: 1 }}
+                >🟢</span>
+              )}
+            </span>
+          }
           title="Slack"
           count={slackUnread}
           onMarkAll={() => markAllRead(slackItems.map(i => i.id))}

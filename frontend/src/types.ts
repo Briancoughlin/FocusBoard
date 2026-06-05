@@ -37,6 +37,7 @@ export interface Config {
   githubToken?: string;
   githubBaseUrl?: string;
   githubConfigured?: boolean;
+  apiCutoffDate?: string;
   // Status flags returned by the API
   jiraConfigured?: boolean;
   googleConfigured?: boolean;

@@ -138,6 +138,7 @@ export function SettingsPage({ onDirtyChange }: SettingsPageProps = {}) {
         githubBaseUrl: cfg.githubBaseUrl || '',
         anthropicKey: '',
         anthropicBaseUrl: cfg.anthropicBaseUrl || '',
+        apiCutoffDate: (cfg as Record<string, string>).apiCutoffDate || '',
       });
       // Populate channel map rows from saved config
       const map = cfg.slackChannelMap || {};
@@ -601,6 +602,44 @@ export function SettingsPage({ onDirtyChange }: SettingsPageProps = {}) {
           </a>
         </div>
       </Section>
+
+      {/* API Cutover */}
+      <div className="rounded-xl border p-6 shadow-sm" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}>
+        <h3 className="font-semibold text-base mb-1" style={{ color: 'var(--text-primary)' }}>API Cutover</h3>
+        <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+          When you connect a new API (e.g. Slack bot token after IT approval), use this to avoid
+          importing weeks of old data.
+        </p>
+        <div className="flex items-center gap-3">
+          <div>
+            <label htmlFor="apiCutoffDate" className="block text-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
+              Fetch records starting from
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                id="apiCutoffDate"
+                type="date"
+                value={form.apiCutoffDate || ''}
+                onChange={e => setField('apiCutoffDate', e.target.value)}
+                className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
+                style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}
+              />
+              {form.apiCutoffDate && (
+                <button
+                  onClick={() => setField('apiCutoffDate', '')}
+                  className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+              Leave empty to fetch all available history. When set, Gmail, Slack, and GitHub will only return items after this date.
+            </p>
+          </div>
+        </div>
+      </div>
 
       {/* Save reminder */}
       <p className="text-xs text-gray-400 text-center pb-4">

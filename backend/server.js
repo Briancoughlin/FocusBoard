@@ -151,6 +151,24 @@ app.use('/api', (req, res, next) => {
   next();
 });
 
+// --- Watcher heartbeat state (in-memory, resets on server restart) ---
+let watcherLastSeen = null;
+
+// POST /api/health/watcher/ping — called by notification-watcher.js every poll cycle
+app.post('/api/health/watcher/ping', (req, res) => {
+  watcherLastSeen = new Date().toISOString();
+  res.json({ ok: true });
+});
+
+// GET /api/health/watcher — frontend polls this to check watcher liveness
+app.get('/api/health/watcher', (req, res) => {
+  if (!watcherLastSeen) {
+    return res.json({ alive: false, lastSeen: null, secondsAgo: null });
+  }
+  const secondsAgo = Math.round((Date.now() - new Date(watcherLastSeen).getTime()) / 1000);
+  res.json({ alive: true, lastSeen: watcherLastSeen, secondsAgo });
+});
+
 // --- Config routes ---
 app.get('/api/config', (req, res) => {
   const cfg = loadConfig();
@@ -178,6 +196,7 @@ app.get('/api/config', (req, res) => {
     githubToken: cfg.githubToken ? '***' : '',
     githubBaseUrl: cfg.githubBaseUrl || '',
     githubConfigured: !!cfg.githubToken,
+    apiCutoffDate: cfg.apiCutoffDate || '',
   });
 });
 
@@ -199,6 +218,13 @@ app.post('/api/config', (req, res) => {
     if (val !== undefined && val !== '***' && val !== '') {
       if (typeof val !== 'string' || val.length > 2000) continue;
       merged[field] = val;
+    }
+  }
+
+  // apiCutoffDate can be explicitly cleared to empty string (unlike secrets, which use '' to mean "no change")
+  if (incoming.apiCutoffDate !== undefined && incoming.apiCutoffDate !== '***') {
+    if (incoming.apiCutoffDate === '' || /^\d{4}-\d{2}-\d{2}$/.test(incoming.apiCutoffDate)) {
+      merged.apiCutoffDate = incoming.apiCutoffDate;
     }
   }
 

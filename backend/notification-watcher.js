@@ -78,8 +78,20 @@ try {
 const TMP_PS = path.join(os.tmpdir(), 'focusboard-notification-watcher.ps1');
 fs.writeFileSync(TMP_PS, PS_SCRIPT, 'utf8');
 
+const HEALTH_PING_URL = 'http://localhost:3001/api/health/watcher/ping';
+
+async function pingHealthEndpoint() {
+  try {
+    await fetch(HEALTH_PING_URL, { method: 'POST' });
+  } catch {
+    // Server may not be up yet — ignore silently
+  }
+}
+
 async function checkNotifications() {
   logger.debug('Notification poll cycle start', {});
+  // Ping the health endpoint so the server knows the watcher is alive
+  await pingHealthEndpoint();
   try {
     const output = execSync(
       `powershell -NonInteractive -ExecutionPolicy Bypass -File "${TMP_PS}"`,

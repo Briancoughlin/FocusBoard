@@ -89,7 +89,13 @@ router.get('/', async (req, res) => {
       console.warn('Slack search error:', err.message);
     }
 
-    if (rawMessages.length === 0) {
+    // Apply cutoff date filter if configured
+    const cutoffDate = cfg.apiCutoffDate || null;
+    const filteredMessages = cutoffDate
+      ? rawMessages.filter(m => m.date >= cutoffDate)
+      : rawMessages;
+
+    if (filteredMessages.length === 0) {
       return res.json({ tasks: [] });
     }
 
@@ -97,7 +103,7 @@ router.get('/', async (req, res) => {
 
     if (cfg.anthropicKey) {
       // Use Claude to extract action items
-      const actionItems = await extractActionItems(rawMessages, 'slack');
+      const actionItems = await extractActionItems(filteredMessages, 'slack');
       tasks = actionItems.map((item) => ({
         id: `slack-${item.sourceId}`,
         sourceId: item.sourceId,
@@ -112,7 +118,7 @@ router.get('/', async (req, res) => {
       }));
     } else {
       // Without Claude, create simple task cards from messages
-      tasks = rawMessages.slice(0, 10).map((msg) => ({
+      tasks = filteredMessages.slice(0, 10).map((msg) => ({
         id: `slack-${msg.id}`,
         sourceId: msg.id,
         title: msg.subject,

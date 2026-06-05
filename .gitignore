@@ -8,3 +8,4 @@ backend/daemon/
 backend/data/
 backend/logs/
 backend/.auth-token
+backend/backups/

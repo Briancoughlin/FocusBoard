@@ -150,8 +150,14 @@ router.get('/', async (req, res) => {
       token, baseUrl
     );
 
-    logger.info('GitHub notifications fetched', { count: (notifications || []).length });
-    for (const notif of notifications || []) {
+    // Apply cutoff date filter if configured
+    const cutoffDate = cfg.apiCutoffDate || null;
+    const filteredNotifications = cutoffDate
+      ? (notifications || []).filter(n => n.updated_at >= cutoffDate)
+      : (notifications || []);
+
+    logger.info('GitHub notifications fetched', { count: (notifications || []).length, afterFilter: filteredNotifications.length });
+    for (const notif of filteredNotifications) {
       const repo = notif.repository.full_name;
       const subjectTitle = notif.subject.title || '';
 
