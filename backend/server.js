@@ -377,7 +377,7 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(frontendDist, 'index.html'));
 });
 
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, '127.0.0.1', () => {
   logger.info('FocusBoard starting', { port: PORT, node: process.version });
 
   if (!fs.existsSync(CONFIG_PATH)) {
@@ -423,9 +423,13 @@ server.on('error', (err) => {
         logger.info('FocusBoard backend running (retry)', { port: PORT });
       });
     }, 3000);
+  } else if (err.code === 'ECONNRESET' || err.code === 'ECONNABORTED' || err.code === 'ETIMEDOUT') {
+    // Network change errors — log and continue, don't exit
+    logger.warn('Network error on server socket — continuing', { code: err.code, error: err.message });
   } else {
-    logger.error('Server error', { error: err.message });
-    process.exit(1);
+    logger.error('Server error', { code: err.code, error: err.message });
+    // Don't exit — let the process keep running and recover
+    // The scheduled task restart handles truly fatal crashes
   }
 });
 
