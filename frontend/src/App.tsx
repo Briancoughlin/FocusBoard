@@ -652,7 +652,14 @@ export default function App() {
       )}
       {reportOpen && (
         <ReportModal
-          tasks={[...tasks, ...completedHistory.filter(h => !tasks.find(t => t.id === h.id))]}
+          tasks={[
+            // Current board tasks (today's done items)
+            ...tasks,
+            // Raw tasks not on board but in done-dates (earlier this week)
+            ...[...rawTasks, ...pastedTasks, ...injectedTasks, ...completedHistory].filter(t =>
+              doneDates[t.id] && !tasks.find(b => b.id === t.id)
+            )
+          ]}
           doneDates={doneDates}
           onClose={() => setReportOpen(false)}
         />
