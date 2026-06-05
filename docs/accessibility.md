@@ -67,14 +67,41 @@ FocusBoard follows Windows system theme (dark/light mode and accent colour). Whe
 
 ---
 
-## Testing
+## Automated Testing
 
-Accessibility attributes have been implemented but not yet formally tested with assistive technology. The following are on the roadmap:
+The following accessibility checks run automatically on every commit via GitHub Actions CI:
+
+### axe-core audit
+The industry-standard `@axe-core/cli` tool scans the live app on every push and flags violations including:
+- Missing ARIA labels on interactive elements
+- Invalid ARIA roles or attributes
+- Colour contrast failures (based on computed styles)
+- Missing form labels
+- Incorrect heading hierarchy
+
+Run it locally (requires server running on port 3001):
+```powershell
+cd frontend && npm run test:a11y
+```
+
+### Unit tests for accessibility-critical logic (43 frontend tests total)
+`frontend/src/tests/accessibility.test.ts` covers:
+
+- **Colourblind indicator correctness** — verifies the right urgency pattern (▲▲▲/◆◆◆/···) shows for each level. If overdue logic breaks, the wrong pattern would appear on the wrong card.
+- **Urgency sort order** — overdue always sorts before today, today before soon. Wrong order = wrong priority signals for ADHD users.
+- **Source badge label integrity** — all source types have valid values so text labels never go missing.
+
+### What automated testing cannot catch
+- Screen reader announcement quality and flow
+- Keyboard navigation feel and logic
+- Colourblind perception (requires simulation or real users)
+- Cognitive accessibility (information density, reading level)
+
+The following still require manual testing:
 
 - [ ] NVDA screen reader testing (Windows)
 - [ ] Windows Narrator testing
-- [ ] Axe automated accessibility audit
-- [ ] Colourblind simulation testing (Coblis or browser DevTools)
+- [ ] Colourblind simulation (Coblis or browser DevTools accessibility panel)
 
 If you find an accessibility issue, please [report it](https://github.com/Briancoughlin/FocusBoard/issues) using the 🐛 bug report button in the app.
 

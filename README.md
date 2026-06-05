@@ -72,8 +72,9 @@ Every push to `main` runs:
 - **Source badges** — always include text labels, colour is decorative
 - **Keyboard navigation** — all interactive elements are focusable; sidebar sections support Enter/Space
 - **Known limitation** — drag-and-drop requires a pointing device; keyboard drag is on the roadmap
+- **Automated accessibility testing** — axe-core audit runs on every CI push; 11 dedicated accessibility unit tests verify urgency indicators, sort order, and source label integrity
 
-See [docs/accessibility.md](docs/accessibility.md) for full details and WCAG conformance status.
+See [docs/accessibility.md](docs/accessibility.md) for full details, automated test coverage, and WCAG conformance status.
 
 ### 🧹 Code Quality
 - **ESLint** configured for TypeScript/React (frontend) and Node.js (backend)
