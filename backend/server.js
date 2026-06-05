@@ -143,7 +143,8 @@ app.use('/api', (req, res, next) => {
         status: res.statusCode,
         duration_ms: duration,
       });
-    } else {
+    } else if (!req.path.startsWith('/theme-')) {
+      // Skip debug logging for theme polling (every 5s) — too noisy
       logger.debug('API call', { method: req.method, path: req.path, status: res.statusCode, duration_ms: duration });
     }
   });
