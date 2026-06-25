@@ -49,21 +49,23 @@ export function KanbanBoard({ tasks, isLoading, isSyncing, onTaskMove, onOpenSet
     .filter(e => UNCONFIGURED_ERRORS.some(msg => e.error.toLowerCase().includes(msg)))
     .map(e => e.source);
 
-  // VPN warning: Jira error that looks like a network/connectivity failure
-  const vpnError = errors.find(
-    e => e.source === 'jira' && (
+  // VPN warning: Jira or Gmail error that looks like a network/connectivity failure
+  const vpnErrors = errors.filter(
+    e => (e as { vpnRequired?: boolean; vpnLikely?: boolean }).vpnRequired ||
       (e as { vpnLikely?: boolean }).vpnLikely ||
-      e.error.toLowerCase().includes('unreachable') ||
-      e.error.toLowerCase().includes('vpn') ||
-      e.error.toLowerCase().includes('econnrefused') ||
-      e.error.toLowerCase().includes('enotfound') ||
-      e.error.toLowerCase().includes('etimedout')
-    )
+      e.error.toLowerCase().includes('vpn required') ||
+      (e.source === 'jira' && (
+        e.error.toLowerCase().includes('unreachable') ||
+        e.error.toLowerCase().includes('econnrefused') ||
+        e.error.toLowerCase().includes('enotfound') ||
+        e.error.toLowerCase().includes('etimedout')
+      ))
   );
+  const vpnSources = vpnErrors.map(e => e.source);
 
   const realErrors = errors.filter(
     e => !UNCONFIGURED_ERRORS.some(msg => e.error.toLowerCase().includes(msg))
-      && e !== vpnError
+      && !vpnErrors.includes(e)
   );
 
   const filteredTasks = activeTab === 'all' ? tasks
@@ -84,14 +86,14 @@ export function KanbanBoard({ tasks, isLoading, isSyncing, onTaskMove, onOpenSet
           </button>
         </div>
       )}
-      {vpnError && (
+      {vpnErrors.length > 0 && (
         <div className="mb-3 px-4 py-3 rounded-lg border flex items-start gap-3 text-sm"
           style={{ backgroundColor: 'rgba(245,158,11,0.08)', borderColor: 'rgba(245,158,11,0.4)', color: 'var(--text-primary)' }}>
           <span className="text-xl flex-shrink-0 leading-none">🔒</span>
           <div>
-            <p className="font-semibold" style={{ color: '#b45309' }}>Jira is unreachable</p>
+            <p className="font-semibold" style={{ color: '#b45309' }}>{vpnSources.map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' & ')} {vpnSources.length === 1 ? 'is' : 'are'} unreachable</p>
             <p className="mt-0.5" style={{ color: 'var(--text-secondary)' }}>
-              This usually means you're not on VPN or Netbird. Connect and click{' '}
+              Connect to VPN or Netbird and click{' '}
               <button
                 onClick={onRefresh}
                 className="underline font-medium hover:no-underline"

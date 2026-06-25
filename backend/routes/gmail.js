@@ -224,6 +224,11 @@ router.get('/', async (req, res) => {
     syncDone({ messages: messageIds.length, slackDigests: slackDigestCount, actionItems: tasks.length });
     res.json({ tasks });
   } catch (err) {
+    const is403 = err.message?.includes('403') || err.code === 403;
+    if (is403) {
+      logger.warn('Gmail blocked — VPN or org policy required', { code: E.GMAIL_EXTRACT_FAILED });
+      return res.json({ tasks: [], error: 'VPN required', vpnRequired: true });
+    }
     logger.error('Gmail error', { code: E.GMAIL_EXTRACT_FAILED, error: err.message });
     res.json({ tasks: [], error: err.message });
   }

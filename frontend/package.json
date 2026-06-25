@@ -18,6 +18,9 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
+  "overrides": {
+    "form-data": "^4.0.6"
+  },
   "devDependencies": {
     "@axe-core/cli": "^4.11.3",
     "@types/react": "^18.2.0",
