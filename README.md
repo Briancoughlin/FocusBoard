@@ -4,6 +4,8 @@ An ADHD-friendly task aggregator that pulls your work from Jira, Gmail, Google C
 
 Runs locally on your machine — your data never leaves your computer.
 
+![FocusBoard screenshot](docs/screenshot.png)
+
 ---
 
 ## Production Quality
