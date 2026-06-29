@@ -98,7 +98,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **43 targeted tests** — Jira status mapping, encryption, urgency scoring, task filtering, week view filter
 - **Dependabot auto-merge** — patch and minor dependency updates auto-merge when CI passes
 - **CHANGELOG.md** — full version history
-- **CONTRIBUTING.md** — setup guide, how to add integrations, PR checklist, Unity-specific notes
+- **CONTRIBUTING.md** — setup guide, how to add integrations, PR checklist, enterprise-specific notes
 - **React error boundary** — catches JS errors, shows recovery UI instead of white screen
 - **Offline detection** — banner when offline, auto-syncs on reconnect
 - **Google token auto-refresh** — OAuth tokens silently renew without re-authentication
@@ -165,7 +165,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 - **Focus view** — split pane with week calendar (top) and kanban (bottom), resizable divider
 - **Backlog view** — full kanban with source filter tabs
-- **Jira integration** — fetches all assigned tickets with Unity-specific status mapping, epic names, paginated (271+ tickets)
+- **Jira integration** — fetches all assigned tickets with configurable status mapping, epic names, paginated (271+ tickets)
 - **Gmail integration** — fetches today's emails, Claude extracts action items
 - **Google Calendar** — week strip view, filters working-location and solo-location events
 - **Quick Add** — paste Zoom summaries, meeting notes, or any text to create cards
@@ -183,5 +183,5 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Dependabot** — weekly dependency vulnerability scanning
 - **Windows notification watcher** — `FocusBoardNotifications` scheduled task
 - **One-command setup** — `setup.ps1` installs Node, builds, registers tasks
-- **README** — full setup guide including Unity-specific Jira instructions
+- **README** — full setup guide including enterprise Jira instructions
 - **Code comments** — JSDoc on key files (server, routes, App, FocusView, WeekView)

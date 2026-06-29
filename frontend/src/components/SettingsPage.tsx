@@ -431,8 +431,8 @@ export function SettingsPage({ onDirtyChange }: SettingsPageProps = {}) {
           </div>
           <Toggle featureKey="weeklyReport" features={features} setFeatures={setFeatures} setIsDirty={setIsDirty} />
         </div>
-        <Field label="API Key" id="anthropicKey" type="password" value={form.anthropicKey || ''} placeholder={config.anthropicConfigured ? '••••••••••••' : 'sk-ant-...'} onChange={v => setField('anthropicKey', v)} hint="Standard Anthropic key, or your U-AI token" />
-        <Field label="Base URL (optional)" id="anthropicBaseUrl" value={form.anthropicBaseUrl || ''} placeholder="https://uai-litellm.internal.unity.com" onChange={v => setField('anthropicBaseUrl', v)} hint="Unity employees: use the U-AI gateway URL. Leave blank for standard Anthropic." />
+        <Field label="API Key" id="anthropicKey" type="password" value={form.anthropicKey || ''} placeholder={config.anthropicConfigured ? '••••••••••••' : 'sk-ant-...'} onChange={v => setField('anthropicKey', v)} hint="Your Anthropic API key" />
+        <Field label="Base URL (optional)" id="anthropicBaseUrl" value={form.anthropicBaseUrl || ''} placeholder="https://your-llm-gateway.example.com" onChange={v => setField('anthropicBaseUrl', v)} hint="Leave blank for standard Anthropic. Set this if your organisation has an internal LLM gateway." />
         <a href="https://console.anthropic.com/account/keys" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"><ExternalLink size={11} /> Get API key</a>
       </IntegrationSection>
 

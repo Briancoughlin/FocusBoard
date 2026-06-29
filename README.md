@@ -19,7 +19,7 @@ FocusBoard is built to production standards despite being a personal tool. Here'
 
 ### 🧪 Testing
 - **208 automated tests** — 109 backend + 99 frontend across 21 suites:
-  - Jira status mapping (9 tests) — Unity-specific status names
+  - Jira status mapping (9 tests) — custom status name mapping
   - AES-256-GCM encryption (5 tests) — config security
   - Config merge logic (7 tests) — input validation and secret masking
   - Task cache (5 tests) — read/write round-trip
@@ -186,13 +186,11 @@ Start-ScheduledTask -TaskName "FocusBoardWatchdog"
 
 Go to **Settings** (gear icon) to configure each source.
 
-### Anthropic / U-AI Gateway
+### Anthropic
 Required for Gmail AI extraction and smart Quick Add.
 
-- **Unity employees**: Go to the U-AI Portal, generate a key, and enter:
-  - API Key: your U-AI token
-  - Base URL: `https://uai-litellm.internal.unity.com`
-- **Others**: Go to https://console.anthropic.com/account/keys, create a key, paste into Settings
+- Go to https://console.anthropic.com/account/keys, create a key, paste into Settings
+- If your organisation has an internal LLM gateway, enter its URL in the Base URL field
 
 Without a key: Quick Add falls back to bullet-point splitting, Gmail shows raw items.
 
@@ -205,12 +203,12 @@ Without a key: Quick Add falls back to bullet-point splitting, Gmail shows raw i
 2. Create an API token and copy it
 3. In Settings: enter your Jira URL, email, token, and optionally a JQL filter and default project key
 
-#### Unity Jira (jira.unity3d.com)
-1. Make sure you're in the `Engine All` group
-2. Go to https://jira.unity3d.com/plugins/servlet/de.resolution.apitokenauth/admin
-3. Click **New API Token** → scope **Read & Write** → copy it
-4. Connect to **Unity VPN or Netbird** before syncing
-5. In Settings: URL = `https://jira.unity3d.com`, your Unity email, and the token
+#### Self-hosted / Enterprise Jira
+Some organisations use a third-party auth plugin rather than standard Atlassian tokens (e.g. `de.resolution.apitokenauth`). Check with your IT team if standard tokens are disabled.
+
+1. Generate a token via your organisation's Jira auth plugin
+2. Connect to VPN if required before syncing
+3. In Settings: enter your Jira URL, email, and the token
 
 **Additional Jira Settings:**
 - **JQL Filter** — paste your board's JQL to show only relevant tickets
@@ -242,7 +240,7 @@ FocusBoard automatically captures Slack Windows toast notifications when you rec
 
 Setup:
 1. Enable notification access: Windows Settings → Privacy → Notifications → Allow apps to access notifications
-2. In Settings → Slack: enter your **Workspace URL** (e.g. `https://unity.slack.com`) and **Team ID** (from `app.slack.com/client/TEAM_ID/...`)
+2. In Settings → Slack: enter your **Workspace URL** (e.g. `https://yourorg.slack.com`) and **Team ID** (from `app.slack.com/client/TEAM_ID/...`)
 3. Add channel IDs in the **Channel ID Map** for direct linking — FocusBoard will prompt you to add them when new channels appear
 4. Set Slack to email you for DMs/mentions when away (as a backup)
 
@@ -262,7 +260,7 @@ Works with both github.com and GitHub Enterprise.
 1. Go to https://github.com/settings/tokens (or your Enterprise equivalent)
 2. Create a token with scopes: `repo`, `notifications`, `read:user`
 3. Paste into Settings → GitHub
-4. For GitHub Enterprise: also enter your Base URL (e.g. `https://github.unity3d.com/api/v3`)
+4. For GitHub Enterprise: also enter your Base URL (e.g. `https://github.yourorg.com/api/v3`)
 
 Shows: PRs awaiting your review, your open PRs, assigned issues, CI pass/fail notifications.
 

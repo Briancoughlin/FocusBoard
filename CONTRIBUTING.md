@@ -1,6 +1,6 @@
 # Contributing to FocusBoard
 
-Thanks for your interest in contributing! FocusBoard is an ADHD-friendly productivity hub built for Unity employees but designed to be adaptable for any team.
+Thanks for your interest in contributing! FocusBoard is an ADHD-friendly productivity hub designed to be adaptable for any team.
 
 ---
 
@@ -163,17 +163,17 @@ Get-Content "backend\logs\server-$(Get-Date -Format 'yyyy-MM-dd').log" | Select-
 
 ---
 
-## Unity-specific notes
+## Enterprise / corporate notes
 
-If you work at Unity and are adapting this for internal use:
+If you're adapting this for use at a large organisation:
 
-- **Jira**: use the `de.resolution.apitokenauth` plugin token, not Atlassian Cloud tokens. Requires VPN/Netbird.
-- **Slack**: IT approval needed for a bot token. Windows notification capture works without it.
-- **Gmail/Calendar**: use your Unity Google account via the OAuth flow. Set up a Cloud project with your personal Google account.
-- **U-AI Gateway**: use `https://uai-litellm.internal.unity.com` as the Anthropic base URL with your U-AI token.
+- **Jira**: some organisations use third-party auth plugins rather than standard Atlassian tokens — check with your IT team if standard tokens don't work. May require VPN.
+- **Slack**: a bot token requires IT/admin approval. Windows notification capture works without it.
+- **Gmail/Calendar**: if your organisation restricts OAuth access, set up a personal Google Cloud project and add your work email as a test user.
+- **Anthropic/LLM**: if your organisation has an internal LLM gateway, set the Base URL in Settings → Integrations → Anthropic to point to it.
 
 ---
 
 ## Questions?
 
-Open a GitHub issue or ping @briancoughlin on Unity Slack.
+Open a GitHub issue on the [FocusBoard repo](https://github.com/Briancoughlin/FocusBoard).

@@ -163,7 +163,7 @@ Docker deserves serious consideration alongside the exe approach — it may actu
 - **No port conflict crashes** — container restarts cleanly, isolated from host network changes
 - **No scheduled task complexity** — Docker Desktop auto-starts containers at login
 - **Easy updates** — `docker pull` gets the latest image, no rebuild needed
-- **Already familiar to technical users** — Unity developers likely have Docker installed
+- **Already familiar to technical users** — developers likely have Docker installed
 
 **Cons:**
 - Docker Desktop has a licence cost for commercial use (free for personal/small business)
@@ -240,7 +240,7 @@ No git clone needed at all.
 | Updates | ✅ docker pull | ⚠️ Complex self-replace |
 
 **Recommendation:**
-- **Docker first** — faster to ship, more reliable, great for technical Unity colleagues
+- **Docker first** — faster to ship, more reliable, great for technical users
 - **exe later** — once Docker proves the concept, wrap it for the broader ADHD community
 
 ---

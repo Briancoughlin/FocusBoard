@@ -16,7 +16,7 @@ FocusBoard stores API credentials and connects to work systems. Security issues 
 Instead, report them privately via one of these methods:
 
 1. **GitHub Private Vulnerability Reporting** — use the "Report a vulnerability" button on the [Security tab](https://github.com/Briancoughlin/FocusBoard/security/advisories/new)
-2. **Email** — brian.coughlin@unity3d.com
+2. **Email** — open a GitHub issue and request contact details privately
 
 ### What to include
 

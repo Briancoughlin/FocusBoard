@@ -52,7 +52,7 @@ Full support for Apple Silicon (arm64) and Intel (x64) Macs. Docker handles this
 
 **Theme:** Build on it
 
-*Note: the Discourse / Unity Discussions plugin is blocked until after the platform migration is complete.*
+*Note: the Discourse plugin is planned for a future release.*
 
 ### Plugin Architecture
 A formal plugin interface so integrations can be added without touching core code.
@@ -60,7 +60,7 @@ A formal plugin interface so integrations can be added without touching core cod
 ```javascript
 export default {
   id: 'discourse',
-  name: 'Unity Discussions',
+  name: 'Discourse',
   settings: [...],
   async fetchTasks(config) { ... },
   async onTaskDone(task, config) { ... }
@@ -76,10 +76,8 @@ Named layouts instead of a fixed structure:
 - **Minimal** — just the kanban
 - **Custom** — save your current arrangement as a personal preset
 
-### Discourse / Unity Discussions
+### Discourse
 First third-party plugin. Surfaces community posts needing staff response, mentions, flagged content. Particularly valuable for Community PMs.
-
-**Blocked on:** Unity platform migration completing first.
 
 ---
 
@@ -88,9 +86,9 @@ First third-party plugin. Surfaces community posts needing staff response, menti
 These are ideas worth exploring once the core is stable. Not committed, not prioritised — just captured so they don't get lost.
 
 ### Integrations
-- **Slack bot token** — full API access (pending IT approval at Unity)
-- **Zoom API** — direct meeting summary import (pending IT approval)
-- **Microsoft Teams** — alternative to Slack for non-Unity users
+- **Slack bot token** — full API access (requires IT/admin approval)
+- **Zoom API** — direct meeting summary import (requires IT/admin approval)
+- **Microsoft Teams** — alternative to Slack
 - **Linear** — alternative to Jira for startups and smaller teams
 - **Notion** — task import/export
 - **Outlook Calendar** — for Microsoft-heavy organisations
