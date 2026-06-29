@@ -16,7 +16,7 @@
     "restore": "node restore.js"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.36.0",
+    "@anthropic-ai/sdk": "^0.107.0",
     "@slack/web-api": "^7.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
