@@ -21,6 +21,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **`docs/error-codes.md`** — reference document covering all 35 codes, Windows Scheduled Task exit codes, Node.js exit codes, and crash investigation PowerShell one-liners
 - **37 new tests** — `gmail-feedback.test.js` (input validation, sender extraction, noise patterns), `watchdog.test.js` (route shapes, PowerShell command safety), `week-navigation.test.ts` (offset logic, boundaries), `leaderboard.test.ts` (medals, streaks, ranking), `confidence-dots.test.ts` (level thresholds); total now 208
 
+### Changed
+- Frontend upgraded from Tailwind CSS 3 to 4 (`@tailwindcss/vite`, CSS-first config in `src/index.css`); removes the dev-only `braces` advisory and the need for `autoprefixer`/`postcss` config. Colours follow Tailwind 4's OKLCH palette
+
 ### Fixed
 - Server exits with a clear error message if FOCUSBOARD_DOCKER=true but FOCUSBOARD_KEY not set (previously would silently use unstable container hostname as key)
 - 76 backend tests (14 new docker-mode tests covering key derivation, auth bypass, startup validation)

@@ -61,12 +61,12 @@ function SkeletonCard() {
   return (
     <div className="rounded-lg border p-3 mb-2 animate-pulse" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}>
       <div className="flex justify-between mb-2">
-        <div className="h-4 w-14 bg-gray-200 rounded" />
+        <div className="h-4 w-14 bg-gray-200 rounded-sm" />
         <div className="h-2 w-2 bg-gray-200 rounded-full" />
       </div>
-      <div className="h-3 w-full bg-gray-200 rounded mb-1" />
-      <div className="h-3 w-3/4 bg-gray-200 rounded mb-2" />
-      <div className="h-2 w-16 bg-gray-200 rounded" />
+      <div className="h-3 w-full bg-gray-200 rounded-sm mb-1" />
+      <div className="h-3 w-3/4 bg-gray-200 rounded-sm mb-2" />
+      <div className="h-2 w-16 bg-gray-200 rounded-sm" />
     </div>
   );
 }
@@ -76,7 +76,7 @@ export function KanbanColumn({ column, tasks, isLoading, onDismiss, onPin, pinne
     <div className="flex flex-col flex-1 min-w-0">
       {/* Column header */}
       <div
-        className={`flex items-center justify-between px-3 py-2 mb-2 rounded-t-lg border-t-4 ${column.borderColor} shadow-sm`}
+        className={`flex items-center justify-between px-3 py-2 mb-2 rounded-t-lg border-t-4 ${column.borderColor} shadow-xs`}
         style={{ backgroundColor: 'var(--bg-card)', borderBottomColor: 'var(--border)' }}
         aria-label={`${column.label} column — ${isLoading ? 'loading' : tasks.length} tasks`}
       >

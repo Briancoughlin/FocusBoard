@@ -190,7 +190,7 @@ export function FocusView({ tasks, kanbanTasks, isLoading, isSyncing, onTaskMove
       <div
         ref={handleRef}
         onPointerDown={handlePointerDown}
-        className="flex-shrink-0 h-4 flex items-center justify-center cursor-row-resize group z-10 select-none"
+        className="shrink-0 h-4 flex items-center justify-center cursor-row-resize group z-10 select-none"
         role="separator"
         aria-orientation="horizontal"
         aria-label="Drag to resize calendar and task panels"
@@ -206,7 +206,7 @@ export function FocusView({ tasks, kanbanTasks, isLoading, isSyncing, onTaskMove
             Reminds them that the kanban is filtered and provides a dismiss button. */}
         {selectedDay && (
           <div
-            className="flex items-center justify-between px-3 py-1.5 mb-2 rounded-lg text-sm font-medium flex-shrink-0"
+            className="flex items-center justify-between px-3 py-1.5 mb-2 rounded-lg text-sm font-medium shrink-0"
             style={{ backgroundColor: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.4)', color: '#b45309' }}
             title="Showing tasks filtered by this day"
           >
@@ -223,12 +223,12 @@ export function FocusView({ tasks, kanbanTasks, isLoading, isSyncing, onTaskMove
 
         {/* Epic filter */}
         {epics.length > 0 && (
-          <div className="flex items-center gap-2 px-1 pb-2 flex-shrink-0">
+          <div className="flex items-center gap-2 px-1 pb-2 shrink-0">
             <span className="text-xs text-gray-400 font-medium" title="Filter the kanban to show only tasks from a specific epic">Epic:</span>
             <select
               value={selectedEpic}
               onChange={e => { logAction('Epic filter changed'); setSelectedEpic(e.target.value); onEpicChange?.(e.target.value); }}
-              className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 max-w-xs"
+              className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white text-gray-700 focus:outline-hidden focus:ring-2 focus:ring-blue-400 max-w-xs"
               aria-label="Filter by epic"
               title="Filter the kanban to show only tasks from a specific epic"
             >

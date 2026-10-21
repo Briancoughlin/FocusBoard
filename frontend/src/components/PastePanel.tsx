@@ -39,7 +39,7 @@ export function PastePanel({ onTasksExtracted, onClose }: Props) {
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <div className="flex items-center gap-2">
-            <div className="bg-gradient-to-br from-violet-500 to-purple-600 p-1.5 rounded-lg" aria-hidden="true">
+            <div className="bg-linear-to-br from-violet-500 to-purple-600 p-1.5 rounded-lg" aria-hidden="true">
               <ClipboardPaste size={16} className="text-white" />
             </div>
             <div>
@@ -60,7 +60,7 @@ export function PastePanel({ onTasksExtracted, onClose }: Props) {
             onChange={e => setText(e.target.value)}
             placeholder="Paste your Zoom summary, meeting notes, email thread, or any text with action items..."
             aria-label="Paste meeting notes or Zoom summary here"
-            className="w-full h-48 px-3 py-2.5 text-sm border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent bg-gray-50 placeholder-gray-400"
+            className="w-full h-48 px-3 py-2.5 text-sm border border-gray-200 rounded-xl resize-none focus:outline-hidden focus:ring-2 focus:ring-violet-400 focus:border-transparent bg-gray-50 placeholder-gray-400"
           />
           {error && <p className="text-xs text-red-500 mt-2">{error}</p>}
         </div>

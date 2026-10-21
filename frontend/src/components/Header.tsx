@@ -35,19 +35,19 @@ function formatLastSynced(d: Date | null): string {
 
 export function Header({ view, onViewChange, onRefresh, isRefreshing, isSyncing, lastSynced, onPaste, onShowDigest, onShowReport, onShowBugReport, privacyMode, onTogglePrivacy, completedToday, onShowLeaderboard, fixVersions, selectedFixVersion, onFixVersionChange }: Props) {
   return (
-    <header className="px-6 py-3 flex items-center justify-between shadow-sm sticky top-0 z-10" style={{ backgroundColor: 'var(--bg-header)', borderBottom: '1px solid var(--border)' }}>
+    <header className="px-6 py-3 flex items-center justify-between shadow-xs sticky top-0 z-10" style={{ backgroundColor: 'var(--bg-header)', borderBottom: '1px solid var(--border)' }}>
       {/* Left: Brand */}
       <div className="flex items-center gap-2">
-        <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-1.5 rounded-lg">
+        <div className="bg-linear-to-br from-blue-500 to-purple-600 p-1.5 rounded-lg">
           <Zap size={18} className="text-white" strokeWidth={2.5} />
         </div>
-        <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+        <span className="text-xl font-bold bg-linear-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
           FocusBoard
         </span>
         <span className="text-xs text-gray-400 font-normal ml-1 hidden sm:inline">
           ADHD Task Aggregator
         </span>
-        <span className="text-xs px-1.5 py-0.5 rounded font-mono" style={{ color: 'var(--text-secondary)', backgroundColor: 'var(--bg)' }}>v{version}</span>
+        <span className="text-xs px-1.5 py-0.5 rounded-sm font-mono" style={{ color: 'var(--text-secondary)', backgroundColor: 'var(--bg)' }}>v{version}</span>
       </div>
 
       {/* Center: Nav tabs + fix version filter */}
@@ -60,7 +60,7 @@ export function Header({ view, onViewChange, onRefresh, isRefreshing, isSyncing,
               aria-current={view === v ? 'page' : undefined}
               className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all capitalize ${
                 view === v
-                  ? 'text-white shadow-sm'
+                  ? 'text-white shadow-xs'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
               style={view === v ? { backgroundColor: 'var(--accent)' } : {}}
@@ -75,7 +75,7 @@ export function Header({ view, onViewChange, onRefresh, isRefreshing, isSyncing,
             onChange={e => onFixVersionChange(e.target.value)}
             aria-label="Filter by fix version"
             title="Filter tasks by fix version / quarter"
-            className="text-xs border rounded-lg px-2 py-1.5 font-medium transition-all focus:outline-none focus:ring-2"
+            className="text-xs border rounded-lg px-2 py-1.5 font-medium transition-all focus:outline-hidden focus:ring-2 focus:ring-blue-500/50"
             style={{
               borderColor: selectedFixVersion === 'all' ? 'var(--border)' : 'var(--accent)',
               color: selectedFixVersion === 'all' ? 'var(--text-secondary)' : 'var(--accent)',

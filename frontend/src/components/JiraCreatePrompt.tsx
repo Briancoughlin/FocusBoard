@@ -107,12 +107,12 @@ export function JiraCreatePrompt({ task, onCreated, onDismiss, suggestedProjectK
     }
   }
 
-  const selectClass = "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white";
+  const selectClass = "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-400 bg-white";
 
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="jira-create-title">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-        <div className="bg-gradient-to-r from-blue-500 to-blue-700 px-6 py-4 flex items-center justify-between">
+        <div className="bg-linear-to-r from-blue-500 to-blue-700 px-6 py-4 flex items-center justify-between">
           <div>
             <h2 id="jira-create-title" className="text-white font-semibold text-lg">Track in Jira?</h2>
             <p className="text-blue-100 text-xs mt-0.5">Create a ticket to track this work</p>

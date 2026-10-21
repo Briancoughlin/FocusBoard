@@ -89,7 +89,7 @@ export function KanbanBoard({ tasks, isLoading, isSyncing, onTaskMove, onOpenSet
       {vpnErrors.length > 0 && (
         <div className="mb-3 px-4 py-3 rounded-lg border flex items-start gap-3 text-sm"
           style={{ backgroundColor: 'rgba(245,158,11,0.08)', borderColor: 'rgba(245,158,11,0.4)', color: 'var(--text-primary)' }}>
-          <span className="text-xl flex-shrink-0 leading-none">🔒</span>
+          <span className="text-xl shrink-0 leading-none">🔒</span>
           <div>
             <p className="font-semibold" style={{ color: '#b45309' }}>{vpnSources.map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' & ')} {vpnSources.length === 1 ? 'is' : 'are'} unreachable</p>
             <p className="mt-0.5" style={{ color: 'var(--text-secondary)' }}>
@@ -126,7 +126,7 @@ export function KanbanBoard({ tasks, isLoading, isSyncing, onTaskMove, onOpenSet
               aria-selected={isActive}
               aria-label={tab.id === 'all' ? `Show all tasks (${count})` : `Show ${count} tasks from ${tab.label}`}
               title={tab.tooltip}
-              className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${isActive ? 'border-[var(--accent)] text-[var(--text-primary)]' : tab.color + ' hover:text-gray-700'}`}
+              className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${isActive ? 'border-(--accent) text-(--text-primary)' : tab.color + ' hover:text-gray-700'}`}
               style={isActive ? { borderBottomColor: 'var(--accent)', color: 'var(--text-primary)' } : {}}
             >
               {tab.label}

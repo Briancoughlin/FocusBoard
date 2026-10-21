@@ -141,7 +141,7 @@ export function LeaderboardModal({ scores, onClose }: Props) {
               }}
             >
               {/* Rank */}
-              <div className="w-8 text-center flex-shrink-0">
+              <div className="w-8 text-center shrink-0">
                 {getMedal(rank) ? (
                   <span className="text-lg">{getMedal(rank)}</span>
                 ) : (
@@ -168,11 +168,11 @@ export function LeaderboardModal({ scores, onClose }: Props) {
 
               {/* PB star */}
               {isPB && (
-                <Star size={13} className="text-amber-400 fill-amber-400 flex-shrink-0" aria-label="Personal best" />
+                <Star size={13} className="text-amber-400 fill-amber-400 shrink-0" aria-label="Personal best" />
               )}
 
               {/* Score bar */}
-              <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex items-center gap-2 shrink-0">
                 <div
                   className="h-1.5 rounded-full bg-emerald-400 transition-all"
                   style={{ width: `${Math.round((count / personalBest) * 60)}px`, minWidth: '4px' }}
