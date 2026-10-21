@@ -36,10 +36,13 @@ function calendarDaysBetween(a: Date, b: Date): number {
   return Math.round((utcB - utcA) / (24 * 60 * 60 * 1000));
 }
 
-const originalTZ = process.env.TZ;
+// The app tsconfig has no Node types, so reach process.env through a narrow cast.
+const env = (globalThis as unknown as { process: { env: Record<string, string | undefined> } })
+  .process.env;
+const originalTZ = env.TZ;
 
 beforeAll(() => {
-  process.env.TZ = 'Europe/London';
+  env.TZ = 'Europe/London';
   vi.useFakeTimers({ toFake: ['Date'] });
   // Default "today": Wednesday 14 Oct 2026, mid-afternoon, no DST nearby.
   vi.setSystemTime(new Date('2026-10-14T15:30:00Z'));
@@ -51,8 +54,8 @@ afterEach(() => {
 
 afterAll(() => {
   vi.useRealTimers();
-  if (originalTZ === undefined) delete process.env.TZ;
-  else process.env.TZ = originalTZ;
+  if (originalTZ === undefined) delete env.TZ;
+  else env.TZ = originalTZ;
 });
 
 describe('basic navigation', () => {
