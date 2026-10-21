@@ -25,7 +25,7 @@ function ConfidenceDots({ confidence }: { confidence: number }) {
   const label = level === 3 ? 'High confidence action' : level === 2 ? 'Medium confidence' : 'Low confidence';
   return (
     <span
-      className="text-xs font-bold tracking-tighter flex-shrink-0"
+      className="text-xs font-bold tracking-tighter shrink-0"
       style={{ color: colour, fontSize: '9px', letterSpacing: '-1px' }}
       title={label}
       aria-label={label}
@@ -79,7 +79,7 @@ function ItemRow({ item, onRead, onAddToBoard, onNotAction }: {
           {item.source === 'gmail' ? <Mail size={10} className="text-red-400" /> :
            item.source === 'slack' ? <Hash size={10} className="text-purple-400" /> :
            <Github size={10} className="text-gray-600" />}
-          {!item.read && <span className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />}
+          {!item.read && <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />}
           {item.source === 'gmail' && typeof item.confidence === 'number' && (
             <ConfidenceDots confidence={item.confidence} />
           )}
@@ -323,7 +323,7 @@ export function InboxSidebar({ tasks, onAddToBoard }: Props) {
   const totalUnread = githubUnread + slackUnread + inboxUnread;
 
   return (
-    <div className="flex flex-col h-full w-64 flex-shrink-0" style={{ backgroundColor: 'var(--bg-sidebar)', borderLeft: '1px solid var(--border)' }}>
+    <div className="flex flex-col h-full w-64 shrink-0" style={{ backgroundColor: 'var(--bg-sidebar)', borderLeft: '1px solid var(--border)' }}>
 
       {/* Top bar */}
       <div className="px-3 py-2.5 flex items-center gap-2" style={{ borderBottom: '1px solid var(--border)' }}>

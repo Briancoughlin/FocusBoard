@@ -35,7 +35,7 @@ export function JiraDonePrompt({ task, onOpen, onDismiss }: Props) {
 
   return (
     <div className="fixed bottom-6 right-6 z-50 w-80 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden animate-slide-up">
-      <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 px-4 py-3 flex items-center justify-between">
+      <div className="bg-linear-to-r from-emerald-500 to-emerald-600 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <CheckCircle size={15} className="text-white" />
           <p className="text-white font-medium text-sm">Add closing comment?</p>
@@ -52,7 +52,7 @@ export function JiraDonePrompt({ task, onOpen, onDismiss }: Props) {
           onChange={e => setComment(e.target.value)}
           placeholder="What was completed? (optional)"
           rows={3}
-          className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-emerald-400 mb-3"
+          className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 resize-none focus:outline-hidden focus:ring-2 focus:ring-emerald-400 mb-3"
           style={{ backgroundColor: 'var(--bg)' }}
           autoFocus
         />

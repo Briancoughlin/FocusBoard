@@ -98,7 +98,7 @@ export function BugReportModal({ onClose, currentView, lastSynced, taskCount }: 
                 placeholder="Describe what you were doing and what went wrong..."
                 rows={5}
                 required
-                className="w-full rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2"
+                className="w-full rounded-lg px-3 py-2 text-sm resize-none focus:outline-hidden focus:ring-2 focus:ring-blue-500/50"
                 style={{
                   backgroundColor: 'var(--bg)',
                   border: '1px solid var(--border)',
@@ -173,7 +173,7 @@ export function BugReportModal({ onClose, currentView, lastSynced, taskCount }: 
           <div className="flex flex-col gap-4">
             <div className="flex items-start gap-2 rounded-lg p-3" style={{ backgroundColor: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
               <AlertCircle size={16} className="text-red-500 mt-0.5 shrink-0" />
-              <p className="text-sm text-red-600 break-words">{errorMsg}</p>
+              <p className="text-sm text-red-600 wrap-break-word">{errorMsg}</p>
             </div>
             <div className="flex gap-2 justify-end">
               <button

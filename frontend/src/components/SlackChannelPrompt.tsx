@@ -12,7 +12,7 @@ export function SlackChannelPrompt({ channelName, onSave, onDismiss }: Props) {
 
   return (
     <div className="fixed bottom-6 right-80 z-50 w-80 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden animate-slide-up">
-      <div className="bg-gradient-to-r from-purple-500 to-purple-600 px-4 py-3 flex items-center justify-between">
+      <div className="bg-linear-to-r from-purple-500 to-purple-600 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Hash size={15} className="text-white" />
           <p className="text-white font-medium text-sm">Add channel ID?</p>
@@ -34,7 +34,7 @@ export function SlackChannelPrompt({ channelName, onSave, onDismiss }: Props) {
           value={channelId}
           onChange={e => setChannelId(e.target.value)}
           placeholder="e.g. C06AF9683"
-          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 mb-3"
+          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-purple-400 mb-3"
           onKeyDown={e => { if (e.key === 'Enter' && channelId.trim()) onSave(channelName, channelId.trim()); }}
         />
         <div className="flex gap-2">

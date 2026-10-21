@@ -41,7 +41,7 @@ export function DailyDigest({ tasks, onDismiss }: Props) {
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="digest-title">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-500 to-purple-600 px-6 py-5 text-white">
+        <div className="bg-linear-to-r from-blue-500 to-purple-600 px-6 py-5 text-white">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-blue-100 text-sm font-medium">{dayName}</p>

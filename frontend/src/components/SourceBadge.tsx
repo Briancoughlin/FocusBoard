@@ -18,7 +18,7 @@ export function SourceBadge({ source }: Props) {
   const { label, bg, text } = config[source];
   return (
     <span
-      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${bg} ${text}`}
+      className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium ${bg} ${text}`}
       role="img"
       aria-label={`Source: ${label}`}
     >

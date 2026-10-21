@@ -10,8 +10,8 @@ type TestState = 'idle' | 'testing' | 'ok' | 'error';
 function StatusIcon({ configured }: { configured?: boolean }) {
   if (configured === undefined) return null;
   return configured
-    ? <CheckCircle size={16} className="text-emerald-500 flex-shrink-0" />
-    : <XCircle size={16} className="text-red-400 flex-shrink-0" />;
+    ? <CheckCircle size={16} className="text-emerald-500 shrink-0" />
+    : <XCircle size={16} className="text-red-400 shrink-0" />;
 }
 
 
@@ -37,7 +37,7 @@ function Field({ label, id, type = 'text', value, placeholder, onChange, hint }:
         value={value}
         placeholder={placeholder}
         onChange={e => onChange(e.target.value)}
-        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
+        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
         autoComplete="off"
       />
       {hint && <p className="text-xs text-gray-400 mt-1">{hint}</p>}
@@ -87,10 +87,10 @@ function Toggle({ featureKey, features, setFeatures, setIsDirty }: {
       aria-checked={enabled}
       aria-label={`${enabled ? 'Disable' : 'Enable'} ${featureKey}`}
       onClick={e => { e.stopPropagation(); setFeatures(f => ({ ...f, [featureKey]: !enabled })); setIsDirty(true); }}
-      className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none flex-shrink-0"
+      className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-hidden shrink-0"
       style={{ backgroundColor: enabled ? 'var(--accent)' : '#d1d5db' }}
     >
-      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${enabled ? 'translate-x-6' : 'translate-x-1'}`} />
     </button>
   );
 }
@@ -112,7 +112,7 @@ function IntegrationSection({ featureKey, icon, title, description, configured, 
 
   return (
     <div
-      className="rounded-xl border shadow-sm overflow-hidden transition-all"
+      className="rounded-xl border shadow-xs overflow-hidden transition-all"
       style={{
         borderColor: expanded ? 'var(--accent)' : enabled ? 'var(--border)' : 'var(--border)',
         backgroundColor: 'var(--bg-card)',
@@ -127,7 +127,7 @@ function IntegrationSection({ featureKey, icon, title, description, configured, 
         style={{ borderBottom: expanded && enabled ? '1px solid var(--border)' : 'none' }}
       >
         <div className="flex items-center gap-3 min-w-0">
-          <span className="text-2xl flex-shrink-0">{icon}</span>
+          <span className="text-2xl shrink-0">{icon}</span>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <h3 className="font-semibold text-base" style={{ color: 'var(--text-primary)' }}>{title}</h3>
@@ -320,7 +320,7 @@ export function SettingsPage({ onDirtyChange }: SettingsPageProps = {}) {
         <button
           onClick={handleSave}
           disabled={saving}
-          className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all shadow-sm ${
+          className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all shadow-xs ${
             saved ? 'bg-emerald-500 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'
           } disabled:opacity-50`}
         >
@@ -340,7 +340,7 @@ export function SettingsPage({ onDirtyChange }: SettingsPageProps = {}) {
             onClick={() => setSubTab(tab.key)}
             role="tab"
             aria-selected={subTab === tab.key}
-            className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${subTab === tab.key ? 'shadow-sm text-white' : ''}`}
+            className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${subTab === tab.key ? 'shadow-xs text-white' : ''}`}
             style={subTab === tab.key ? { backgroundColor: 'var(--accent)' } : { color: 'var(--text-secondary)' }}
           >
             {tab.label}
@@ -367,7 +367,7 @@ export function SettingsPage({ onDirtyChange }: SettingsPageProps = {}) {
         <Field label="OAuth Client ID" id="googleClientId" value={form.googleClientId || ''} placeholder="123456789-abc.apps.googleusercontent.com" onChange={v => setField('googleClientId', v)} />
         <Field label="OAuth Client Secret" id="googleClientSecret" type="password" value={form.googleClientSecret || ''} placeholder={config.googleClientSecret ? '••••••••••••' : 'GOCSPX-...'} onChange={v => setField('googleClientSecret', v)} hint="Google Cloud Console → APIs & Services → Credentials" />
         <div className="flex flex-wrap items-center gap-3 mt-2">
-          <button onClick={openGoogleAuth} disabled={!form.googleClientId && !config.googleClientId} className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-40 shadow-sm transition-colors">
+          <button onClick={openGoogleAuth} disabled={!form.googleClientId && !config.googleClientId} className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-40 shadow-xs transition-colors">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
             Connect Google Account
           </button>
@@ -397,14 +397,14 @@ export function SettingsPage({ onDirtyChange }: SettingsPageProps = {}) {
         </div>
         <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--border)' }}>
           <p className="text-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>Channel ID Map</p>
-          <p className="text-xs mb-3" style={{ color: 'var(--text-secondary)' }}>Maps channel names to IDs for deep-linking into Slack. Find the ID in: <code className="font-mono px-1 rounded" style={{ backgroundColor: 'var(--bg)' }}>app.slack.com/client/TEAM_ID/CHANNEL_ID</code></p>
+          <p className="text-xs mb-3" style={{ color: 'var(--text-secondary)' }}>Maps channel names to IDs for deep-linking into Slack. Find the ID in: <code className="font-mono px-1 rounded-sm" style={{ backgroundColor: 'var(--bg)' }}>app.slack.com/client/TEAM_ID/CHANNEL_ID</code></p>
           {channelMapRows.length > 0 && (
             <div className="mb-2 space-y-2">
               <div className="grid grid-cols-[1fr_1fr_auto] gap-2 text-xs font-medium px-1" style={{ color: 'var(--text-secondary)' }}><span>Channel Name</span><span>Channel ID</span><span /></div>
               {channelMapRows.map((row, idx) => (
                 <div key={idx} className="grid grid-cols-[1fr_1fr_auto] gap-2 items-center">
-                  <input type="text" value={row.name} placeholder="ask-discussions" onChange={e => { setChannelMapRows(rows => rows.map((r, i) => i === idx ? { ...r, name: e.target.value } : r)); setIsDirty(true); }} className="px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50" />
-                  <input type="text" value={row.id} placeholder="C06AF9683" onChange={e => { setChannelMapRows(rows => rows.map((r, i) => i === idx ? { ...r, id: e.target.value } : r)); setIsDirty(true); }} className="px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 font-mono" />
+                  <input type="text" value={row.name} placeholder="ask-discussions" onChange={e => { setChannelMapRows(rows => rows.map((r, i) => i === idx ? { ...r, name: e.target.value } : r)); setIsDirty(true); }} className="px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 bg-gray-50" />
+                  <input type="text" value={row.id} placeholder="C06AF9683" onChange={e => { setChannelMapRows(rows => rows.map((r, i) => i === idx ? { ...r, id: e.target.value } : r)); setIsDirty(true); }} className="px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 bg-gray-50 font-mono" />
                   <button onClick={() => { setChannelMapRows(rows => rows.filter((_, i) => i !== idx)); setIsDirty(true); }} className="text-gray-400 hover:text-red-500 transition-colors px-1" title="Remove" aria-label="Remove row">×</button>
                 </div>
               ))}
@@ -437,24 +437,24 @@ export function SettingsPage({ onDirtyChange }: SettingsPageProps = {}) {
       </IntegrationSection>
 
       {/* API Cutover lives here — it's integration-related */}
-      <div className="rounded-xl border p-6 shadow-sm" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}>
+      <div className="rounded-xl border p-6 shadow-xs" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}>
         <h3 className="font-semibold text-base mb-1" style={{ color: 'var(--text-primary)' }}>API Cutover Date</h3>
         <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>When connecting a new API, set this to avoid importing weeks of old data.</p>
         <div className="flex items-center gap-2">
-          <input id="apiCutoffDate" type="date" value={form.apiCutoffDate || ''} onChange={e => setField('apiCutoffDate', e.target.value)} className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50" style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }} />
+          <input id="apiCutoffDate" type="date" value={form.apiCutoffDate || ''} onChange={e => setField('apiCutoffDate', e.target.value)} className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 bg-gray-50" style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }} />
           {form.apiCutoffDate && <button onClick={() => setField('apiCutoffDate', '')} className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors" style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>Clear</button>}
         </div>
         <p className="text-xs mt-2" style={{ color: 'var(--text-secondary)' }}>Leave empty to fetch all history. When set, Gmail, Slack, and GitHub only return items after this date.</p>
       </div>
 
-      <p className="text-xs text-gray-400 text-center pb-4">Settings stored in <code className="font-mono bg-gray-100 px-1 rounded">backend/config.json</code> — never sent anywhere.</p>
+      <p className="text-xs text-gray-400 text-center pb-4">Settings stored in <code className="font-mono bg-gray-100 px-1 rounded-sm">backend/config.json</code> — never sent anywhere.</p>
       </div>}
 
       {/* ══ APP SETTINGS TAB — appearance, api cutover, maintenance ══ */}
       {subTab === 'app' && <div className="space-y-6">
 
         {/* Appearance */}
-        <div className="rounded-xl border p-6 shadow-sm" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}>
+        <div className="rounded-xl border p-6 shadow-xs" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}>
           <h3 className="font-semibold text-base mb-1" style={{ color: 'var(--text-primary)' }}>Appearance</h3>
           <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>Accent colour and dark mode follow your Windows settings automatically.</p>
           <div className="flex items-center justify-between mb-4">
@@ -462,7 +462,7 @@ export function SettingsPage({ onDirtyChange }: SettingsPageProps = {}) {
               <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Follow Windows theme</p>
               <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Use your Windows accent colour and dark/light mode</p>
             </div>
-            <button role="switch" aria-checked={themeAuto} onClick={() => handleThemeAutoChange(!themeAuto)} className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none" style={{ backgroundColor: themeAuto ? 'var(--accent)' : '#d1d5db' }}>
+            <button role="switch" aria-checked={themeAuto} onClick={() => handleThemeAutoChange(!themeAuto)} className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-hidden" style={{ backgroundColor: themeAuto ? 'var(--accent)' : '#d1d5db' }}>
               <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${themeAuto ? 'translate-x-6' : 'translate-x-1'}`} />
             </button>
           </div>
@@ -470,12 +470,12 @@ export function SettingsPage({ onDirtyChange }: SettingsPageProps = {}) {
             <div className="space-y-3 pt-3 border-t" style={{ borderColor: 'var(--border)' }}>
               <div className="flex items-center gap-4">
                 <label className="text-sm font-medium w-28" style={{ color: 'var(--text-primary)' }}>Accent colour</label>
-                <input type="color" value={themeAccent} onChange={e => handleThemeAccentChange(e.target.value)} className="h-8 w-16 rounded cursor-pointer border" style={{ borderColor: 'var(--border)' }} />
+                <input type="color" value={themeAccent} onChange={e => handleThemeAccentChange(e.target.value)} className="h-8 w-16 rounded-sm cursor-pointer border" style={{ borderColor: 'var(--border)' }} />
                 <span className="text-xs font-mono" style={{ color: 'var(--text-secondary)' }}>{themeAccent}</span>
               </div>
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Dark mode</label>
-                <button role="switch" aria-checked={themeDark} onClick={() => handleThemeDarkChange(!themeDark)} className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none" style={{ backgroundColor: themeDark ? '#374151' : '#d1d5db' }}>
+                <button role="switch" aria-checked={themeDark} onClick={() => handleThemeDarkChange(!themeDark)} className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-hidden" style={{ backgroundColor: themeDark ? '#374151' : '#d1d5db' }}>
                   <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${themeDark ? 'translate-x-6' : 'translate-x-1'}`} />
                 </button>
               </div>
@@ -484,7 +484,7 @@ export function SettingsPage({ onDirtyChange }: SettingsPageProps = {}) {
         </div>
 
         {/* Maintenance */}
-        <div className="rounded-xl border p-6 shadow-sm" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}>
+        <div className="rounded-xl border p-6 shadow-xs" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}>
           <h3 className="font-semibold text-base mb-1" style={{ color: 'var(--text-primary)' }}>Maintenance</h3>
           <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>If the app looks stale or Settings appears blank, clear the browser cache and reload fresh from the server.</p>
           <button
@@ -509,7 +509,7 @@ export function SettingsPage({ onDirtyChange }: SettingsPageProps = {}) {
           </button>
         </div>
 
-        <p className="text-xs text-gray-400 text-center pb-4">Settings stored in <code className="font-mono bg-gray-100 px-1 rounded">backend/config.json</code> — never sent anywhere.</p>
+        <p className="text-xs text-gray-400 text-center pb-4">Settings stored in <code className="font-mono bg-gray-100 px-1 rounded-sm">backend/config.json</code> — never sent anywhere.</p>
       </div>}
 
     </div>

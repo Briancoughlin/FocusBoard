@@ -85,7 +85,7 @@ export function TaskCard({ task, index, onDismiss, onPin, pinned, onWontDo }: Pr
           aria-label={task.title}
           className={`
             rounded-lg border mb-2 cursor-grab active:cursor-grabbing
-            shadow-sm hover:shadow-md transition-all duration-150 overflow-hidden
+            shadow-xs hover:shadow-md transition-all duration-150 overflow-hidden
             ${task.url ? 'hover:border-blue-300' : ''}
             ${snapshot.isDragging ? 'shadow-lg rotate-1 border-blue-300 ring-2 ring-blue-200' : ''}
           `}
@@ -139,7 +139,7 @@ export function TaskCard({ task, index, onDismiss, onPin, pinned, onWontDo }: Pr
               {onWontDo && (
                 <button
                   onClick={e => { e.stopPropagation(); onWontDo(task.id); }}
-                  className="transition-colors p-0.5 rounded"
+                  className="transition-colors p-0.5 rounded-sm"
                   style={{ color: isWontDo ? '#ef4444' : 'var(--text-secondary)' }}
                   title={isWontDo ? "Mark as Done instead" : "Mark as Won't Do"}
                   aria-label={isWontDo ? "Mark as Done instead" : "Mark as Won't Do"}
@@ -150,7 +150,7 @@ export function TaskCard({ task, index, onDismiss, onPin, pinned, onWontDo }: Pr
               {onPin && (
                 <button
                   onClick={e => { e.stopPropagation(); onPin(task.id); }}
-                  className="transition-colors p-0.5 rounded"
+                  className="transition-colors p-0.5 rounded-sm"
                   style={{ color: pinned ? '#f59e0b' : 'var(--text-secondary)' }}
                   title={pinned ? 'Unpin from Focus view' : 'Pin to Focus view'}
                   aria-label={pinned ? 'Unpin from Focus view' : 'Pin to Focus view'}
@@ -161,7 +161,7 @@ export function TaskCard({ task, index, onDismiss, onPin, pinned, onWontDo }: Pr
               )}
               <button
                 onClick={e => { e.stopPropagation(); onDismiss(task.id); }}
-                className="transition-colors p-0.5 rounded hover:text-red-400"
+                className="transition-colors p-0.5 rounded-sm hover:text-red-400"
                 style={{ color: 'var(--text-secondary)' }}
                 title="Dismiss this task"
                 aria-label="Dismiss this task"
@@ -178,7 +178,7 @@ export function TaskCard({ task, index, onDismiss, onPin, pinned, onWontDo }: Pr
               <div className="flex items-center gap-2 mb-0.5">
                 <p className="text-xs font-mono text-blue-400" title="Jira ticket key — click title to open">{task.ticketKey}</p>
                 {task.fixVersion && (
-                  <span className="text-xs px-1 py-0 rounded" style={{ backgroundColor: 'var(--accent-light)', color: 'var(--accent)' }} title={`Fix version: ${task.fixVersion}`}>
+                  <span className="text-xs px-1 py-0 rounded-sm" style={{ backgroundColor: 'var(--accent-light)', color: 'var(--accent)' }} title={`Fix version: ${task.fixVersion}`}>
                     {task.fixVersion}
                   </span>
                 )}

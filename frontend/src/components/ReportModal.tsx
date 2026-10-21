@@ -164,7 +164,7 @@ export function ReportModal({ tasks: propTasks, doneDates: propDoneDates, onClos
                 onClick={() => { setPeriod(p); setReport(''); setError(''); }}
                 className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
                   period === p
-                    ? 'text-white shadow-sm'
+                    ? 'text-white shadow-xs'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
                 style={period === p ? { backgroundColor: 'var(--accent)' } : {}}
@@ -210,7 +210,7 @@ export function ReportModal({ tasks: propTasks, doneDates: propDoneDates, onClos
               <textarea
                 readOnly
                 value={report}
-                className="flex-1 min-h-0 w-full rounded-lg p-3 text-sm font-mono resize-none outline-none"
+                className="flex-1 min-h-0 w-full rounded-lg p-3 text-sm font-mono resize-none outline-hidden"
                 style={{
                   backgroundColor: 'var(--bg)',
                   border: '1px solid var(--border)',

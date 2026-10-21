@@ -1,47 +1,119 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
-:root {
-  --accent: #0078d4;
-  --accent-light: rgba(0, 120, 212, 0.06);
-  --accent-hover: #106ebe;
-  --bg: #f9fafb;
-  --bg-card: #ffffff;
-  --bg-sidebar: #ffffff;
-  --bg-header: #ffffff;
-  --text-primary: #111827;
-  --text-secondary: #6b7280;
-  --border: #e5e7eb;
+@theme {
+  --animate-slide-up: slide-up 0.2s ease-out;
+
+  --color-todo: #3b82f6;
+  --color-inprogress: #f59e0b;
+  --color-waiting: #8b5cf6;
+  --color-done: #10b981;
+
+  /* v4 line heights are ratios of the font size; pin the v3 absolute values so
+     text that also sets an inline font-size keeps its v3 line box */
+  --text-xs--line-height: 1rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base--line-height: 1.5rem;
+  --text-lg--line-height: 1.75rem;
+  --text-xl--line-height: 1.75rem;
+  --text-2xl--line-height: 2rem;
+
+  @keyframes slide-up {
+    0% {
+      transform: translateY(20px);
+      opacity: 0;
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
 }
 
-/* Calendar item title — clamp to 2 lines, expand to full text on hover */
-.calendar-item-title {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  transition: none;
-}
-.group:hover .calendar-item-title {
-  -webkit-line-clamp: unset;
-  overflow: visible;
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+
+  /* v4 preflight dropped these v3 defaults; keep them so buttons and placeholders look the same */
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-gray-400);
+  }
 }
 
-/* Privacy mode — blurs all sensitive content for demos and screenshots */
-.privacy-mode .task-content,
-.privacy-mode .inbox-content,
-.privacy-mode .calendar-content,
-.privacy-mode .digest-content {
-  filter: blur(4px);
-  user-select: none;
-  transition: filter 0.2s ease;
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db transparent;
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: #d1d5db;
+    border-radius: 2px;
+  }
 }
-.privacy-mode .task-content:hover,
-.privacy-mode .inbox-content:hover,
-.privacy-mode .calendar-content:hover,
-.privacy-mode .digest-content:hover {
-  filter: blur(2px);
+
+@layer utilities {
+  :root {
+    --accent: #0078d4;
+    --accent-light: rgba(0, 120, 212, 0.06);
+    --accent-hover: #106ebe;
+    --bg: #f9fafb;
+    --bg-card: #ffffff;
+    --bg-sidebar: #ffffff;
+    --bg-header: #ffffff;
+    --text-primary: #111827;
+    --text-secondary: #6b7280;
+    --border: #e5e7eb;
+  }
+
+  /* Calendar item title — clamp to 2 lines, expand to full text on hover */
+  .calendar-item-title {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    transition: none;
+  }
+  .group:hover .calendar-item-title {
+    -webkit-line-clamp: unset;
+    overflow: visible;
+  }
+
+  /* Privacy mode — blurs all sensitive content for demos and screenshots */
+  .privacy-mode .task-content,
+  .privacy-mode .inbox-content,
+  .privacy-mode .calendar-content,
+  .privacy-mode .digest-content {
+    filter: blur(4px);
+    user-select: none;
+    transition: filter 0.2s ease;
+  }
+  .privacy-mode .task-content:hover,
+  .privacy-mode .inbox-content:hover,
+  .privacy-mode .calendar-content:hover,
+  .privacy-mode .digest-content:hover {
+    filter: blur(2px);
+  }
 }
 
 @layer base {
@@ -50,22 +122,5 @@
     color: var(--text-primary);
     transition: background-color 0.2s, color 0.2s;
     @apply antialiased;
-  }
-}
-
-@layer utilities {
-  .scrollbar-thin {
-    scrollbar-width: thin;
-    scrollbar-color: #d1d5db transparent;
-  }
-  .scrollbar-thin::-webkit-scrollbar {
-    width: 4px;
-  }
-  .scrollbar-thin::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    background-color: #d1d5db;
-    border-radius: 2px;
   }
 }

@@ -240,6 +240,12 @@ export function WeekView({ tasks, allTasks, selectedDay, onDaySelect, onTaskDone
 
                   {/* Events */}
                   <div className="flex-1 overflow-y-auto p-1.5 space-y-1" style={{ backgroundColor: 'var(--bg-card)' }}>
+                    {/* @hello-pangea/dnd requires the placeholder to be rendered in the
+                        droppable container to correctly calculate drop positions. Hidden
+                        here because we manage layout manually with space-y-1; kept first
+                        so space-y (margin-bottom on all but the last child) never adds a
+                        trailing margin that overflows the cell and shows a scrollbar. */}
+                    <div style={{ display: 'none' }}>{provided.placeholder}</div>
                     {snapshot.isDraggingOver && (
                       <div
                         className="text-xs text-center py-2 rounded-lg font-medium"
@@ -329,10 +335,6 @@ export function WeekView({ tasks, allTasks, selectedDay, onDaySelect, onTaskDone
                         return <div key={item.id} onClick={e => { e.stopPropagation(); item.url && window.open(item.url, '_blank'); }}>{cardContent()}</div>;
                       });
                     })()}
-                    {/* @hello-pangea/dnd requires the placeholder to be rendered in the
-                        droppable container to correctly calculate drop positions. Hidden
-                        here because we manage layout manually with space-y-1. */}
-                    <div style={{ display: 'none' }}>{provided.placeholder}</div>
                   </div>
                 </div>
               )}
