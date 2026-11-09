@@ -24,7 +24,7 @@
   },
   "devDependencies": {
     "@axe-core/cli": "^4.13.0",
-    "@tailwindcss/vite": "^4.3.3",
+    "@tailwindcss/vite": "^4.3.5",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "@typescript-eslint/eslint-plugin": "^8.72.1",
